@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Home - LUDOC-shop
+{% endblock %}
+
+{% block content %}
+    {% with msgs = get_flashed_messages(with_categories=True) %}
+    {% for c, msg in msgs %}
+        {% if c == 'error' %}
+            <div class="flash-error">
+        {% else %}
+            <div class="success">
+        {% endif %}
+            {{ msg | safe }}
+        </div><br>
+    {% endfor %}
+    {% endwith %}
+
+    <!-- Contenedor donde se mostrarán los resultados de la búsqueda -->
+    <div class="mb-1" id="search-results"></div>
+    <h3>Nuevos Productos</h3>
+    <br>
+    <div class="items">
+        {% for item in items %}
+        <div class="item{% if item.stock == 0 %} disabled{% endif %}">
+            <div class="item-wrapper">
+                <div class="img-wrapper">
+                    <a href="{{ url_for('item', id=item.id) }}">
+                        <img src="{{ item.image }}" class="pic">
+                        {% if item.stock == 0 %}
+                        <img src="{{ url_for('static', filename='uploads/agotados.png') }}" class="pic overlay">
+                        {% endif %}
+                    </a>
+                    
+                </div>
+                {{ item.name }}
+                <span class="right-item">${{ item.price }}</span><br>
+                <i class="fa fa-star checked"></i>
+                <i class="fa fa-star checked"></i>
+                <i class="fa fa-star checked"></i>
+                <i class="fa fa-star checked"></i>
+                <i class="fa fa-star checked"></i>
+                <span class="text-muted">Quedan ({{ item.stock }})</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <br><br><h3>Más Popular</h3>
+    
+    <br>
+    <div class="items">
+        {% for item in items %}
+        <div class="item{% if item.stock == 0 %} disabled{% endif %}">
+            <div class="item-wrapper">
+                <div class="img-wrapper">
+                    <a href="{{ url_for('item', id=item.id) }}">
+                        <img src="{{ item.image }}" class="pic">
+                        {% if item.stock == 0 %}
+                        <img src="{{ url_for('static', filename='uploads/agotados.png') }}" class="pic overlay">
+                        {% endif %}
+                    </a>
+                    
+                </div>
+                {{ item.name }}
+                <span class="right-item">${{ item.price }}</span><br>
+                <i class="fa fa-star checked"></i>
+                <i class="fa fa-star checked"></i>
+                <i class="fa fa-star checked"></i>
+                <i class="fa fa-star checked"></i>
+                <i class="fa fa-star checked"></i>
+                <span class="text-muted">Quedan ({{ item.stock }})</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not items %}
+    <div class="flash-error">
+        Producto no encontrado...<br>
+        <a href="{{ url_for('home') }}">Descubrir nuevos productos</a>
+    </div>
+     
+           
+    {% endif %}
+{% endblock %}

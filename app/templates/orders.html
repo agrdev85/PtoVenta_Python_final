@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Orders - LUDOC-shop
+{% endblock %}
+<script src="https://js.stripe.com/v3/"></script>
+{% block content %}
+
+    {% with msgs = get_flashed_messages(with_categories=True) %}
+    {% for c, msg in msgs %}
+        {% if c == 'error' %}
+            <div class="flash-error">
+        {% else %}
+            <div class="success">
+        {% endif %}
+            {{ msg | safe }}</div><br>
+    {% endfor %}
+    {% endwith %}
+    
+    {% if not orders %}
+        <div class="flash-error">
+            Aún no has realizado ningún pedido.<br>
+            <a href="{{ url_for('home') }}">Agregar nuevos productos</a>
+        </div>
+    {% else %}
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead class="thead-dark">
+            <tr>
+                <th>Orden id</th>
+                <th>Orden fecha</th>
+                <th>Ordenes items</th>
+                <th>Total a Pagar</th>
+                <th>Orden estatus</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            {% if order.status != 'Libre' %}
+            <tr data-order-id="{{ order.id }}" data-order-status="{{ order.status }}" data-order-total="0">
+                <td>{{ order.id }}</td>
+                <td>{{ order.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>
+                    <div class="order-items">
+                        {% for item in order.items %}
+                            {% set item_price = item.item.price %}
+                            {% set item_total = item_price * item.quantity %}
+                            <div class="my"
+                                 data-item-price="{{ item_price }}"
+                                 data-item-quantity="{{ item.quantity }}"
+                                 data-item-total="{{ item_total }}">
+                                {{ item.item.name }} - Precio: <span style="color: red;">${{ item_price }}</span> <span class="success">x Cantidad: {{ item.quantity }} </span>- Total: <span style="color: red;">${{ item_total }}</span><br>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </td>
+                <td class="order-total">$0</td>
+                <td class="order-status">
+                    {% if order.status == 'Reservado' %}
+                        <span style="color: green;">{{ order.status }}</span>
+                    {% elif order.status == 'Pagado' %}
+                        <span style="color: red;">{{ order.status }}</span>
+                    {% else %}
+                        {{ order.status }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+
+    <div>
+        <h3>Total Neto a Pagar: <span id="total-reservado" style="color: red;" ></span></h3>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let totalReservado = 0;
+
+            // Iterar sobre las filas de la tabla para calcular el total de cada orden
+            document.querySelectorAll('tr[data-order-id]').forEach(row => {
+                const status = row.getAttribute('data-order-status');
+                let orderTotal = 0;
+
+                // Sumar los totales de cada ítem
+                row.querySelectorAll('.my').forEach(item => {
+                    const itemTotal = parseFloat(item.getAttribute('data-item-total'));
+                    orderTotal += itemTotal;
+                });
+
+                // Mostrar el total de la orden
+                row.querySelector('.order-total').textContent = `$${orderTotal.toFixed(2)}`;
+
+                // Si el estado es 'Reservado', sumar al total reservado
+                if (status === 'Reservado') {
+                    totalReservado += orderTotal;
+                }
+
+                // Si el estado es 'Pagado', aplicar estilo
+                if (status === 'Pagado') {
+                // Prueba diferentes estilos
+                row.style.border = '2px solid red';  // Borde rojo
+                row.style.backgroundColor = '#ffdddd';  // Color de fondo rojo claro
+                row.style.color = 'red';  // Texto en rojo
+                }
+            });
+
+            // Mostrar el total reservado
+            document.getElementById('total-reservado').textContent = `$${totalReservado.toFixed(2)}`;
+        });
+    </script>
+
+    {% endif %}
+{% endblock %}

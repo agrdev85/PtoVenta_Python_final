@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}
+	Cart - LUDOC-shop
+{% endblock %}
+<script src="https://js.stripe.com/v3/"></script>
+{% block content %}
+	{% with msgs =  get_flashed_messages(with_categories=True) %}
+	{% for c, msg in msgs %}
+		{% if c == 'error' %}
+			<div class="flash-error">
+		{% else %}
+			<div class="success">
+		{% endif %}
+			{{ msg | safe }}</div><br>
+	{% endfor %}
+	{% endwith %}
+
+	{% if not items %}
+		<div class="flash-error">
+			El carrito está vacio!<br>
+			<a type="button" class="mb-2 btn btn-outline-info" href="{{ url_for('home') }}">Agregar Nuevos Artículos</a>
+		</div>
+	{% else %}
+		<a class="right-item mb-2 btn btn-outline-info" href="{{ url_for('home') }}">Regresar a la Página de Artículos </a><br><br>
+	{% endif %}
+
+	<div class="items">
+	{% for i in range(items|length) %}
+    <div class="item">
+		<div class="item-wrapper">
+			<div class="img-wrapper">
+				<img src="{{ items[i].image }}" class="pic">
+			</div>
+			<b>{{ items[i].name }}</b>
+			<span class="right-item">${{ items[i].price }}</span><br>
+			Cantidad: 
+			<span class="right-item">{{ quantity[i] }}</span><br>
+			Total:
+			<span class="right-item">${{ quantity[i]*items[i].price }}</span>
+			<br><br>
+			<a href="{{ url_for('remove', id=items[i].id, quantity=quantity[i]) }}">
+				<button class="remove-from-cart"> Eliminar del Carrito </button>
+			</a>
+		</div>
+	</div>
+        {% endfor %}
+	</div>
+	{% if price %}
+	<div class="check">
+		<form method="POST" action="{{ url_for('fulfill_order_view') }}">
+			<input type="hidden" value="{{ price_ids }}" name="price_ids">
+			Grand Total: ${{ price }} <br><br>
+			<button class="bg-success btn-block btn-primary checkout"> Reservar </button>
+		</form>
+	</div>
+	{% endif %}
+{% endblock %}

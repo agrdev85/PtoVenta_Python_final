@@ -1,0 +1,173 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Admin Dashboard - LUDOC-shop
+{% endblock %}
+
+<script src="https://js.stripe.com/v3/"></script>
+
+{% block content %}
+
+{% with msgs = get_flashed_messages(with_categories=True) %}
+{% for c, msg in msgs %}
+{% if c == 'error' %}
+<div class="flash-error">
+    {% else %}
+    <div class="success">
+        {% endif %}
+        {{ msg }}</div><br>
+    {% endfor %}
+    {% endwith %}
+
+    {% if not orders %}
+    <div class="flash-error">No hay Ordenes.</div>
+    {% else %}
+
+    <div class="table-responsive">
+        <table id="orders-table" class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Order id</th>
+                    <th>Order date</th>
+                    <th>Username</th>
+                    <th>Ordered items</th>
+                    <th>Order status</th>
+                    <th>Total to Pay</th>
+                    <th>Operations</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr data-order-id="{{ order.id }}" data-order-status="{{ order.status }}" data-order-total="0"
+                    data-username="{{ order.customer.name }}">
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ order.customer.name }}</td>
+                    <td>
+                        {% for i in order.items %}
+                        {% set item_price = i.item.price %}
+                        {% set item_total = item_price * i.quantity %}
+                        <div class="my" data-item-price="{{ item_price }}" data-item-quantity="{{ i.quantity }}"
+                            data-item-total="{{ item_total }}">
+                            {{ i.item.name }}<span class="success">x{{ i.quantity }}</span>-<span
+                                style="color: red;">${{
+                                item_total }}</span><br>
+                        </div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.update_order_status', id=order.id) }}">
+                            <select name="status">
+                                <option value="Pagado" {% if order.status=='Pagado' %}selected{% endif %}>Pagado
+                                </option>
+                                <option value="Libre" {% if order.status=='Libre' %}selected{% endif %}>Libre</option>
+                                <option value="Reservado" {% if order.status=='Reservado' %}selected{% endif %}>
+                                    Reservado</option>
+                            </select>
+                            <button class="btn-primary btn" type="submit">Actualizar</button>
+                        </form>
+                    </td>
+                    <td class="order-total">$0</td>
+                    <td>
+                        <a href="{{ url_for('admin.edit', type='order', id=order.id) }}"><i class="bi bi-pencil-square text-success"></i></a>
+                        <a href="{{ url_for('admin.delete_order', id=order.id) }}"
+							onclick="return confirm('¿Estás seguro de que deseas eliminar esta orden?');"><i class="bi bi-trash3 text-danger"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        <h3>Total Reservado: <span id="total-reservado" style="color: red;">$0.00</span></h3>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Inicializar DataTables
+            var table = $('#orders-table').DataTable({
+                "lengthMenu": [5, 10, 25, 50],
+                "ordering": true,
+                "searching": true,
+                "paging": true,
+                "info": true
+            });
+
+            // Función para calcular el total reservado
+            function calculateTotalReservado() {
+                let totalReservado = 0;
+
+                // Iterar sobre las filas filtradas en DataTables
+                table.rows({ search: 'applied' }).nodes().each(function (row) {
+                    const status = row.getAttribute('data-order-status');
+                    let orderTotal = 0;
+
+                    // Sumar los totales de cada ítem
+                    $(row).find('.my').each(function () {
+                        const itemTotal = parseFloat($(this).attr('data-item-total'));
+                        orderTotal += itemTotal;
+                    });
+
+                    // Si el estado es 'Reservado', sumar al total reservado
+                    if (status === 'Reservado') {
+                        totalReservado += orderTotal;
+                    }
+
+                    // Mostrar el total de la orden
+                    $(row).find('.order-total').text(`$${orderTotal.toFixed(2)}`);
+
+                    // Estilos según el estado
+                    if (status === 'Pagado') {
+                        $(row).css({
+                            'border': '2px solid red',
+                            'background-color': '#ffdddd',
+                            'color': 'red'
+                        });
+                    } else if (status === 'Libre') {
+                        $(row).css({
+                            'border': '2px solid purple',
+                            'background-color': '#f3e5f5',
+                            'color': 'purple'
+                        });
+                    }
+                });
+
+                // Mostrar el total reservado
+                $('#total-reservado').text(`$${totalReservado.toFixed(2)}`);
+            }
+
+            // Llamar a la función para calcular el total reservado al iniciar y después de cada filtrado
+            calculateTotalReservado();
+
+            // Ejecutar recalculación cada vez que se realiza un filtrado en DataTables
+            table.on('search.dt', function () {
+                calculateTotalReservado();
+            });
+
+
+            // Verificar y actualizar órdenes a "Libre" si están "Pagado" desde hace 24 horas
+            function checkAndUpdateOrders() {
+                fetch('/admin/update_order_status_to_free', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);  // Muestra el mensaje de respuesta en la consola
+                        window.location.reload(); // Recarga la página para reflejar los cambios
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            }
+
+            // Llama a la función para verificar y actualizar las órdenes cada cierto tiempo
+            setInterval(checkAndUpdateOrders, 60000); // Verifica cada minuto (60000 ms)
+        });
+    </script>
+
+    {% endif %}
+    {% endblock %}

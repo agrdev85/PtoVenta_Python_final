@@ -1,0 +1,221 @@
+.main {
+	padding: 10vh 0;
+}
+
+a:hover {
+	text-decoration: none;
+}
+
+.navbar {
+	padding: .7rem 6rem;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.19);
+}
+
+footer {
+	box-shadow: 1px 0 2px 0 rgba(0, 0, 0, 0.2), 1px 0 5px 0 rgba(0, 0, 0, 0.19);
+}
+
+.forms,
+.flash-error,
+.success {
+	margin: 0 auto;
+	max-width: 400px;
+}
+
+form .btn {
+	background: #007bff;
+	color: white;
+	border-radius: 5px;
+}
+
+.flash-error,
+.help-block,
+.success {
+	text-align: center;
+	padding: 5px;
+	font-weight: bold;
+}
+
+.flash-error,
+.help-block {
+	color: red;
+}
+
+.success {
+	color: green;
+}
+
+.items {
+	max-width: 900px;
+	margin: 0 auto;
+	display: flex;
+	justify-content: space-around;
+	flex-wrap: wrap;
+	gap: 70px;
+}
+
+.item {
+	width: 250px;
+	padding: 12px;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.19);
+	border-radius: 5px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.item:hover {
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+
+}
+
+.item-display {
+	margin: 0 auto;
+	max-width: 500px;
+}
+
+.add-to-cart {
+	background-color: green;
+}
+
+.remove-from-cart {
+	background-color: red;
+}
+
+.add-to-cart,
+.remove-from-cart {
+	width: 100%;
+	border: none;
+	color: white;
+	padding: 5px;
+	border-radius: 5px;
+	cursor: pointer;
+}
+
+.pic {
+	width: 150px;
+	height: 150px;
+	transition: transform 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.img-wrapper {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 15px;
+}
+
+.img-wrapper {
+	position: relative;
+}
+
+.pic.original {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	opacity: 0.1;
+	/* Ajusta la opacidad si es necesario */
+}
+
+.pic.overlay {
+	position: absolute;
+	top: 0;
+	left: 10%;
+	width: 80%;
+	height: 100%;
+	pointer-events: none;
+	opacity: 0.8;
+	/* Ajusta la opacidad si es necesario */
+}
+
+.item.disabled .original {
+	filter: grayscale(1%);
+	/* Opcional: aplica un filtro para desaturar la imagen de fondo si el stock es 0 */
+}
+
+.right-item {
+	float: right;
+	color: green;
+}
+
+.check {
+	max-width: 300px;
+	margin: 0 auto;
+	margin-top: 50px;
+	font-weight: bold;
+}
+
+.checkout {
+	cursor: pointer;
+	padding: 5px;
+	border-radius: 5px;
+}
+
+.details {
+	padding: 15px 0;
+}
+
+.checked {
+	color: orange;
+}
+
+@media only screen and (max-width: 600px) {
+	.navbar {
+		padding: .3rem 1rem;
+	}
+}
+
+.item-display img.pic.agotado {
+	opacity: 0.5;
+	/* Puedes ajustar la opacidad para indicar que está desactivado */
+}
+
+.item-display .add-to-cart {
+	cursor: pointer;
+}
+
+.item-display.disabled .add-to-cart {
+	cursor: not-allowed;
+	background-color: #ddd;
+	/* Color de fondo para indicar que está deshabilitado */
+}
+
+
+.disabled {
+	opacity: 0.5;
+	/* Reduce la opacidad para indicar que está deshabilitado */
+	pointer-events: none;
+	/* Desactiva la interacción del mouse */
+}
+
+.disabled .pic {
+	opacity: 0.5;
+	/* Reduce la opacidad de la imagen */
+}
+
+.search-results-container {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	/* Centra horizontalmente */
+	align-items: center;
+	/* Centra verticalmente */
+	gap: 20px;
+	/* Espacio entre elementos */
+	margin-top: 20px;
+}
+
+.text-muted {
+	font-size: 0.9rem;
+	color: gray;
+}
+
+.navbar-nav .nav-item.active .nav-link {
+    background-color: #ff5722; /* Cambia este color al que prefieras */
+    color: white !important;
+    border-radius: 5px; /* Opcional: Añade un borde redondeado */
+    font-weight: bold; /* Opcional: Hace el texto en negrita */
+}

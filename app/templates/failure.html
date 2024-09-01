@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}
+	Payment Failure - LUDOC-shop
+{% endblock %}
+
+{% block content %}
+    <div class="flash-error">
+        No se pudo completar el pago. Por favor inténtalo de nuevo.
+        <a href="{{ url_for('cart') }}">¡Volver!</a>
+    </div>
+{% endblock %}

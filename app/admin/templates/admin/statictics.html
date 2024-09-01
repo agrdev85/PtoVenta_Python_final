@@ -1,0 +1,522 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Admin Dashboard - LUDOC-shop
+{% endblock %}
+
+{% block content %}
+
+{% with msgs = get_flashed_messages(with_categories=True) %}
+{% for c, msg in msgs %}
+{% if c == 'error' %}
+<div class="flash-error">
+    {% else %}
+    <div class="success">
+        {% endif %}
+        {{ msg }}</div><br>
+    {% endfor %}
+    {% endwith %}
+    
+    {% if not orders %}
+    <div class="flash-error">No hay Ordenes.</div>
+    {% else %}
+    <style>
+        .switch.ios, .switch-on.ios, .switch-off.ios { border-radius: 20rem; }
+        .switch.ios .switch-handle { border-radius: 20rem; }
+      </style>
+      
+    <div class="filters-container mb-4">
+        
+        <div class="d-flex justify-content-between">
+            <div>
+                <label for="start-date">Fecha de Inicio:</label>
+                <input type="date" id="start-date">
+                <label for="end-date">Fecha de Fin:</label>
+                <input type="date" id="end-date">
+                <button id="filter-date-range" class="btn btn-primary ml-2">Filtrar</button>
+            </div>
+            <div>
+                <span class="mr-1 mt-2">
+                    <button class="btn btn-outline-success btn-lg" onclick="exportTableToExcel('orders-table')">
+                        <i class="bi bi-file-earmark-excel-fill" width="48" height="48"></i>
+                    </button>
+                    <!-- <button onclick="exportTableToPDF('orders-table')">Exportar a PDF</button> -->
+                    <button class="btn btn-outline-danger btn-lg" onclick="exportPageToPDF()">
+                        <i class="bi bi-filetype-pdf" width="48" height="48"></i>
+                    </button>
+                </span>
+                
+                <input data-size="sm" type="checkbox" id="filter-status" checked data-toggle="switchbutton"
+                    data-onlabel="Estatus ON" data-offlabel="Estatus OFF" data-onstyle="success"
+                    data-offstyle="danger" data-style="ios">
+                <input data-size="sm" type="checkbox" id="filter-date" checked data-toggle="switchbutton" data-onlabel="Fecha ON" data-offlabel="Fecha OFF" data-onstyle="success" data-offstyle="danger" data-style="ios">
+                <input data-size="sm" type="checkbox" id="filter-username" checked data-toggle="switchbutton" data-onlabel="Usuario ON" data-offlabel="Usuario OFF" data-onstyle="success" data-offstyle="danger" data-style="ios">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="statictics-table" class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Order id</th>
+                    <th>Order date</th>
+                    <th>Username</th>
+                    <th>Ordered items</th>
+                    <th>Order status</th>
+                    <th>Total to Pay</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr data-order-id="{{ order.id }}" data-order-status="{{ order.status }}" data-order-total="0"
+                    data-username="{{ order.customer.name }}" data-order-date="{{ order.date.strftime('%Y-%m-%d') }}">
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ order.customer.name }}</td>
+                    <td>
+                        {% for i in order.items %}
+                        {% set item_price = i.item.price %}
+                        {% set item_total = item_price * i.quantity %}
+                        <div class="my" data-item-price="{{ item_price }}" data-item-quantity="{{ i.quantity }}"
+                            data-item-total="{{ item_total }}">
+                            {{ i.item.name }}<span class="success">x{{ i.quantity }}</span>-<span
+                                style="color: red;">${{
+                                item_total }}</span><br>
+                        </div>
+                        {% endfor %}
+                    </td>
+                    <td class="order-status">
+                        {% if order.status == 'Reservado' %}
+                        <span style="color: green;">{{ order.status }}</span>
+                        {% elif order.status == 'Pagado' %}
+                        <span style="color: red;">{{ order.status }}</span>
+                        {% else %}
+                        {{ order.status }}
+                        {% endif %}
+                    </td>
+                    <td class="order-total">$0</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div style="display: flex; gap: 20px;">
+        <!-- Div existente -->
+        <div>
+            <h3>Total Filtrado: <span id="total-reservado" style="color: red;">$0.00</span></h3>
+        </div>
+
+        <!-- Nuevo Div para "Por Cobrar" -->
+        <div>
+            <h3>Por Cobrar: <span id="total-por-cobrar" style="color: green;">$0.00</span></h3>
+        </div>
+
+        <!-- Nuevo Div para "Ganancia Neta" -->
+        <div>
+            <h3>Ganancia Neta: <span id="ganancia-neta" style="color: purple;">$0.00</span></h3>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <h3>Productos más vendidos</h3>
+            <canvas id="top-products-chart"></canvas>
+        </div>
+        <div class="col-md-6">
+            <h3>Total de Ventas</h3>
+            <canvas id="total-sales-chart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-container" style="width: 60%; margin: auto;">
+        <h3>Resumen de Pedidos</h3>
+        <div class="chart-container" style="position: relative; height:40vh; width:80vw">
+            <canvas id="orderStatusChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Inicializar DataTables
+            var table = $('#statictics-table').DataTable({
+                "lengthMenu": [5, 10, 25, 50],
+                "ordering": true,
+                "searching": true,
+                "paging": true,
+                "info": true
+            });
+
+            // Filtros dinámicos
+            const statusFilter = document.getElementById("filter-status");
+            const dateFilter = document.getElementById("filter-date");
+            const usernameFilter = document.getElementById("filter-username");
+            const startDateInput = document.getElementById("start-date");
+            const endDateInput = document.getElementById("end-date");
+            const filterButton = document.getElementById("filter-date-range");
+
+            table.columns(4).visible(statusFilter.checked);
+            table.columns(1).visible(dateFilter.checked);
+            table.columns(2).visible(usernameFilter.checked);
+
+            statusFilter.addEventListener("change", function () {
+                table.columns(4).visible(this.checked);
+            });
+
+            dateFilter.addEventListener("change", function () {
+                table.columns(1).visible(this.checked);
+            });
+
+            usernameFilter.addEventListener("change", function () {
+                table.columns(2).visible(this.checked);
+            });
+
+            // Filtrar por rango de fechas
+            filterButton.addEventListener("click", function () {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+
+                $.fn.dataTable.ext.search.push(
+                    function (settings, data, dataIndex) {
+                        const orderDate = data[1].substring(0, 10); // Obtiene la fecha en formato YYYY-MM-DD
+                        if (
+                            (startDate === '' || orderDate >= startDate) &&
+                            (endDate === '' || orderDate <= endDate)
+                        ) {
+                            return true;
+                        }
+                        return false;
+                    }
+                );
+                table.draw();
+                calculateTotalReservado();
+                updateChartData();
+            });
+
+            // Función para calcular el total filtrado
+            function calculateTotalReservado() {
+                let totalReservado = 0;
+
+                // Iterar sobre las filas filtradas en DataTables
+                table.rows({ search: 'applied' }).nodes().each(function (row) {
+                    const status = row.getAttribute('data-order-status');
+                    let orderTotal = 0;
+
+                    // Sumar los totales de cada ítem
+                    $(row).find('.my').each(function () {
+                        const itemTotal = parseFloat($(this).attr('data-item-total'));
+                        orderTotal += itemTotal;
+                    });
+
+                    // Sumar al total reservado
+                    totalReservado += orderTotal;
+
+                    // Mostrar el total de la orden
+                    $(row).find('.order-total').text(`$${orderTotal.toFixed(2)}`);
+
+                    // Estilos según el estado
+                    if (status === 'Pagado') {
+                        $(row).css({
+                            'border': '2px solid red',
+                            'background-color': '#ffdddd',
+                            'color': 'red'
+                        });
+                    } else if (status === 'Libre') {
+                        $(row).css({
+                            'border': '2px solid purple',
+                            'background-color': '#f3e5f5',
+                            'color': 'purple'
+                        });
+                    }
+                });
+
+                // Mostrar el total reservado
+                $('#total-reservado').text(`$${totalReservado.toFixed(2)}`);
+            }
+
+            // Llamar a la función para calcular el total reservado al iniciar y después de cada filtrado
+            calculateTotalReservado();
+
+            // Ejecutar recalculación cada vez que se realiza un filtrado en DataTables
+            table.on('search.dt', function () {
+                calculateTotalReservado();
+            });
+
+            // Inicializar gráfico de estado de pedidos
+            var ctx = document.getElementById('orderStatusChart').getContext('2d');
+            var orderStatusChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Pagado', 'Libre', 'Reservado'],
+                    datasets: [{
+                        label: 'Número de Órdenes',
+                        data: [0, 0, 0], // Datos iniciales
+                        backgroundColor: ['#e33a3a', '#b867c4', '#198639'],
+                        borderColor: ['2px solid red', '2px solid purple', '2px solid green'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Estado de Órdenes'
+                        }
+                    }
+                }
+            });
+
+            // Función para actualizar los datos del gráfico de estado de pedidos
+            function updateChartData() {
+                var pagado = 0;
+                var libre = 0;
+                var reservado = 0;
+
+                table.rows({ search: 'applied' }).nodes().each(function (row) {
+                    const status = row.getAttribute('data-order-status');
+                    if (status === 'Pagado') {
+                        pagado++;
+                    } else if (status === 'Libre') {
+                        libre++;
+                    } else if (status === 'Reservado') {
+                        reservado++;
+                    }
+                });
+
+                // Actualizar los datos del gráfico
+                orderStatusChart.data.datasets[0].data = [pagado, libre, reservado];
+                orderStatusChart.update();
+            }
+
+            // Inicializar gráficos de productos más vendidos y total de ventas
+            var topProductsChartCtx = document.getElementById('top-products-chart').getContext('2d');
+            var totalSalesChartCtx = document.getElementById('total-sales-chart').getContext('2d');
+
+            var topProductsChart = new Chart(topProductsChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: [], // Etiquetas de los productos
+                    datasets: [{
+                        label: 'Cantidad Vendida',
+                        data: [], // Datos iniciales de cantidad vendida
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                // Mostrar signo de $ en el eje Y
+                                callback: function (value, index, ticks) {
+                                    return value; // Mostrar valores de cantidad vendida, sin $
+                                }
+                            }
+                        }
+                    },
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Productos más Vendidos'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.dataset.label || '';
+                                    const product = context.label;
+                                    const salesData = context.raw; // Ventas del producto
+                                    const totalAmount = context.dataset.totalAmounts[context.dataIndex]; // Total de ventas del producto
+                                    return `${product} || Cantidad Vendida: ${salesData} || $${totalAmount.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            var totalSalesChart = new Chart(totalSalesChartCtx, {
+                type: 'pie',
+                data: {
+                    labels: [], // Etiquetas de estado de pedidos
+                    datasets: [{
+                        label: 'Total de Ventas',
+                        data: [], // Datos iniciales
+                        backgroundColor: ['#e33a3a', '#b867c4', '#198639'],
+                        borderColor: ['2px solid red', '2px solid purple', '2px solid green'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Total de Ventas por Estado'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.label || '';
+                                    const value = context.raw; // Monto total de ventas
+                                    return `${label}: $${value.toFixed(2)}`; // Muestra el total con el símbolo $
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Función para actualizar los gráficos de productos más vendidos y total de ventas
+            function updateSalesCharts() {
+                var productSales = {}; // Ventas totales por producto
+                var productQuantities = {}; // Cantidad de ventas por producto
+                var totalSales = {
+                    'Pagado': 0,
+                    'Libre': 0,
+                    'Reservado': 0
+                };
+
+                // Variables para calcular Por Cobrar y Ganancia Neta
+                let totalPorCobrar = 0; // Sumatoria de Total to Pay con estado Reservado
+                let gananciaNeta = 0;   // Sumatoria de Total to Pay con estados Pagado y Libre
+
+                table.rows({ search: 'applied' }).nodes().each(function (row) {
+                    const status = row.getAttribute('data-order-status');
+                    $(row).find('.my').each(function () {
+                        const [productName, quantityAndPrice] = $(this).text().split('x');
+                        const productQuantity = parseInt(quantityAndPrice.split('-')[0]); // Cantidad vendida
+                        const itemTotal = parseFloat($(this).attr('data-item-total'));
+
+                        // Sumar las ventas y cantidades de productos
+                        if (productName.trim() in productSales) {
+                            productSales[productName.trim()] += itemTotal;
+                            productQuantities[productName.trim()] += productQuantity;
+                        } else {
+                            productSales[productName.trim()] = itemTotal;
+                            productQuantities[productName.trim()] = productQuantity;
+                        }
+
+                        // Sumar al total según el estado de la orden
+                        if (status === 'Pagado' || status === 'Libre' || status === 'Reservado') {
+                            totalSales[status] += itemTotal;
+                        }
+
+                        // Calcular Por Cobrar y Ganancia Neta según el estado
+                        if (status === 'Reservado') {
+                            totalPorCobrar += itemTotal;
+                        } else if (status === 'Pagado' || status === 'Libre') {
+                            gananciaNeta += itemTotal;
+                        }
+
+                    });
+                });
+
+                // Actualizar el gráfico de productos más vendidos
+                topProductsChart.data.labels = Object.keys(productSales);
+                topProductsChart.data.datasets[0].data = Object.values(productQuantities);
+                topProductsChart.data.datasets[0].totalAmounts = Object.values(productSales); // Almacena los montos totales para los tooltips
+                topProductsChart.update();
+
+                // Actualizar el gráfico de total de ventas por estado
+                totalSalesChart.data.labels = Object.keys(totalSales);
+                totalSalesChart.data.datasets[0].data = Object.values(totalSales);
+                totalSalesChart.update();
+
+                // Actualizar los montos mostrados en los spans correspondientes
+                document.getElementById('total-por-cobrar').textContent = `$${totalPorCobrar.toFixed(2)}`;
+                document.getElementById('ganancia-neta').textContent = `$${gananciaNeta.toFixed(2)}`;
+            }
+
+            // Actualizar los gráficos al cargar la página y después de cada filtrado
+            updateChartData();
+            updateSalesCharts();
+
+            table.on('search.dt', function () {
+                updateChartData();
+                updateSalesCharts();
+            });
+
+
+
+        });
+
+        // Funcion Para Exportar Tabla a Excel
+        function exportTableToExcel(tableID, filename = 'data.xlsx') {
+            var table = document.getElementById(tableID);
+            var wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
+            XLSX.writeFile(wb, filename);
+        }
+
+        // Funcion Para Exportar Tabla a PDF
+        function exportTableToPDF(tableID, filename = 'data.pdf') {
+            var { jsPDF } = window.jspdf;
+            var doc = new jsPDF();
+            doc.autoTable({ html: '#' + tableID });
+            doc.save(filename);
+        }
+
+        // Funcion Para Exportar Pagina a PDF
+        function exportPageToPDF(filename = 'pagina.pdf') {
+            const { jsPDF } = window.jspdf;
+
+            // Selecciona el cuerpo del documento o un contenedor específico si lo deseas
+            const element = document.body;
+
+            // Utiliza html2canvas para capturar el contenido de la página
+            html2canvas(element, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                // Ajusta las dimensiones para que la imagen se ajuste a la página A4
+                const imgWidth = 210;
+                const pageHeight = 297;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                // Agrega la imagen al PDF
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                // Si el contenido es mayor a una página, divide en páginas adicionales
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                // Guarda el PDF
+                pdf.save(filename);
+            });
+        }
+
+    </script>
+
+    {% endif %}
+    {% endblock %}
