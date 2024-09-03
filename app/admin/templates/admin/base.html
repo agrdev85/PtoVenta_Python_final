@@ -31,6 +31,7 @@
 
 
   <title>{% block title %} {% endblock %}</title>
+
 </head>
 
 <body>
@@ -53,17 +54,31 @@
           <a class="nav-link" href="{{ url_for('register') }}">Registrarse</a>
         </li>
         {% else %}
-        <li class="nav-item {% if request.endpoint == 'orders' %}active{% endif %}">
-          <a class="nav-link" href="{{ url_for('orders') }}">Ordenes</a>
+        <li class="mr-2 nav-item {% if request.endpoint == 'orders' %}active{% endif %}">
+          <a class="nav-link btn btn-outline-primary" href="{{ url_for('orders') }}">Ordenes
+            <i class="bi bi-bell"></i>
+          </a>
         </li>
-        <li class="nav-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
-          <a class="nav-link" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+        <li class="mr-2 nav-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+          <a class="nav-link btn btn-outline-primary" href="{{ url_for('admin.dashboard') }}">Dashboard
+            <i class="bi bi-speedometer2"></i>
+          </a>
         </li>
-        <li class="nav-item {% if request.endpoint == 'admin.items' %}active{% endif %}">
-          <a class="nav-link" href="{{ url_for('admin.items') }}">Productos</a>
+        <li class="mr-2 nav-item {% if request.endpoint == 'admin.items' %}active{% endif %}">
+          <a class="nav-link btn btn-outline-primary" href="{{ url_for('admin.items') }}">Productos
+            <i class="bi bi-bag-fill"></i>
+          </a>
         </li>
-        <li class="nav-item {% if request.endpoint == 'admin.statictics' %}active{% endif %}">
-          <a class="nav-link" href="{{ url_for('admin.statictics') }}">Estadísticas</a>
+        <li class="mr-2 nav-item {% if request.endpoint == 'admin.statictics' %}active{% endif %}">
+          <a class="nav-link btn btn-outline-primary" href="{{ url_for('admin.statictics') }}">Estadísticas 
+            <i class="bi bi-graph-up-arrow"></i>
+          </a>
+        </li>
+        <li>
+          <!-- Botón para abrir el modal -->
+          <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#fullScreenModal">Calc...
+            <i class="bi bi-calculator-fill"></i>
+          </button>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
@@ -82,9 +97,386 @@
       </ul>
     </div>
   </nav>
+
   <div class="container">
     <div class="main">
+      <!-- Modal Herramientas -->
+      <div class="modal fade" id="fullScreenModal" tabindex="-1" role="dialog" aria-labelledby="fullScreenModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title text-center w-100" id="fullScreenModalLabel">Herramientas de Cálculo</h3>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <!-- Botones tipo switch para mostrar/ocultar cards -->
+              <div class="d-flex justify-content-center">
+                <!-- Botón de Billete -->
+                <div class="form-check form-switch mx-2">
+                  <input class="form-check-input" type="checkbox" id="billete" checked data-toggle="switchbutton"
+                    data-onlabel="ON" data-offlabel="OFF" data-onstyle="success" data-offstyle="danger">
+                  <label class="form-check-label" for="billete">Calculadora Billete</label>
+                </div>
+
+                <!-- Botón de Ingresos -->
+                <div class="form-check form-switch mx-2">
+                  <input class="form-check-input" type="checkbox" id="ingresos" checked data-toggle="switchbutton"
+                    data-onlabel="ON" data-offlabel="OFF" data-onstyle="success" data-offstyle="danger">
+                  <label class="form-check-label" for="ingresos">Distribuir Ingresos</label>
+                </div>
+              </div>
+
+              <!-- Código de la calculadora de billetes -->
+              <!-- Primera tarjeta -->
+              <div class="card mb-3" id="card1">
+                <div class="card-body">
+                  <!-- (Código de la calculadora de billetes va aquí) -->
+                  <h1>Calculadora de Billetes</h1>
+
+                  <div class="denomination-input">
+                    <label style="color: green;">5 CUP</label>
+                    <input type="number" id="denom-5" min="0" value="0">
+                  </div>
+                  <div class="denomination-input">
+                    <label style="color: brown;">10 CUP</label>
+                    <input type="number" id="denom-10" min="0" value="0">
+                  </div>
+                  <div class="denomination-input">
+                    <label style="color: blue;">20 CUP</label>
+                    <input type="number" id="denom-20" min="0" value="0">
+                  </div>
+                  <div class="denomination-input">
+                    <label style="color: lightpurple;">50 CUP</label>
+                    <input type="number" id="denom-50" min="0" value="0">
+                  </div>
+                  <div class="denomination-input">
+                    <label style="color: red;">100 CUP</label>
+                    <input type="number" id="denom-100" min="0" value="0">
+                  </div>
+                  <div class="denomination-input">
+                    <label style="color: orange;">200 CUP</label>
+                    <input type="number" id="denom-200" min="0" value="0">
+                  </div>
+                  <div class="denomination-input">
+                    <label style="color: lightgreen;">500 CUP</label>
+                    <input type="number" id="denom-500" min="0" value="0">
+                  </div>
+                  <div class="denomination-input">
+                    <label class="gradient">1000 CUP</label>
+                    <input type="number" id="denom-1000" min="0" value="0">
+                  </div>
+
+                  <div class="total-message" id="total-message">
+                    El total es: 0 CUP
+                  </div>
+
+                  <script>
+                    const denom5 = document.getElementById('denom-5');
+                    const denom10 = document.getElementById('denom-10');
+                    const denom20 = document.getElementById('denom-20');
+                    const denom50 = document.getElementById('denom-50');
+                    const denom100 = document.getElementById('denom-100');
+                    const denom200 = document.getElementById('denom-200');
+                    const denom500 = document.getElementById('denom-500');
+                    const denom1000 = document.getElementById('denom-1000');
+                    const totalMessage = document.getElementById('total-message');
+
+                    function updateTotal() {
+                      const total = (denom5.value * 5) +
+                        (denom10.value * 10) +
+                        (denom20.value * 20) +
+                        (denom50.value * 50) +
+                        (denom100.value * 100) +
+                        (denom200.value * 200) +
+                        (denom500.value * 500) +
+                        (denom1000.value * 1000);
+                      totalMessage.textContent = `El total es: ${total} CUP`;
+                    }
+
+                    document.querySelectorAll('input[type="number"]').forEach(input => {
+                      input.addEventListener('input', updateTotal);
+                    });
+                  </script>
+                  <!-- Fin Calculadora de Billetes -->
+                </div>
+              </div>
+              <!-- Código de la distribución de ingresos -->
+              <!-- Segunda tarjeta -->
+              <div class="card" id="card2">
+                <div class="card-body">
+                  <h1>Distribución de Ingresos</h1>
+                  <div class="container">
+                    <div class="row">
+                      <!-- Card with sliders -->
+                      <div class="card">
+                        <div class="card-content">
+                          <h5 class="card-title">Asignación de Porcentajes | <span class="porcientoAsig"
+                              id="remainingText"></span></h5>
+                          <form id="incomeForm" class="mb-4">
+                            <div class="form-group">
+                              <label for="income">Introduzca su ingreso neto:</label>
+                              <input type="number" class="form-control" id="income" name="income" required>
+                            </div>
+                            <div class="slider-container">
+                              <div class="form-group">
+                                <label for="maintenance">Necesidades Básicas::</label>
+                                <div class="slider">
+                                  <input type="range" class="form-control" id="maintenance" name="maintenance"
+                                    value="30" min="0" max="100" oninput="updateSliders()">
+                                  <span class="slider-value" id="maintenanceValue">30%</span>
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label for="friends">Nuevas Amistades:</label>
+                                <div class="slider">
+                                  <input type="range" class="form-control" id="friends" name="friends" value="20"
+                                    min="0" max="100" oninput="updateSliders()">
+                                  <span class="slider-value" id="friendsValue">20%</span>
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label for="education">Formación:</label>
+                                <div class="slider">
+                                  <input type="range" class="form-control" id="education" name="education" value="15"
+                                    min="0" max="100" oninput="updateSliders()">
+                                  <span class="slider-value" id="educationValue">15%</span>
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label for="annualTrips">Salidas Anuales:</label>
+                                <div class="slider">
+                                  <input type="range" class="form-control" id="annualTrips" name="annualTrips"
+                                    value="10" min="0" max="100" oninput="updateSliders()">
+                                  <span class="slider-value" id="annualTripsValue">10%</span>
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label for="investment">Inversiones:</label>
+                                <div class="slider">
+                                  <input type="range" class="form-control" id="investment" name="investment" value="25"
+                                    min="0" max="100" oninput="updateSliders()">
+                                  <span class="slider-value" id="investmentValue">25%</span>
+                                </div>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                      <!-- Card with charts -->
+                      <div class="card chart-card">
+                        <div class="card-content">
+                          <h5 class="card-title">Gráficos</h5>
+                          <div id="remainingPercentageCanvas" width="200" height="200">
+                            <canvas id="remainingCanvas" width="400" height="400"></canvas>
+                            <div id="remainingPercentageText">100%</div>
+                          </div>
+                          <div class="form-group">
+                            <label for="chartType">Tipo de Gráfico:</label>
+                            <select id="chartType" class="form-control" onchange="calculateAndDisplay()">
+                              <option value="bar">Barra</option>
+                              <option value="pie">Pastel</option>
+                            </select>
+                          </div>
+                          <div class="chart-container">
+                            <canvas id="incomeChart" width="400" height="400"></canvas>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <script>
+                    let chart;
+                    const remainingCanvas = document.getElementById('remainingCanvas');
+                    const remainingCtx = remainingCanvas.getContext('2d');
+                    const remainingText = document.getElementById('remainingPercentageText');
+                    const remainingPercentageCanvas = document.getElementById('remainingPercentageCanvas');
+
+
+                    function updateSliders() {
+                      const maintenance = parseFloat(document.getElementById('maintenance').value) || 0;
+                      const friends = parseFloat(document.getElementById('friends').value) || 0;
+                      const education = parseFloat(document.getElementById('education').value) || 0;
+                      const annualTrips = parseFloat(document.getElementById('annualTrips').value) || 0;
+                      const investment = parseFloat(document.getElementById('investment').value) || 0;
+
+                      const totalPercentage = maintenance + friends + education + annualTrips + investment;
+                      const remainingPercentage = 100 - totalPercentage;
+
+                      // Display percentage in slider value spans
+                      document.getElementById('maintenanceValue').textContent = `${Math.round(maintenance)}%`;
+                      document.getElementById('friendsValue').textContent = `${Math.round(friends)}%`;
+                      document.getElementById('educationValue').textContent = `${Math.round(education)}%`;
+                      document.getElementById('annualTripsValue').textContent = `${Math.round(annualTrips)}%`;
+                      document.getElementById('investmentValue').textContent = `${Math.round(investment)}%`;
+
+                      // Update remaining percentage text
+                      document.getElementById('remainingText').textContent = `Falta por asignar: ${Math.round(remainingPercentage)}%`;
+
+                      // Limit sliders if remaining percentage is 0
+                      document.querySelectorAll('input[type="range"]').forEach(slider => {
+                        const currentValue = parseFloat(slider.value);
+                        if (remainingPercentage < 0) {
+                          slider.value = Math.max(0, currentValue + remainingPercentage);
+                        }
+                      });
+
+                      drawRemainingPercentage(remainingPercentage);
+                      calculateAndDisplay(); // Automatically calculate and display chart data
+                    }
+
+                    function drawRemainingPercentage(percentage) {
+                      const radius = 100;
+                      const centerX = remainingCanvas.width / 2;
+                      const centerY = remainingCanvas.height / 2;
+                      const endAngle = 2 * Math.PI * (percentage / 100);
+
+                      remainingCtx.clearRect(0, 0, remainingCanvas.width, remainingCanvas.height);
+                      remainingCtx.beginPath();
+                      remainingCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+                      remainingCtx.fillStyle = `rgba(${255 - 2.55 * percentage}, ${2.55 * percentage}, 0, 0.3)`;
+                      remainingCtx.fill();
+
+                      remainingCtx.beginPath();
+                      remainingCtx.arc(centerX, centerY, radius, 0, endAngle, false);
+                      remainingCtx.lineTo(centerX, centerY);
+                      remainingCtx.fillStyle = `rgba(${255 - 2.55 * percentage}, ${2.55 * percentage}, 0, 1)`;
+                      remainingCtx.fill();
+
+                      remainingText.textContent = `${Math.round(percentage)}%`;
+
+                      if (percentage < 100) {
+                        remainingPercentageCanvas.style.opacity = 1;
+                      } else {
+                        remainingPercentageCanvas.style.opacity = 0;
+                      }
+                    }
+
+                    function calculateAndDisplay() {
+                      const income = Math.round(parseFloat(document.getElementById('income').value)) || 0;
+                      const maintenance = Math.round(parseFloat(document.getElementById('maintenance').value)) || 0;
+                      const friends = Math.round(parseFloat(document.getElementById('friends').value)) || 0;
+                      const education = Math.round(parseFloat(document.getElementById('education').value)) || 0;
+                      const annualTrips = Math.round(parseFloat(document.getElementById('annualTrips').value)) || 0;
+                      const investment = Math.round(parseFloat(document.getElementById('investment').value)) || 0;
+
+
+                      const data = {
+                        labels: ['Necesidades Básicas:', 'Nuevas Amistades', 'Formación', 'Salidas Anuales', 'Inversiones'],
+                        datasets: [{
+                          data: [maintenance, friends, education, annualTrips, investment],
+                          backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#2ecc71'],
+                          borderColor: ['#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#2ecc71'],
+                          borderWidth: 1
+                        }]
+                      };
+
+                      const config = {
+                        type: document.getElementById('chartType').value,
+                        data: data,
+                        options: {
+                          responsive: true,
+                          plugins: {
+                            datalabels: {
+                              display: true,
+                              align: 'center',
+                              anchor: 'center',
+                              formatter: (value, context) => {
+                                const dataset = context.chart.data.datasets[context.datasetIndex];
+                                const total = dataset.data.reduce((acc, val) => acc + val, 0);
+                                const percent = ((value / total) * 100).toFixed(1);
+                                const dollar = ((value / 100) * income).toFixed(2);
+                                return `${percent}%\n$${dollar}`;
+                              },
+                              color: '#fff',
+                              font: {
+                                weight: 'bold',
+                                size: 14
+                              }
+                            },
+                            tooltip: {
+                              callbacks: {
+                                label: function (context) {
+                                  const dataset = context.dataset;
+                                  const total = dataset.data.reduce((acc, val) => acc + val, 0);
+                                  const percent = ((context.raw / total) * 100).toFixed(1);
+                                  const dollar = ((context.raw / 100) * income).toFixed(2);
+                                  return [`${percent}%`, `$${dollar}`];
+                                }
+                              }
+                            }
+                          }
+                        }
+
+                      };
+
+
+                      if (chart) {
+                        chart.destroy();
+                      }
+                      const ctx = document.getElementById('incomeChart').getContext('2d');
+                      chart = new Chart(ctx, config);
+                    }
+
+                    document.addEventListener('DOMContentLoaded', () => {
+                      updateSliders();
+                    });
+
+                    const sliders = document.querySelectorAll('input[type="range"]');
+                    sliders.forEach(slider => {
+                      slider.addEventListener('input', () => {
+                        remainingPercentageCanvas.style.opacity = 1;
+                      });
+                      slider.addEventListener('change', () => {
+                        setTimeout(() => {
+                          remainingPercentageCanvas.style.opacity = 0;
+                        }, 1000);
+                      });
+                    });
+                  </script>
+                  <!-- Fin del segundo Card -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // Función para mostrar/ocultar tarjetas
+        function toggleCardVisibility() {
+          const card1 = document.getElementById('card1');
+          const card2 = document.getElementById('card2');
+
+          const billeteSwitch = document.getElementById('billete');
+          const ingresosSwitch = document.getElementById('ingresos');
+
+          // Mostrar/Ocultar tarjeta de "Billete"
+          billeteSwitch.addEventListener('change', function () {
+            if (this.checked) {
+              card1.style.display = 'block'; // Mostrar tarjeta
+            } else {
+              card1.style.display = 'none'; // Ocultar tarjeta
+            }
+          });
+
+          // Mostrar/Ocultar tarjeta de "Ingresos"
+          ingresosSwitch.addEventListener('change', function () {
+            if (this.checked) {
+              card2.style.display = 'block'; // Mostrar tarjeta
+            } else {
+              card2.style.display = 'none'; // Ocultar tarjeta
+            }
+          });
+        }
+
+        // Ejecuta la función cuando se cargue la página
+        document.addEventListener('DOMContentLoaded', toggleCardVisibility);
+      </script>
       {% block content %}
+
       {% endblock %}
     </div>
   </div>

@@ -5,41 +5,246 @@
 table {
 	margin: 0 auto;
 }
+
 table th {
 	color: white;
 	background-color: #343a40;
 	padding: 15px;
 }
+
 table tr {
-	border-bottom:1px solid #0046C2;
+	border-bottom: 1px solid #0046C2;
 }
 
-table td, th {
-padding:5px 30px;
+table td,
+th {
+	padding: 5px 30px;
 }
 
-.flash-error, .help-block, .success {
+.flash-error,
+.help-block,
+.success {
 	text-align: center;
 	padding: 5px;
-	font-weight:bold;
+	font-weight: bold;
 }
 
-.flash-error, .help-block {
+.flash-error,
+.help-block {
 	color: red;
 }
 
 .success {
-	color:green;
+	color: green;
 }
 
 .add-new {
-	margin-left:65vw;
-	margin-bottom:20px;
+	margin-left: 65vw;
+	margin-bottom: 20px;
 }
 
 .navbar-nav .nav-item.active .nav-link {
-    background-color: #ff5722; /* Cambia este color al que prefieras */
-    color: white !important;
-    border-radius: 5px; /* Opcional: Añade un borde redondeado */
-    font-weight: bold; /* Opcional: Hace el texto en negrita */
+	background-color: #ff5722;
+	/* Cambia este color al que prefieras */
+	color: white !important;
+	border-radius: 5px;
+	/* Opcional: Añade un borde redondeado */
+	font-weight: bold;
+	/* Opcional: Hace el texto en negrita */
+}
+
+
+.switch.ios,
+.switch-on.ios,
+.switch-off.ios {
+	border-radius: 20rem;
+}
+
+.switch.ios .switch-handle {
+	border-radius: 20rem;
+}
+
+/* Asegurar que el texto dentro de los botones sea visible */
+.form-check-input {
+	min-width: 100px;
+	/* Ajustar el ancho mínimo del botón */
+}
+
+/* Ajustar las etiquetas de los botones */
+.form-check-label {
+	margin-left: 8px;
+	/* Añadir un margen para que las etiquetas se vean mejor */
+}
+
+/* CSS Personalizado Modal fullscreen */
+
+.modal-fullscreen {
+	width: 100%;
+	max-width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+.modal-content {
+	height: 100%;
+	border: none;
+	border-radius: 0;
+}
+
+.modal-body {
+	overflow-y: auto;
+}
+
+
+.hidden-card {
+	display: none;
+}
+
+
+h1 {
+	color: #333;
+	margin-bottom: 20px;
+	text-align: center;
+}
+
+.denomination-input {
+	display: flex;
+	align-items: center;
+	margin-bottom: 10px;
+	font-size: 18px;
+}
+
+label {
+	margin-right: 10px;
+	font-weight: bold;
+}
+
+input[type="number"] {
+	width: 100px;
+	padding: 5px;
+	font-size: 16px;
+	margin-right: 10px;
+}
+
+.total-message {
+	margin-top: 20px;
+	padding: 15px;
+	font-size: 24px;
+	color: white;
+	background-color: #6a0572;
+	border-radius: 8px;
+	text-align: center;
+	box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+
+/*Segundo Card */
+
+.chart-container {
+	position: relative;
+	height: 100%;
+	width: 100%;
+}
+
+.form-control {
+	height: 35px;
+}
+
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+.card {
+	flex: 1;
+	margin: 10px;
+}
+
+.slider-container {
+	margin: 10px;
+}
+
+#remainingPercentageCanvas {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 1000;
+	opacity: 0;
+	transition: opacity 0.5s;
+}
+
+#remainingPercentageText {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	font-size: 24px;
+	font-weight: bold;
+}
+
+.card-content {
+	position: relative;
+	padding: 20px;
+}
+
+.chart-card {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+}
+
+.slider {
+	width: 100%;
+	position: relative;
+}
+
+.slider-value {
+	position: absolute;
+	top: -25px;
+	left: 50%;
+	transform: translateX(-50%);
+	font-weight: bold;
+}
+
+.chart-container canvas {
+	width: 400px !important;
+	height: 400px !important;
+}
+
+.slider-container label {
+	color: #333;
+}
+
+.porcientoAsig {
+	color: #ff6384;
+	/* Rojo */
+}
+
+#maintenanceValue {
+	color: #ff6384;
+	/* Rojo */
+}
+
+#friendsValue {
+	color: #36a2eb;
+	/* Azul */
+}
+
+#educationValue {
+	color: #cc65fe;
+	/* Morado */
+}
+
+#annualTripsValue {
+	color: #ffce56;
+	/* Amarillo */
+}
+
+#investmentValue {
+	color: #2ecc71;
+	/* Verde */
 }

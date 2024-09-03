@@ -37,10 +37,13 @@
 
         {% if item.stock > 0 %}
         <form action="{{ url_for('add_to_cart', id=item.id) }}" method="POST">
-            Cantidad:
-            <input type="number" value="1" name="quantity" min="1" max="{{ item.stock }}"
-                onkeyup="if(this.value > {{ item.stock }}) this.value = {{ item.stock }};" required>
-            <br><br>
+            <div>
+                Cantidad:
+                <input type="number" value="1" name="quantity" id="quantity" min="1" max="{{ item.stock }}"
+                oninput="if(this.value > {{ item.stock }}) this.value = {{ item.stock }};" required>
+                <strong style="color: red;"><span class="sub-total ml-4" id="subtotal">Subtotal: ${{ item.price }}</span></strong>
+            </div>
+            <br>
             <input type="submit" class="add-to-cart" value="Añadir al Carro" name="add">
         </form>
         <a type="button" class="mt-2 btn btn-outline-info" href="{{ url_for('home') }}">Regresar a la Página de Artículos</a>
@@ -49,4 +52,17 @@
         {% endif %}
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const quantityInput = document.getElementById('quantity');
+            const subtotalSpan = document.getElementById('subtotal');
+            let price = parseFloat({{ item.price }}); // Asegura que price es un número
+
+            quantityInput.addEventListener('input', function() {
+                let quantity = parseInt(quantityInput.value); // Siempre usa un número
+                let subtotal = quantity * price;
+                subtotalSpan.textContent = `Subtotal: $${subtotal.toFixed(2)}`; // Muestra el subtotal
+            });
+        });
+    </script>
 {% endblock %}

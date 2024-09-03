@@ -16,17 +16,13 @@ Admin Dashboard - LUDOC-shop
         {{ msg }}</div><br>
     {% endfor %}
     {% endwith %}
-    
+
     {% if not orders %}
     <div class="flash-error">No hay Ordenes.</div>
     {% else %}
-    <style>
-        .switch.ios, .switch-on.ios, .switch-off.ios { border-radius: 20rem; }
-        .switch.ios .switch-handle { border-radius: 20rem; }
-      </style>
-      
+
     <div class="filters-container mb-4">
-        
+
         <div class="d-flex justify-content-between">
             <div>
                 <label for="start-date">Fecha de Inicio:</label>
@@ -45,12 +41,16 @@ Admin Dashboard - LUDOC-shop
                         <i class="bi bi-filetype-pdf" width="48" height="48"></i>
                     </button>
                 </span>
-                
+
                 <input data-size="sm" type="checkbox" id="filter-status" checked data-toggle="switchbutton"
-                    data-onlabel="Estatus ON" data-offlabel="Estatus OFF" data-onstyle="success"
-                    data-offstyle="danger" data-style="ios">
-                <input data-size="sm" type="checkbox" id="filter-date" checked data-toggle="switchbutton" data-onlabel="Fecha ON" data-offlabel="Fecha OFF" data-onstyle="success" data-offstyle="danger" data-style="ios">
-                <input data-size="sm" type="checkbox" id="filter-username" checked data-toggle="switchbutton" data-onlabel="Usuario ON" data-offlabel="Usuario OFF" data-onstyle="success" data-offstyle="danger" data-style="ios">
+                    data-onlabel="Estatus ON" data-offlabel="Estatus OFF" data-onstyle="success" data-offstyle="danger"
+                    data-style="ios">
+                <input data-size="sm" type="checkbox" id="filter-date" checked data-toggle="switchbutton"
+                    data-onlabel="Fecha ON" data-offlabel="Fecha OFF" data-onstyle="success" data-offstyle="danger"
+                    data-style="ios">
+                <input data-size="sm" type="checkbox" id="filter-username" checked data-toggle="switchbutton"
+                    data-onlabel="Usuario ON" data-offlabel="Usuario OFF" data-onstyle="success" data-offstyle="danger"
+                    data-style="ios">
             </div>
         </div>
     </div>
@@ -119,22 +119,23 @@ Admin Dashboard - LUDOC-shop
     </div>
 
     <div class="row mt-5">
-        <div class="col-md-6">
+        <div style="width: 60%; margin: auto;">
             <h3>Productos más vendidos</h3>
             <canvas id="top-products-chart"></canvas>
         </div>
-        <div class="col-md-6">
+        <div style="width: 30%; margin: auto;">
             <h3>Total de Ventas</h3>
             <canvas id="total-sales-chart"></canvas>
         </div>
     </div>
 
-    <div class="chart-container" style="width: 60%; margin: auto;">
+    <div style="width: 45%; margin: auto;">
         <h3>Resumen de Pedidos</h3>
-        <div class="chart-container" style="position: relative; height:40vh; width:80vw">
+        <div style="position: relative; width:250; height:250">
             <canvas id="orderStatusChart"></canvas>
         </div>
     </div>
+
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
