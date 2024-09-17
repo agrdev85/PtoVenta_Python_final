@@ -1,5 +1,5 @@
 SECRET_KEY=123456
-DB_URI="sqlite:///test.db"
+DB_URI="postgresql://ludoc:cEJ8lAsHr0hqizybyin6cfjkmDeEN4wm@dpg-crklc1btq21c73dbt9h0-a.oregon-postgres.render.com/ludoc_shop"
 EMAIL= agr@gmail.com
 PASSWORD= 123456
 STRIPE_PUBLIC=
