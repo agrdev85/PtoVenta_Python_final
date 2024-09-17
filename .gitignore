@@ -1,6 +1,6 @@
 .env
 __pycache__
-instance
+instance/
 .vscode
 *.sql
 *.exe
