@@ -19,6 +19,12 @@ load_dotenv()
 app = Flask(__name__)
 app.register_blueprint(admin)
 
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 10,  # Número máximo de conexiones en el pool
+    'max_overflow': 20,  # Conexiones extra si el pool está lleno
+    'pool_timeout': 30  # Tiempo antes de que una conexión expirada sea reciclada
+}
+
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "123456")
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "postgresql://ludoc:cEJ8lAsHr0hqizybyin6cfjkmDeEN4wm@dpg-crklc1btq21c73dbt9h0-a.oregon-postgres.render.com/ludoc_shop")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
