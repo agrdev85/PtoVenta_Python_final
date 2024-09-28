@@ -26,7 +26,7 @@
             {% endif %}
         </div>
         <b>{{ item.name }}</b>
-        <span class="right-item">${{ item.price }}</span><br>
+        <span class="right-item">{{ item.price }} CUP</span><br>
         <i class="fa fa-star checked"></i>
         <i class="fa fa-star checked"></i>
         <i class="fa fa-star checked"></i>
@@ -41,7 +41,7 @@
                 Cantidad:
                 <input type="number" value="1" name="quantity" id="quantity" min="1" max="{{ item.stock }}"
                 oninput="if(this.value > {{ item.stock }}) this.value = {{ item.stock }};" required>
-                <strong style="color: red;"><span class="sub-total ml-4" id="subtotal">Subtotal: ${{ item.price }}</span></strong>
+                <strong style="color: red;"><span class="sub-total ml-4" id="subtotal">Subtotal: {{ item.price }} CUP</span></strong>
             </div>
             <br>
             <input type="submit" class="add-to-cart" value="Añadir al Carro" name="add">
@@ -61,7 +61,7 @@
             quantityInput.addEventListener('input', function() {
                 let quantity = parseInt(quantityInput.value); // Siempre usa un número
                 let subtotal = quantity * price;
-                subtotalSpan.textContent = `Subtotal: $${subtotal.toFixed(2)}`; // Muestra el subtotal
+                subtotalSpan.textContent = `Subtotal: ${subtotal} CUP`; // Muestra el subtotal
             });
         });
     </script>

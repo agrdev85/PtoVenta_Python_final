@@ -39,7 +39,8 @@ def items():
 @admin_only
 def statictics():
     orders = Order.query.all()
-    return render_template("admin/statictics.html", orders = orders)
+    items = Item.query.all()
+    return render_template("admin/statictics.html", orders = orders, items = items)
 
 @admin.route('/add', methods=['POST', 'GET'])
 @admin_only

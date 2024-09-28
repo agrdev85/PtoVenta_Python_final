@@ -45,8 +45,8 @@
         <li class="nav-item {% if request.endpoint == 'login' %}active{% endif %}">
           <a class="nav-link" href="{{ url_for('login') }}">Iniciar Sesión</a>
         </li>
-        <li class="nav-item {% if request.endpoint == 'register' %}active{% endif %}">
-          <a class="nav-link" href="{{ url_for('register') }}">Registrarse</a>
+        <li class="nav-item {% if request.endpoint == 'whasapp' %}active{% endif %}">
+          <a class="nav-link" href="{{ url_for('whasapp') }}">Registrarse</a>
         </li>
         {% else %}
         <li class="mr-2 nav-item {% if request.endpoint == 'orders' %}active{% endif %}">

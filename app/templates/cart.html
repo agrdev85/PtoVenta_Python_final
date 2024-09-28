@@ -33,11 +33,11 @@
 				<img src="{{ items[i].image }}" class="pic">
 			</div>
 			<b>{{ items[i].name }}</b>
-			<span class="right-item">${{ items[i].price }}</span><br>
+			<span class="right-item">{{ items[i].price }} CUP</span><br>
 			Cantidad: 
 			<span class="right-item">{{ quantity[i] }}</span><br>
 			Total:
-			<span class="right-item">${{ quantity[i]*items[i].price }}</span>
+			<span class="right-item">{{ quantity[i]*items[i].price }} CUP</span>
 			<br><br>
 			<a href="{{ url_for('remove', id=items[i].id, quantity=quantity[i]) }}">
 				<button class="remove-from-cart"> Eliminar del Carrito </button>
@@ -50,7 +50,7 @@
 	<div class="check">
 		<form method="POST" action="{{ url_for('fulfill_order_view') }}">
 			<input type="hidden" value="{{ price_ids }}" name="price_ids">
-			Grand Total: ${{ price }} <br><br>
+			Grand Total: {{ price }} CUP<br><br>
 			<button class="bg-success btn-block btn-primary checkout"> Reservar </button>
 		</form>
 	</div>

@@ -50,12 +50,12 @@
                                  data-item-price="{{ item_price }}"
                                  data-item-quantity="{{ item.quantity }}"
                                  data-item-total="{{ item_total }}">
-                                {{ item.item.name }} - Precio: <span style="color: red;">${{ item_price }}</span> <span class="success">x Cantidad: {{ item.quantity }} </span>- Total: <span style="color: red;">${{ item_total }}</span><br>
+                                {{ item.item.name }} - Precio: <span style="color: red;">{{ item_price }}cup</span> <span class="success">x Cantidad: {{ item.quantity }} </span>- Total: <span style="color: red;">{{ item_total }}cup</span><br>
                             </div>
                         {% endfor %}
                     </div>
                 </td>
-                <td class="order-total">$0</td>
+                <td class="order-total">0</td>
                 <td class="order-status">
                     {% if order.status == 'Reservado' %}
                         <span style="color: green;">{{ order.status }}</span>
@@ -92,7 +92,7 @@
                 });
 
                 // Mostrar el total de la orden
-                row.querySelector('.order-total').textContent = `$${orderTotal.toFixed(2)}`;
+                row.querySelector('.order-total').textContent = `${orderTotal.toFixed(0)}`;
 
                 // Si el estado es 'Reservado', sumar al total reservado
                 if (status === 'Reservado') {
@@ -109,7 +109,7 @@
             });
 
             // Mostrar el total reservado
-            document.getElementById('total-reservado').textContent = `$${totalReservado.toFixed(2)}`;
+            document.getElementById('total-reservado').textContent = `${totalReservado.toFixed(0)} CUP`;
         });
     </script>
 

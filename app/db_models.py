@@ -37,8 +37,8 @@ class Item(db.Model):
 	price_id = db.Column(db.String(250), nullable=False)
 	costo = db.Column(db.Integer)
 	stock = db.Column(db.Integer, default=0)
-	orders = db.relationship("Ordered_item", backref="item")
-	in_cart = db.relationship("Cart", backref="item")
+	orders = db.relationship('Ordered_item', backref='item', lazy=True, cascade="all, delete, delete-orphan")
+	in_cart = db.relationship("Cart", backref="item", lazy=True, cascade="all, delete, delete-orphan")
 	
 class Cart(db.Model):
 	__tablename__ = "cart"

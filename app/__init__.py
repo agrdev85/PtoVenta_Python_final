@@ -85,11 +85,17 @@ def login():
     
     return render_template("login.html", form=form)
 
+@app.route("/whasapp", methods=['POST', 'GET'])
+def whasapp():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+       
+    return render_template("whasapp.html")
 
 @app.route("/register", methods=['POST', 'GET'])
 def register():
-	if current_user.is_authenticated:
-		return redirect(url_for('home'))
+	#if current_user.is_authenticated:
+	#	return redirect(url_for('home'))
 	form = RegisterForm()
 	if form.validate_on_submit():
 		user = User.query.filter_by(email=form.email.data).first()
