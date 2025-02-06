@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 
 {% block title %}
-	Admin Add item - LUDOC-shop
+	Admin Add item - TIENDA-shop
 {% endblock %}
 <script src="https://js.stripe.com/v3/"></script>
 {% block content %}
@@ -16,8 +16,24 @@
 	{% endfor %}
 	{% endwith %}
 
-    <div class="forms">
-		{{ wtf.quick_form(form) }}
-	</div>
+    
+	<div class="d-flex justify-content-center align-items-center vh-100">
+		<div class="card w-100 mx-3" style="max-width: 500px;">
+			<div class="card-body">
+				<h5 class="card-title text-center mb-4">Artículos</h5>
+				<div class="forms">
+					<!-- Renderiza el formulario -->
+					{{ wtf.quick_form(form) }}
+					
+					<!-- Botón Cancelar -->
+					<div class="form-actions d-flex justify-content-between align-items-center mt-3">
+						
+						<a href="{{ url_for('admin.items') }}" class="btn btn-danger ms-auto">Cancelar</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>	
+		
     
 {% endblock %}

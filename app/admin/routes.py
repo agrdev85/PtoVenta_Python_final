@@ -1,150 +1,209 @@
-from flask import Blueprint, render_template, url_for, flash, request  # Agregamos 'request' aquí
+from flask import Blueprint, jsonify, render_template, url_for, flash, request
+from flask_login import current_user, login_required
 from werkzeug.utils import redirect, secure_filename
 from ..db_models import Order, Ordered_item, Item, db, User
 from ..admin.forms import AddItemForm, OrderEditForm
 from ..funcs import admin_only
+import logging
+from sqlalchemy.orm import aliased
+from werkzeug.security import generate_password_hash, check_password_hash
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 admin = Blueprint("admin", __name__, url_prefix="/admin", static_folder="static", template_folder="templates")
 
 @admin.route('/')
 @admin_only
 def dashboard():
-    orders = Order.query.all()
-        
+    # Obtener las órdenes relacionadas con el administrador actual o sus empleados
+    orders = Order.query.join(User, Order.uid == User.id).filter((User.id == current_user.id) | (User.created_by == current_user.id)
+    ).all()
+
     return render_template("admin/home.html", orders=orders)
 
 @admin.route('/update_order_status/<int:id>', methods=['POST'])
 @admin_only
 def update_order_status(id):
-    order = Order.query.get_or_404(id)
+    # Validar que la orden pertenece al administrador actual o a un empleado del administrador actual
+    order = Order.query.join(User, Order.uid == User.id).filter(
+        Order.id == id,
+        (User.created_by == current_user.id) | (User.id == current_user.id)  # Verificar si es del admin o de un empleado del admin
+    ).first_or_404()
     status = request.form.get('status')
     if status in ['Pagado', 'Libre', 'Reservado']:
         order.status = status
         order.date = datetime.now()
         db.session.commit()
-        flash('¡El estado del pedido se actualizó exitosamente!', 'success')
+        flash(f"¡Estado de la orden actualizado exitosamente a '{status}'!", 'success')
     else:
-        flash('¡Valor de estado no válido!', 'error')
+        flash("¡Estado no válido!", 'error')
     return redirect(url_for('admin.dashboard'))
 
 @admin.route('/items')
 @admin_only
 def items():
-    items = Item.query.all()
+    # Filtrar productos creados por el administrador actual o sus empleados
+    items = Item.query.join(User, Item.created_by == User.id).filter(
+        (User.id == current_user.id) | (User.created_by == current_user.id)
+    ).all()
     return render_template("admin/items.html", items=items)
 
 @admin.route('/statictics')
 @admin_only
 def statictics():
-    orders = Order.query.all()
-    items = Item.query.all()
-    return render_template("admin/statictics.html", orders = orders, items = items)
+    # Filtrar órdenes relacionadas con el administrador actual o sus empleados
+    orders = Order.query.join(User, Order.uid == User.id).filter(
+        (User.id == current_user.id) | (User.created_by == current_user.id)
+    ).all()
+    items = Item.query.join(User, Item.created_by == User.id).filter(
+        (User.id == current_user.id) | (User.created_by == current_user.id)
+    ).all()
+    return render_template("admin/statictics.html", orders=orders, items=items)
+
+def create_user_folder(user_id):
+    """
+    Crea una carpeta específica para un usuario basado en su ID si no existe.
+    
+    Args:
+        user_id (int): ID del usuario para el cual se creará la carpeta.
+    
+    Returns:
+        str: Ruta relativa de la carpeta creada o existente.
+    """
+    # Ruta relativa basada en el ID del usuario
+    user_folder = f'static/uploads/{user_id}'
+    
+    # Ruta absoluta para verificar y crear la carpeta
+    absolute_folder = os.path.join(os.getcwd(), user_folder)
+    
+    # Crear la carpeta si no existe
+    if not os.path.exists(absolute_folder):
+        os.makedirs(absolute_folder)  # Crear la carpeta y subcarpetas necesarias
+        print(f"Carpeta creada: {absolute_folder}")
+    
+    return user_folder  # Retorna la ruta relativa para su uso
 
 @admin.route('/add', methods=['POST', 'GET'])
+@login_required
 @admin_only
 def add():
     form = AddItemForm()
     if form.validate_on_submit():
+        # Obtener el archivo de la imagen
         image_file = form.image.data
+
+        # Crear la carpeta específica para el usuario administrador si no existe
+        user_folder = create_user_folder(current_user.id)  # Llamada a la función
+
         if image_file:
-            image_file.save('app/static/uploads/' + image_file.filename)
-            image_file = url_for('static', filename=f'uploads/{image_file.filename}')
+            # Asegurarse de que el nombre del archivo sea seguro
+            filename = secure_filename(image_file.filename)
+            file_path = os.path.join(user_folder, filename)  # Ruta relativa dentro de la carpeta del usuario
+
+            # Guardar la imagen en la carpeta del usuario
+            image_file.save(os.path.join(os.getcwd(), file_path))  # Ruta absoluta para guardar la imagen
         else:
-            image_file = None  # O maneja un valor por defecto si no se sube imagen
+            # Si no se carga ninguna imagen, asignar una por defecto
+            file_path = 'static/uploads/default.png'
 
-        # Asignar la imagen predeterminada de agotado si el stock es cero o menor
-        if form.stock.data <= 0:
-            image_file = url_for('static', filename='uploads/agotado.png')
-
+        # Crear un nuevo artículo
         new_item = Item(
             name=form.name.data,
             price=form.price.data,
             category=form.category.data,
-            image=image_file,
+            image=f'/{file_path}',  # Guardar la ruta relativa en la base de datos
             details=form.details.data,
             costo=form.costo.data,
             stock=form.stock.data,
-            price_id=form.price_id.data
+            price_id=form.price_id.data,
+            created_by=current_user.id
         )
+
         db.session.add(new_item)
         try:
             db.session.commit()
-            flash("¡Artículo agregado exitosamente!", "success")
+            flash(f"¡Artículo '{form.name.data}' agregado exitosamente!", "success")
         except Exception as e:
             db.session.rollback()
-            flash(f"Error: {str(e)}", "error")
+            flash(f"Error al agregar el artículo: {str(e)}", "error")
+
         return redirect(url_for('admin.items'))
+    
     return render_template('admin/add.html', form=form)
 
-@admin.route('/edit/<string:type>/<int:id>', methods=['POST', 'GET'])
-@admin_only
-def edit(type, id):
-    if type == "item":
-        item = Item.query.get(id)
-        form = AddItemForm(
-            name=item.name,
-            price=item.price,
-            category=item.category,
-            details=item.details,
-            image=item.image,
-            price_id=item.price_id,
-            costo=item.costo,
-            stock=item.stock
-        )
-        if form.validate_on_submit():
-            item.name = form.name.data
-            item.price = form.price.data
-            item.category = form.category.data
-            item.details = form.details.data
-            item.price_id = form.price_id.data
-            item.costo = form.costo.data
-            item.stock = form.stock.data
 
-            # Si se sube una nueva imagen, la guardamos y actualizamos el valor de item.image
-            if form.image.data:
-                form.image.data.save('app/static/uploads/' + form.image.data.filename)
-                item.image = url_for('static', filename=f'uploads/{form.image.data.filename}')
-        
+@admin.route('/edit/item/<int:id>', methods=['POST', 'GET'])
+@login_required
+@admin_only
+def edit(id):
+    item = Item.query.filter_by(id=id, created_by=current_user.id).first_or_404()
+
+    form = AddItemForm(
+        name=item.name,
+        price=item.price,
+        category=item.category,
+        details=item.details,
+        price_id=item.price_id,
+        costo=item.costo,
+        stock=item.stock
+    )
+
+    if form.validate_on_submit():
+        item.name = form.name.data
+        item.price = form.price.data
+        item.category = form.category.data
+        item.details = form.details.data
+        item.price_id = form.price_id.data
+        item.costo = form.costo.data
+        item.stock = form.stock.data
+
+        # Manejar la imagen
+        if form.image.data:
+            image_file = form.image.data
+            filename = secure_filename(image_file.filename)
+            file_path = f'static/uploads/{current_user.id}/{filename}'
+            os.makedirs(os.path.dirname(f'app/{file_path}'), exist_ok=True)
+            image_file.save(f'app/{file_path}')
+            item.image = f'/{file_path}'
+
+        try:
             db.session.commit()
             flash("¡Artículo actualizado exitosamente!", "success")
-            return redirect(url_for('admin.items'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al actualizar el artículo: {str(e)}", "error")
+        return redirect(url_for('admin.items'))
 
-    elif type == "order":
-        order = Order.query.get(id)
-        form = OrderEditForm(status=order.status)
-        if form.validate_on_submit():
-            order.status = form.status.data
-            db.session.commit()
-            flash("¡Pedido actualizado exitosamente!", "success")
-            return redirect(url_for('admin.dashboard'))
-
-    return render_template('admin/add.html', form=form)
+    return render_template('admin/add.html', form=form, current_image=item.image)
 
 @admin.route('/delete/<int:id>')
 @admin_only
 def delete(id):
-    to_delete = Item.query.get(id)
-    if to_delete is None:
-        flash("Artículo no encontrado.", "error")
-        return redirect(url_for('admin.items')) 
+    to_delete = Item.query.filter_by(id=id, created_by=current_user.id).first()
+    if not to_delete:
+        flash("No tienes permiso para eliminar este producto.", "error")
+        return redirect(url_for('admin.items'))
 
-    if not to_delete.ordered_items:
+    if not to_delete.orders:
         db.session.delete(to_delete)
         db.session.commit()
-        flash("¡Artículo eliminado exitosamente!", "success")
+        flash(f"¡Artículo {to_delete.name} eliminado exitosamente!", "success")
     else:
-        flash("No se pudo eliminar el elemento. Es posible que tenga artículos pedidos relacionados.", "error")
-
+        flash("No se pudo eliminar el artículo porque está relacionado con órdenes.", "error")
     return redirect(url_for('admin.items'))
 
 @admin.route('/delete_order/<int:id>')
 @admin_only
 def delete_order(id):
-    # Obtener la orden por ID
-    order = Order.query.get(id)
-    
+    # Validar que la orden pertenece a un empleado del administrador actual
+    #order = Order.query.join(User, Order.uid == User.id).filter(Order.id == id, User.created_by == current_user.id).first_or_404()
+
+    # Validar que la orden pertenece al administrador actual o a un empleado del administrador actual
+    order = Order.query.join(User, Order.uid == User.id).filter(
+        Order.id == id,
+        (User.created_by == current_user.id) | (User.id == current_user.id)  # Verificar si es del admin o de un empleado del admin
+    ).first_or_404()
+
     if not order:
         flash("No se encontró la orden.", "error")
         return redirect(url_for('admin.dashboard'))
@@ -185,8 +244,159 @@ def update_order_status_to_free():
             order.status = 'Libre'
             db.session.commit()
 
-        jsonify({"message": "Estados de pedidos actualizados a 'Libre'"}), 200
         flash("El estado del pedido cambió exitosamente a Libre.", "success")
         return redirect(url_for('admin.dashboard'))
     else:
-        jsonify({"message": "No hay pedidos para actualizar"}), 200
+        flash("No hay pedidos para actualizar", "info")
+        return redirect(url_for('admin.dashboard'))
+    
+
+@admin.route('/configuracion', methods=['GET'])
+def configuracion():
+    # Crear un alias para referenciar al administrador (creador)
+    admin_alias = aliased(User)
+
+    # Verificar si el usuario actual es el superadmin
+    if current_user.id == 1:  # Supongamos que el superadmin tiene ID 1
+        # Si es superadmin, mostrar todos los usuarios
+        users = db.session.query(
+            User,  # El usuario actual
+            admin_alias.name.label('creator_name')  # Nombre del creador
+        ).outerjoin(
+            admin_alias, User.created_by == admin_alias.id  # Relacionar creado_por con ID del administrador
+        ).all()
+    else:
+        # Si es un administrador normal, mostrar solo sus empleados
+        users = db.session.query(
+            User,
+            admin_alias.name.label('creator_name')
+        ).outerjoin(
+            admin_alias, User.created_by == admin_alias.id
+        ).filter(
+            User.created_by == current_user.id  # Filtrar solo usuarios creados por el administrador actual
+        ).all()
+
+    # Formatear datos para la plantilla
+    user_data = [
+        {
+            'id': user.id,
+            'name': user.name,
+            'email': user.email,
+            'admin': user.admin,
+            'phone': user.phone,
+            'password': user.password,
+            'email_confirmed': user.email_confirmed,
+            'created_by': user.created_by,
+            'registration_date': user.registration_date,
+            'membership_expiration': user.membership_expiration,
+            'creator_name': creator_name if creator_name else 'Sin Admin'
+        }
+        for user, creator_name in users
+    ]
+    
+    # Depuración
+    # for user in user_data:
+    #     print(f"Usuario: {user['name']}, Creador: {user['creator_name']}")
+
+    # Renderizar plantilla
+    return render_template('admin/configuracion.html', users=user_data)
+
+
+@admin.route('/update_user/<int:user_id>', methods=['POST', 'GET'])
+def update_user(user_id):
+    try:
+        # Obtener la fecha de vencimiento desde el formulario (YYYY-MM-DD)
+        membership_expiration_input = request.form.get('membership_expiration')
+
+        # Verificar que la fecha sea válida
+        if membership_expiration_input:
+            try:
+                membership_expiration_date = datetime.strptime(membership_expiration_input, '%Y-%m-%d').date()
+                membership_expiration = datetime.combine(membership_expiration_date, datetime.now().time())
+            except ValueError:
+                flash(f"Fecha de vencimiento inválida.", "error")
+        else:
+            membership_expiration = None
+
+        # Obtener los demás datos del formulario
+        user_name = request.form.get('userName')
+        user_email = request.form.get('userEmail')
+        user_phone = request.form.get('userPhone')
+        password = request.form.get('userPassword')  # Nueva contraseña (opcional). Solo actualizar contraseña si se proporciona
+        
+        # Buscar al usuario en la base de datos
+        user = User.query.get(user_id)
+        if not user:
+            flash(f"¡Usuario no encontrado.", "error")
+
+        # Verificar permisos según el tipo de usuario actual
+        if current_user.id == 1:  # Superadministrador
+            user.name = user_name
+            user.email = user_email
+            user.phone = user_phone
+            user.membership_expiration = membership_expiration
+            user.email_confirmed = request.form.get('email_confirmed', 1)
+
+            # Actualizar contraseña si se proporciona
+            if password:
+                user.password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
+
+            # Actualizar la fecha de vencimiento de los empleados del administrador
+            if user.admin:
+                User.query.filter(User.created_by == user.id).update(
+                    {'membership_expiration': membership_expiration, 'email_confirmed': 1}
+                )
+
+        else:  # Administradores normales
+            if current_user.admin and user.created_by == current_user.id:
+                user.name = user_name
+                user.email = user_email
+                user.phone = user_phone
+
+                # Actualizar contraseña si se proporciona
+                if password:
+                    user.password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
+            else:
+                flash(f"¡No tienes permisos para actualizar este usuario.", "error")
+                return jsonify({'success': False, 'message': ''}), 403
+
+        # Guardar los cambios en la base de datos
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Usuario actualizado exitosamente.'})
+    
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f'Error al actualizar usuario: {str(e)}', exc_info=True)
+        return jsonify({'success': False, 'message': 'Error interno al actualizar el usuario.', 'details': str(e)}), 500
+    
+
+@admin.route('/delete_user/<int:id>')
+@admin_only
+def delete_user(id):
+    if id == 1:
+        flash("¡El superadministrador no puede ser eliminado!", "error")
+        return redirect(url_for('admin.configuracion'))
+
+    user_to_delete = User.query.get(id)
+
+    if not user_to_delete:
+        flash("El usuario no existe.", "error")
+        return redirect(url_for('admin.configuracion'))
+
+    if current_user.id != 1 and user_to_delete.created_by != current_user.id:
+        flash("No tienes permiso para eliminar este usuario.", "error")
+        return redirect(url_for('admin.configuracion'))
+
+    # Verificar si el usuario tiene relaciones activas
+    if user_to_delete.orders:
+        flash("No se puede eliminar el usuario porque tiene órdenes asociadas.", "error")
+        return redirect(url_for('admin.configuracion'))
+
+    try:
+        db.session.delete(user_to_delete)
+        db.session.commit()
+        flash(f"¡Usuario {user_to_delete.name} eliminado exitosamente!", "success")
+    except Exception as e:
+        flash(f"Ocurrió un error al eliminar el usuario: {str(e)}", "error")
+
+    return redirect(url_for('admin.configuracion'))

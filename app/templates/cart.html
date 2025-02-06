@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-	Cart - LUDOC-shop
+	Cart - TIENDA-shop
 {% endblock %}
 <script src="https://js.stripe.com/v3/"></script>
 {% block content %}
@@ -32,7 +32,7 @@
 			<div class="img-wrapper">
 				<img src="{{ items[i].image }}" class="pic">
 			</div>
-			<b>{{ items[i].name }}</b>
+			<b><span class="">{{ items[i].name }}</span><br></b>
 			<span class="right-item">{{ items[i].price }} CUP</span><br>
 			Cantidad: 
 			<span class="right-item">{{ quantity[i] }}</span><br>
@@ -51,7 +51,7 @@
 		<form method="POST" action="{{ url_for('fulfill_order_view') }}">
 			<input type="hidden" value="{{ price_ids }}" name="price_ids">
 			Grand Total: {{ price }} CUP<br><br>
-			<button class="bg-success btn-block btn-primary checkout"> Reservar </button>
+			<button class="bg-success btn-block btn-primary checkout" onclick="return confirm('¿Estás seguro de que deseas enviar esta orden?');"> Reservar </button>
 		</form>
 	</div>
 	{% endif %}

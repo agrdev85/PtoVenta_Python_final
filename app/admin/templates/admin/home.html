@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 
 {% block title %}
-Admin Dashboard - LUDOC-shop
+Admin Dashboard - TIENDA-shop
 {% endblock %}
 
 <script src="https://js.stripe.com/v3/"></script>
@@ -69,7 +69,7 @@ Admin Dashboard - LUDOC-shop
                     </td>
                     <td class="order-total">$0</td>
                     <td>
-                        <a href="{{ url_for('admin.edit', type='order', id=order.id) }}"><i class="bi bi-pencil-square text-success"></i></a>
+                        <!-- <a href="{{ url_for('admin.edit', type='order', id=order.id) }}"><i class="bi bi-pencil-square text-success"></i></a> -->
                         <a href="{{ url_for('admin.delete_order', id=order.id) }}"
 							onclick="return confirm('¿Estás seguro de que deseas eliminar esta orden?');"><i class="bi bi-trash3 text-danger"></i></a>
                     </td>
@@ -91,7 +91,14 @@ Admin Dashboard - LUDOC-shop
                 "ordering": true,
                 "searching": true,
                 "paging": true,
-                "info": true
+                "info": true,
+                "columnDefs": [
+            {
+             "targets": 0, // Índice de la columna "Order ID"
+             "visible": false, // Oculta la columna
+             "searchable": false // También evita que sea buscable
+            }
+           ]
             });
 
             // Función para calcular el total reservado

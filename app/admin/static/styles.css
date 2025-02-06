@@ -43,15 +43,15 @@ th {
 	margin-bottom: 20px;
 }
 
-.navbar-nav .nav-item.active .nav-link {
+/* .navbar-nav .nav-item.active .nav-link {
 	background-color: #ff5722;
 	/* Cambia este color al que prefieras */
-	color: white !important;
-	border-radius: 5px;
+	/* color: white !important;
+	border-radius: 5px; */
 	/* Opcional: Añade un borde redondeado */
-	font-weight: bold;
+	/* font-weight: bold; */
 	/* Opcional: Hace el texto en negrita */
-}
+/* } */
 
 
 .switch.ios,

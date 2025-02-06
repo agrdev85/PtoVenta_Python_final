@@ -1,6 +1,6 @@
 import os, stripe, json
-from datetime import datetime, timedelta
-from flask import Flask, session, render_template, redirect, url_for, flash, request, abort
+from datetime import datetime, timedelta, timezone
+from flask import Flask, session, render_template, redirect, url_for, flash, request, abort, Response
 from flask_bootstrap import Bootstrap
 from .forms import LoginForm, RegisterForm
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,10 +10,9 @@ from itsdangerous import URLSafeTimedSerializer
 from .funcs import mail, send_confirmation_email, fulfill_order
 from dotenv import load_dotenv
 from .admin.routes import admin
-from flask_apscheduler import APScheduler
+from flask_apscheduler import APScheduler 
 from markupsafe import Markup
 from flask import current_app, json
-
 
 load_dotenv()
 app = Flask(__name__)
@@ -26,7 +25,8 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "123456")
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "postgresql://ludoc:cEJ8lAsHr0hqizybyin6cfjkmDeEN4wm@dpg-crklc1btq21c73dbt9h0-a.oregon-postgres.render.com/ludoc_shop")
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///local_db.sqlite3'
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "postgresql://ludoc:cEJ8lAsHr0hqizybyin6cfjkmDeEN4wm@dpg-crklc1btq21c73dbt9h0-a.oregon-postgres.render.com/ludoc_shop")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_USERNAME'] = os.environ.get("EMAIL", "agr@gmail.com")
 app.config['MAIL_PASSWORD'] = os.environ.get("PASSWORD", "root")
@@ -35,11 +35,49 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_PORT'] = 587
 stripe.api_key = os.environ.get("STRIPE_PRIVATE", "123456")
 
+# Configuración de la clase para APScheduler
+class Config:
+    SCHEDULER_API_ENABLED = True
+
+# Función para desactivar usuarios con membresías vencidas
+def deactivate_expired_users():
+    now = datetime.now(timezone.utc)
+    try:
+        # Excluir al superadmin con id=1
+        expired_users = User.query.filter(
+            User.id != 1,  # Excluir al superadmin
+            User.membership_expiration < now,
+            User.email_confirmed == 1
+        ).all()
+
+        for user in expired_users:
+            user.email_confirmed = 0
+            app.logger.info(f"Usuario {user.id} desactivado por membresía vencida.")
+
+        db.session.commit()
+    except Exception as e:
+        app.logger.error(f"Error al desactivar usuarios con membresías vencidas: {e}")
+
+# Instancia de APScheduler
+scheduler = APScheduler()
+
 Bootstrap(app)
 db.init_app(app)
 mail.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+# Inicializar el programador
+scheduler.init_app(app)
+scheduler.start()
+
+# Agregar la tarea al programador
+scheduler.add_job(
+        id='deactivate_expired_users',
+        func=deactivate_expired_users,
+        trigger='interval',
+        hours=24
+    )
 
 with app.app_context():
 	db.create_all()
@@ -47,74 +85,132 @@ with app.app_context():
 @app.context_processor
 def inject_now():
 	""" sends datetime to templates as 'now' """
-	return {'now': datetime.utcnow()}
+	return {'now': datetime.now(timezone.utc)}
 
 @login_manager.user_loader
 def load_user(user_id):
 	return User.query.get(user_id)
 
+@app.after_request
+def add_no_cache_headers(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "-1"
+    return response
+
 @app.route("/")
+#@login_required  # Asegura que solo los usuarios autenticados puedan acceder
 def home():
-	items = Item.query.all()
-	return render_template("home.html", items=items)
+    if current_user.is_authenticated:  # Verifica si el usuario está autenticado
+        # Filtrar productos según si el usuario es administrador o empleado
+        if current_user.admin:  # Si es administrador
+            items = Item.query.filter(Item.created_by == current_user.id).all()
+        else:  # Si es empleado
+            items = Item.query.filter(Item.created_by == current_user.created_by).all()
+        return render_template("home.html", items=items)
+    else:
+        return redirect(url_for('login'))  # Redirige a la página de inicio de sesión
+
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
     
+    deactivate_expired_users()  # Verificar membresías expiradas
+
     form = LoginForm()
-    
     if form.validate_on_submit():
         email = form.email.data
         user = User.query.filter_by(email=email).first()
-        
+
         if user is None:
-            flash(f'¡El usuario con correo electrónico {email} no existe!<br> <a href={url_for("register")}>¡Regístrese ahora!</a>', 'error')
+            flash(f'El usuario con correo electrónico {email} no existe. <a href={url_for("register_admin")}>Regístrese aquí.</a>', 'error')
+            return redirect(url_for('login'))
+
+        # Verificar si el administrador está activo (para empleados)
+        if not user.admin and user.creator and not user.creator.email_confirmed:
+            flash('Su administrador está inactivo. No puede iniciar sesión.', 'error')
             return redirect(url_for('login'))
         
-        elif check_password_hash(user.password, form.password.data):
-            # Establece la ID del usuario en la sesión
+        # Verificar estado de membresía
+        if not user.check_membership_status():
+            flash('Su membresía ha vencido. Contacte al Soporte para renovarla.', 'error')
+            return redirect(url_for('login'))
+
+        # Verificar si el correo electrónico está confirmado
+        if not user.email_confirmed:
+            flash('Debe confirmar su correo electrónico antes de iniciar sesión. Contacte a Soporte', 'error')
+            return redirect(url_for('login'))
+
+
+        # Verificar la contraseña
+        if check_password_hash(user.password, form.password.data):
             session['client_reference_id'] = user.id
             login_user(user)
             return redirect(url_for('home'))
-        
-        else:
-            flash("Correo electrónico y contraseña incorrectos!!", "error")
-            return redirect(url_for('login'))
-    
+
+        flash("Correo electrónico o contraseña incorrectos.", "error")
     return render_template("login.html", form=form)
 
-@app.route("/whasapp", methods=['POST', 'GET'])
-def whasapp():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
-       
-    return render_template("whasapp.html")
+@app.route('/whatsapp', methods=['GET', 'POST'])
+def register_admin():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
+            return redirect(url_for('whatsapp'))
 
-@app.route("/register", methods=['POST', 'GET'])
+        new_user = User(
+            name=form.name.data,
+            email=form.email.data,
+            password=generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8),
+            admin=1,
+            email_confirmed=1,  # Activo automáticamente con período de prueba
+            phone=form.phone.data,
+            membership_expiration=datetime.now(timezone.utc) + timedelta(days=7)  # 7 días de prueba
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        flash('¡Registro exitoso! Puede iniciar sesión ahora.', 'success')
+        return redirect(url_for('login'))
+    return render_template("whatsapp.html", form=form)
+
+
+@app.route("/register", methods=['POST', 'GET'])  #Registrar Empleados
 def register():
-	#if current_user.is_authenticated:
-	#	return redirect(url_for('home'))
-	form = RegisterForm()
-	if form.validate_on_submit():
-		user = User.query.filter_by(email=form.email.data).first()
-		if user:
-			flash(f"El usuario con correo electrónico {user.email} ya existe!!<br> <a href={url_for('login')}>¡Inicia sesión ahora!</a>", "error")
-			return redirect(url_for('register'))
-		new_user = User(name=form.name.data,
-						email=form.email.data,
-						password=generate_password_hash(
-									form.password.data,
-									method='pbkdf2:sha256',
-									salt_length=8),
-						phone=form.phone.data)
-		db.session.add(new_user)
-		db.session.commit()
-		# send_confirmation_email(new_user.email)
-		flash('¡Gracias por registrarte! Puede iniciar sesión ahora.', 'success')
-		return redirect(url_for('login'))
-	return render_template("register.html", form=form)
+    if current_user.admin != 1:
+        flash('No tienes permisos para crear empleados.', 'error')
+        return redirect(url_for('admin.dashboard'))
+    numEmpleados = User.query.filter_by(created_by=current_user.id).count()  
+    if numEmpleados >= 3:
+        flash(f"Solo puedes tener {numEmpleados} empleados.", 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    form = RegisterForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
+            return redirect(url_for('register'))
+
+        new_user = User(
+            name=form.name.data,
+            email=form.email.data,
+            password=generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8),
+            admin=0,  # Usuario normal
+            email_confirmed=1,  # Activo automáticamente
+            created_by=current_user.id,
+            phone=form.phone.data,
+            membership_expiration=current_user.membership_expiration  # Vence con el administrador
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Empleado creado exitosamente.', 'success')
+        return redirect(url_for('admin.dashboard'))
+    return render_template("register.html", form=form)
+
 
 @app.route('/confirm/<token>')
 def confirm_email(token):
@@ -177,6 +273,7 @@ def cart():
 			}
 		price_ids.append(price_id_dict)
 		price += cart.item.price*cart.quantity
+		redirect(url_for('cart'))
 	return render_template('cart.html', items=items, price=price, price_ids=price_ids, quantity=quantity)
 
 @app.route('/orders')
@@ -203,7 +300,14 @@ def item(id):
 def search():
     query = request.args.get('query', '')
     search = f"%{query}%"
-    items = Item.query.filter(Item.name.like(search)).all()
+
+    # Verifica si el usuario actual es un Administrador o un Empleado
+    if current_user.admin == 1:  # Si es un Administrador
+        # El administrador ve los productos que ha creado él mismo
+        items = Item.query.filter(Item.created_by == current_user.id).filter(Item.name.like(search)).all()
+    else:
+        # Si es un Empleado, ve los productos creados por el Administrador
+        items = Item.query.filter(Item.created_by == current_user.created_by).filter(Item.name.like(search)).all()
 
     # Renderiza solo el fragmento HTML con los resultados
     return render_template('search_results.html', items=items)

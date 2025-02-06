@@ -49,18 +49,19 @@ def fulfill_order():
         db.session.add(order)
         
         # Procesar el carrito de compras del usuario
-        for cart in current_user.cart:
+        for cart_item in current_user.cart:
+            item = cart_item.item  # Obtener el artículo asociado al carrito
             # Verificar si hay stock disponible
-            if cart.item.stock < cart.quantity:
-                flash(f"No hay suficiente stock para {cart.item.name}. Solo queda {cart.item.stock}.", "error")
+            if item.stock < cart_item.quantity:
+                flash(f"No hay suficiente stock para {item.name}. Solo queda {item.stock} artículo(s).", "error")
                 # No continuamos procesando este artículo en caso de falta de stock
                 continue
 
             # Reducir el stock disponible
-            cart.item.stock -= cart.quantity
+            item.stock -= cart_item.quantity
 
             # Crear el artículo ordenado
-            ordered_item = Ordered_item(oid=order.id, itemid=cart.item.id, quantity=cart.quantity)
+            ordered_item = Ordered_item(oid=order.id, itemid=item.id, quantity=cart_item.quantity)
             db.session.add(ordered_item)
 
         # Eliminar todos los artículos del carrito
@@ -73,12 +74,13 @@ def fulfill_order():
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        flash("A ocurido un error mientras reservaba el producto. Prueve nuevamente más tarde por favor.", "error")
+        # Imprimir el error de SQLAlchemy para depuración
+        print(f"Error al reservar el producto: {str(e)}")
+        flash("Ha ocurrido un error mientras reservaba el producto. Pruebe nuevamente más tarde por favor.", "error")
 
     # Redirigir a la página de pedidos
     orders = Order.query.filter_by(uid=uid).all()
-    return render_template('orders.html', orders=orders)
-
+    return redirect(url_for('orders'))
 
 def admin_only(func):
 	""" Decorator for giving access to authorized users only """

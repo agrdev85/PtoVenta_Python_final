@@ -1,0 +1,211 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Admin Dashboard - TIENDA-shop
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+
+    <!-- Mostrar mensajes de flash -->
+    {% with msgs = get_flashed_messages(with_categories=True) %}
+    {% for c, msg in msgs %}
+    <div class="alert {{ 'alert-danger' if c == 'error' else 'alert-success' }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {% endfor %}
+    {% endwith %}
+
+    <!-- Tabla de usuarios -->
+    <div class="table-responsive">
+        <table id="userTable" class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Membresía</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-success' if user.admin else 'badge-danger' }}">
+                            {% if current_user.id == 1 and not user.admin %}
+                                Empleado + {{ user['creator_name'] if user['creator_name'] else 'Sin Admin' }}
+                            {% else %}
+                                {{ 'Admin' if user.admin else 'Empleado' }}
+                            {% endif %}
+                        </span>                              
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.phone }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-success' if user.email_confirmed else 'badge-danger' }}">
+                            {{ 'Enable' if user.email_confirmed else 'Disable' }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if user.membership_expiration %}
+                            {{ user.membership_expiration.strftime('%Y-%m-%d') }}
+                        {% else %}
+                            Sin Membresía
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="#" class="edit-user"
+                                data-id="{{ user.id }}"
+                                data-name="{{ user.name }}"
+                                data-email="{{ user.email }}"
+                                data-phone="{{ user.phone }}"
+                                data-membership-expiration="{{ user.membership_expiration }}">
+                        <i class="bi bi-pencil-square text-success"></i>   
+                        </a>
+                        <a href="{{ url_for('admin.delete_user', id=user.id) }}" onclick="return confirm('¿Estás seguro de que deseas eliminar al usuario {{ user.name }}?');"><i class="bi bi-trash3 text-danger"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de gestión de usuarios -->
+<div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="userForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userModalLabel">Editar Usuario</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="userId" name="user_id">
+                    <div class="form-group">
+                        <label for="userName">Nombre</label>
+                        <input type="text" class="form-control" id="userName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">Email</label>
+                        <input type="email" class="form-control" id="userEmail" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPhone">Teléfono</label>
+                        <input type="text" class="form-control" id="userPhone" name="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPassword">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="userPassword" name="password" placeholder="Ingrese nueva contraseña">
+                    </div>
+                    {% if current_user.id == 1 %}
+                    <div class="form-group">
+                        <label for="membershipExpiration">Fecha de Vencimiento de Membresía</label>
+                        <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration" required>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        const table = $('#userTable').DataTable({
+            "lengthMenu": [5, 10, 25, 50],
+            "ordering": true,
+            "searching": true,
+            "paging": true,
+            "info": true,
+            "columnDefs": [
+                {
+                    "targets": 0, // Índice de la columna "Order ID"
+                    "visible": false, // Oculta la columna
+                    "searchable": false // También evita que sea buscable
+                }
+            ]
+        });
+    
+        // Mostrar datos del usuario en el modal
+        $(document).on('click', '.edit-user', function () {
+            const userId = $(this).data('id');
+            const userName = $(this).data('name');
+            const userEmail = $(this).data('email');
+            const userPhone = $(this).data('phone'); 
+            const userPassword = $(this).data('password'); 
+            const membershipExpiration = $(this).data('membership-expiration');
+    
+            $('#userId').val(userId);
+            $('#userName').val(userName);
+            $('#userEmail').val(userEmail);
+            $('#userPhone').val(userPhone);
+            $('#userPassword').val(userPassword);
+    
+            // Rellenar la fecha de vencimiento de la membresía en el campo de fecha
+            if (membershipExpiration) {
+                // Asegurarse de que la fecha está en el formato correcto YYYY-MM-DD
+                const formattedDate = new Date(membershipExpiration).toISOString().split('T')[0];
+                $('#membershipExpiration').val(formattedDate);
+            } else {
+                $('#membershipExpiration').val('');
+            }
+    
+            $('#userModal').modal('show');
+        });
+    
+    
+        // Manejar el envío del formulario
+        $('#userForm').on('submit', function (e) {
+            e.preventDefault();
+    
+            const userId = $('#userId').val();
+            const membershipExpiration = $('#membershipExpiration').val(); // Obtener la fecha seleccionada
+    
+            const formData = {
+                userId: userId,
+                membership_expiration: membershipExpiration,  // Enviar la fecha seleccionada
+                userName: $('#userName').val(),
+                userEmail: $('#userEmail').val(),
+                userPhone: $('#userPhone').val(),
+                userPassword: $('#userPassword').val(),
+            };
+    
+            $.ajax({
+                url: `/admin/update_user/${userId}`,
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        $('#userModal').modal('hide');
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert('Hubo un error al actualizar el usuario.');
+                }
+            });
+        });
+    });
+    
+    </script>
+
+{% endblock %}
