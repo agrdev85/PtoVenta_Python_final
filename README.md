@@ -24,7 +24,7 @@ Para ejecutar el proyecto localmente, sigue estos pasos:
 1. Clona el repositorio:
 
     ```bash
-    git clone https://github.com/tu_usuario/agr_studio.git
+    git clone https://github.com/agrdev85/PtoVenta_Python_final.git
     ```
 
 2. Navega al directorio del proyecto:
