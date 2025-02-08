@@ -213,6 +213,26 @@ form .btn {
 	color: gray;
 }
 
+.quantity-container {
+    display: flex;
+    align-items: center;
+}
+
+button {
+    padding: 5px 10px;
+    font-size: 18px;
+    margin: 0 10px;
+    cursor: pointer;
+}
+
+input[type="number"] {
+    width: 80px;
+    text-align: center;
+}
+
+
+
+
 .telegram-float {
     position: fixed;
     bottom: 20px;  /* Espaciado desde el borde inferior */

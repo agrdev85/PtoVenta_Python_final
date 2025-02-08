@@ -37,12 +37,20 @@
 
         {% if item.stock > 0 %}
         <form action="{{ url_for('add_to_cart', id=item.id) }}" method="POST">
-            <div>
+            <div class="quantity-container">
                 Cantidad:
+                <!-- Botón de restar (rojo) -->
+                <button type="button" id="decrease" class="btn btn-danger">-</button>
+
+                <!-- Input de cantidad -->
                 <input type="number" value="1" name="quantity" id="quantity" min="1" max="{{ item.stock }}"
                 oninput="if(this.value > {{ item.stock }}) this.value = {{ item.stock }};" required>
-                <strong style="color: red;"><span class="sub-total ml-4" id="subtotal">Subtotal: {{ item.price }} CUP</span></strong>
+
+                <!-- Botón de sumar (verde) -->
+                <button type="button" id="increase" class="btn btn-success">+</button>
+
             </div>
+            <strong style="color: red;"><span class="sub-total ml-4" id="subtotal">Subtotal: {{ item.price }} CUP</span></strong>
             <br>
             <input type="submit" class="add-to-cart" value="Añadir al Carro" name="add">
         </form>
@@ -58,6 +66,29 @@
             const subtotalSpan = document.getElementById('subtotal');
             let price = parseFloat({{ item.price }}); // Asegura que price es un número
 
+            const increaseButton = document.getElementById('increase');
+            const decreaseButton = document.getElementById('decrease');
+
+            // Asegúrate de que la cantidad no exceda el stock disponible
+            increaseButton.addEventListener('click', function() {
+                let currentQuantity = parseInt(quantityInput.value);
+                if (currentQuantity < {{ item.stock }}) {
+                    quantityInput.value = currentQuantity + 1;
+                    let subtotal = quantityInput.value * price;
+                    subtotalSpan.textContent = `Subtotal: ${subtotal} CUP`;
+                }
+            });
+
+            decreaseButton.addEventListener('click', function() {
+                let currentQuantity = parseInt(quantityInput.value);
+                if (currentQuantity > 1) {
+                    quantityInput.value = currentQuantity - 1;
+                    let subtotal = quantityInput.value * price;
+                    subtotalSpan.textContent = `Subtotal: ${subtotal} CUP`;
+                }
+            });
+
+            // Actualizar el subtotal cuando se cambie la cantidad manualmente
             quantityInput.addEventListener('input', function() {
                 let quantity = parseInt(quantityInput.value); // Siempre usa un número
                 let subtotal = quantity * price;
