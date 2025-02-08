@@ -49,13 +49,13 @@
       </a>
     </li>
     {% else %}
-    <li class="nav-item {% if request.endpoint == 'register' %}active{% endif %}">
+   <!--  <li class="nav-item {% if request.endpoint == 'register' %}active{% endif %}">
       <a class="nav-link" href="{{ url_for('register') }}" data-toggle="tooltip" title="Añadir Empleado">
         <div class="icon-circle">
           <i class="bi bi-person-plus"></i>
         </div>
       </a>
-    </li>
+    </li> -->
     <li class="nav-item {% if request.endpoint == 'orders' %}active{% endif %}">
       <a class="nav-link" href="{{ url_for('orders') }}" data-toggle="tooltip" title="Órdenes">
         <div class="icon-circle">

@@ -21,7 +21,7 @@ Admin items - TIENDA-shop
 	<div class="flash-error">No hay Items.</div>
 	<div class="d-flex justify-content-end mb-3">
 	  <div class="add-new btn-success btn">
-		 <a href="{{ url_for('admin.add') }}" class="text-light">New Item
+		 <a href="{{ url_for('admin.add') }}" data-toggle="tooltip" title="Añadir Producto" class="text-light">
             <i class="bi bi-database-fill-add"></i>
 		 </a>
 	  </div>
@@ -29,7 +29,7 @@ Admin items - TIENDA-shop
 	{% else %}
 	<div class="d-flex justify-content-end mb-3">
 	   <div class="add-new btn-success btn">
-		  <a href="{{ url_for('admin.add') }}" class="text-light">New Item
+		<a href="{{ url_for('admin.add') }}" data-toggle="tooltip" title="Añadir Producto" class="text-light">
 			<i class="bi bi-database-fill-add"></i>
 		  </a>
 	   </div>  

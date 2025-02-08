@@ -5,7 +5,7 @@ Admin Dashboard - TIENDA-shop
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid my-4">
+<div class="container-fluid">
 
     <!-- Mostrar mensajes de flash -->
     {% with msgs = get_flashed_messages(with_categories=True) %}
@@ -18,6 +18,14 @@ Admin Dashboard - TIENDA-shop
     </div>
     {% endfor %}
     {% endwith %}
+    
+    <div class="d-flex justify-content-end mb-3">
+        <div class="add-new btn-success btn">
+           <a href="{{ url_for('register') }}" data-toggle="tooltip" title="Añadir Empleado" class="text-light">
+              <i class="bi bi-person-plus"></i>
+           </a>
+        </div>
+      </div>
 
     <!-- Tabla de usuarios -->
     <div class="table-responsive">
