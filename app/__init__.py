@@ -99,17 +99,27 @@ def add_no_cache_headers(response):
     return response
 
 @app.route("/")
-#@login_required  # Asegura que solo los usuarios autenticados puedan acceder
 def home():
-    if current_user.is_authenticated:  # Verifica si el usuario está autenticado
-        # Filtrar productos según si el usuario es administrador o empleado
-        if current_user.admin:  # Si es administrador
-            items = Item.query.filter(Item.created_by == current_user.id).all()
-        else:  # Si es empleado
-            items = Item.query.filter(Item.created_by == current_user.created_by).all()
-        return render_template("home.html", items=items)
+    # Verifica si el usuario está autenticado
+    if current_user.is_authenticated:
+        # Si el usuario está autenticado, revisamos si tiene membresía activa
+        if not current_user.check_membership_status():
+            # Si no tiene una membresía activa, redirige a la página de membresía
+            return redirect(url_for('membership_plans'))  # Página de planes de membresía
+        else:
+            # Si tiene membresía, mostrar los productos
+            if current_user.admin:
+                items = Item.query.filter(Item.created_by == current_user.id).all()
+            else:
+                items = Item.query.filter(Item.created_by == current_user.created_by).all()
+            return render_template("home.html", items=items)
     else:
-        return redirect(url_for('login'))  # Redirige a la página de inicio de sesión
+        # Si no está autenticado, lo redirigimos a la página de login
+        return redirect(url_for('login'))
+    
+@app.route("/membership_plans")
+def membership_plans():
+    return render_template("membership_plans.html")
 
 
 @app.route("/login", methods=['POST', 'GET'])

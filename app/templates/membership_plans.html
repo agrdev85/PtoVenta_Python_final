@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Planes de Membresía | TIENDA-Shop
+{% endblock %}
+
+{% block content %}
+    <h1 class="text-center mb-4">Elige tu Plan de Membresía</h1>
+    
+    <!-- Cards de Membresía -->
+    <div class="row">
+        <!-- Plan Prueba -->
+        <div class="col-md-4">
+            <div class="card membership-card">
+                <h3 class="card-title text-center">Plan de Prueba</h3>
+                <p class="card-text">Prueba nuestra plataforma durante 7 días con acceso limitado a 3 empleados.</p>
+                <p class="text-center"><strong>$0 / 7 días</strong></p>
+                <ul>
+                    <li>Hasta 3 empleados</li>
+                    <li>Hasta 5 productos</li>
+                    <li>Acceso limitado a funciones básicas</li>
+                </ul>
+                <a href="{{ url_for('register_admin') }}" class="btn btn-primary w-100">Comienza tu Prueba</a>
+            </div>
+        </div>
+
+        <!-- Plan Básico -->
+        <div class="col-md-4">
+            <div class="card membership-card">
+                <h3 class="card-title text-center">Plan Básico</h3>
+                <p class="card-text">Accede a productos limitados, ideal para clientes ocasionales.</p>
+                <p class="text-center"><strong>$5 / mes</strong></p>
+                <ul>
+                    <li>Hasta 3 empleados</li>
+                    <li>Hasta 12 productos</li>
+                    <li>Soporte básico</li>
+                    <li>Acceso a todas las funciones</li>
+                </ul>
+                <a href="{{ url_for('register_admin') }}" class="btn btn-primary w-100">Suscribirse</a>
+            </div>
+        </div>
+
+        <!-- Plan Profesional -->
+        <div class="col-md-4">
+            <div class="card membership-card">
+                <h3 class="card-title text-center">Plan Profesional</h3>
+                <p class="card-text">Mejora tu experiencia con soporte prioritario y más productos.</p>
+                <p class="text-center"><strong>$10 / mes</strong></p>
+                <ul>
+                    <li>Hasta 5 empleados</li>
+                    <li>Hasta 25 productos</li>
+                    <li>Soporte prioritario</li>
+                    <li>Descuento del 15%</li>
+                </ul>
+                <a href="{{ url_for('register_admin') }}" class="btn btn-primary w-100">Suscribirse</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acordeón de Preguntas Frecuentes -->
+    <div class="faq-card mt-5">
+        <h3 class="text-center">Preguntas Frecuentes</h3>
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="faqOne">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseOne" aria-expanded="true" aria-controls="faqCollapseOne">
+                        ¿Cómo me registro y qué pasa después de los 7 días de prueba?
+                    </button>
+                </h2>
+                <div id="faqCollapseOne" class="accordion-collapse collapse show" aria-labelledby="faqOne" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Después de registrarte, tendrás 7 días de prueba. Luego, si decides continuar, puedes realizar un pago y activar tu membresía. Si no pagas después de los 7 días, tu cuenta será desactivada.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="faqTwo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseTwo" aria-expanded="false" aria-controls="faqCollapseTwo">
+                        ¿Cómo puedo renovar mi membresía?
+                    </button>
+                </h2>
+                <div id="faqCollapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Puedes renovar tu membresía contactando a Soporte. Una vez que realices el pago, tu cuenta se reactivará y se asignará el nuevo período de membresía.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="faqThree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseThree" aria-expanded="false" aria-controls="faqCollapseThree">
+                        ¿Qué sucede si mi cuenta se desactiva por falta de pago?
+                    </button>
+                </h2>
+                <div id="faqCollapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Si tu cuenta se desactiva, tendrás que ponerte en contacto con el soporte para reactivarla. El costo de la reactivación será determinado por el tipo de membresía que elijas.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="faqFour">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFour" aria-expanded="false" aria-controls="faqCollapseFour">
+                        ¿Puedo cambiar mi plan de membresía?
+                    </button>
+                </h2>
+                <div id="faqCollapseFour" class="accordion-collapse collapse" aria-labelledby="faqFour" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Sí, puedes cambiar tu plan de membresía en cualquier momento. Si deseas cambiar tu plan, por favor contacta a nuestro soporte.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
