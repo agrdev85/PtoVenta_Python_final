@@ -237,21 +237,21 @@ input[type="number"] {
     position: fixed;
     bottom: 20px;  /* Espaciado desde el borde inferior */
     right: 20px;   /* Espaciado desde el borde derecho */
-    background-color: #0088cc;
+    background-color: #5e9ef1;
     color: #fff;
     text-align: center;
     border-radius: 50px;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0);
     padding: 10px 15px;
     font-size: 18px;
-    z-index: 9999; /* Siempre por encima de otros elementos */
+    z-index: 9999; /* Asegura que esté siempre encima de otros elementos */
     text-decoration: none;
     transition: opacity 0.3s ease, transform 0.3s ease;
-    opacity: 1;  /* Aseguramos que esté visible por defecto */
+    opacity: 1;  /* Asegura que esté visible por defecto */
 }
 
 .telegram-float:hover {
-    background-color: #006699;
+    background-color: #0066996c;
     text-decoration: none;
 }
 
@@ -295,37 +295,6 @@ input[type="number"] {
 	}
 }
 
-/* Estilos para el botón flotante */
-.telegram-float {
-    position: fixed;
-    bottom: 20px;  /* Espaciado desde el borde inferior */
-    right: 20px;   /* Espaciado desde el borde derecho */
-    background-color: #0088cc;
-    color: #fff;
-    text-align: center;
-    border-radius: 50px;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-    padding: 10px 15px;
-    font-size: 18px;
-    z-index: 9999; /* Asegura que el botón esté sobre otros elementos */
-    text-decoration: none;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    opacity: 1;  /* Asegura que el botón sea visible por defecto */
-}
-
-.telegram-float:hover {
-    background-color: #0066991f;
-    text-decoration: none;
-}
-
-.telegram-float i {
-    margin-right: 5px;
-}
-
-.telegram-hidden {
-    opacity: 0;
-    pointer-events: none; /* Deshabilita la interacción con el botón cuando está oculto */
-}
 
 /*  Espaciado para compensar el navbar fijo  */
 body {
@@ -400,3 +369,36 @@ body {
    .navbar-nav {
     gap: 3px; /* Espaciado entre los elementos del navbar */
    } 
+
+   /* Estilos Responsivos para el Acordeón */
+   
+	   .accordion-button {
+		   text-align: left;
+		   font-size: 1rem;
+	   }
+   
+	   /* Asegurarse que no haya desplazamiento horizontal */
+	   .card {
+		   width: 100%;
+		   overflow: hidden;
+	   }
+   
+	   .card-body {
+		   padding: 15px;
+	   }
+   
+	   /* Asegurando que los botones y el contenido no se desborden */
+	   .accordion-button {
+		   white-space: normal; /* Para evitar texto que se desborde */
+	   }
+   
+	   /* Ajustes para pantallas pequeñas */
+	   @media (max-width: 767px) {
+		   .accordion-button {
+			   font-size: 0.9rem; /* Ajustar el tamaño del texto en pantallas pequeñas */
+		   }
+   
+		   .accordion-body {
+			   padding: 10px; /* Reducir el padding en pantallas pequeñas */
+		   }
+	   }

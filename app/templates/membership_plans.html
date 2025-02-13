@@ -1,40 +1,38 @@
 {% extends "base.html" %}
 
 {% block title %}
-Planes de Membresía | TIENDA-Shop
+    Planes de Membresía | TIENDA-Shop
 {% endblock %}
 <script src="https://js.stripe.com/v3/"></script>
 {% block content %}
-{% with msgs = get_flashed_messages(with_categories=True) %}
-{% for c, msg in msgs %}
-{% if c == 'error' %}
-<div class="flash-error">
-    {% else %}
-    <div class="success">
-        {% endif %}
-        {{ msg | safe }}</div><br>
-    {% endfor %}
+    {% with msgs = get_flashed_messages(with_categories=True) %}
+        {% for c, msg in msgs %}
+            {% if c == 'error' %}
+                <div class="flash-error">
+            {% else %}
+                <div class="success">
+            {% endif %}
+            {{ msg | safe }}</div><br>
+        {% endfor %}
     {% endwith %}
 
     <h1 class="text-center mb-4">Elige tu Plan de Membresía</h1>
 
     <!-- Cards de Membresía -->
-    <!-- Contenedor Responsivo -->
- <div class="container"> 
-    <div class="row justify-content-center gap-4">
+    <div class="container">
+        <div class="row justify-content-center gap-4">
             <!-- Plan Prueba -->
             <div class="col-lg-4 col-md-6 col-sm-12">
                 <div class="card membership-card shadow-lg p-3 bg-warning rounded"
                     style="background: linear-gradient(135deg, #ece6de, #a9cbf1);">
                     <div class="card-body text-center">
                         <h3 class="card-title fw-bold">Plan de Prueba</h3>
-                        <p class="card-text">Prueba nuestra plataforma durante 7 días con acceso limitado a 3 empleados.
-                        </p>
+                        <p class="card-text">Prueba nuestra plataforma durante 7 días con acceso limitado a 3 empleados.</p>
                         <p class="fw-bold text-primary">$0 / 7 días</p>
                         <ul class="list-unstyled">
                             <li>✅ Hasta 3 empleados</li>
                             <li>✅ Hasta 5 productos</li>
-                            <li>⚠️ Funciones básicas</li>
+                            <li>⚠️ Acceso limitado a funciones básicas</li>
                         </ul>
                         <a href="{{ url_for('register_admin') }}" class="btn btn-primary w-100">Comienza tu Prueba</a>
                     </div>
@@ -71,7 +69,6 @@ Planes de Membresía | TIENDA-Shop
                         <ul class="list-unstyled">
                             <li>✅ Hasta 5 empleados</li>
                             <li>✅ Hasta 25 productos</li>
-                            <li>✅ Acceso a todas las funciones</li>
                             <li>🚀 Soporte prioritario</li>
                             <li>💰 Descuento del 15%</li>
                         </ul>
@@ -82,49 +79,49 @@ Planes de Membresía | TIENDA-Shop
         </div>
     </div>
 
-    <!-- Acordeón de Preguntas Frecuentes -->
-    <div class="container mt-5">
-        <h2 class="text-center mb-4">Preguntas Frecuentes</h2>
+<!-- Acordeón de Preguntas Frecuentes -->
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Preguntas Frecuentes</h2>
 
-        <div class="accordion" id="accordionExample">
-            {% set preguntas_respuestas = [
-            ('¿Cómo me registro y qué pasa después de los 7 días de prueba?', '✅ Después de registrarte, tendrás 7 días
-            de prueba. Luego, si decides continuar, puedes realizar un pago y activar tu membresía. Si no pagas después
-            de los 7 días, tu cuenta será desactivada.'),
-            ('¿Cómo puedo renovar mi membresía?', '✅ Puedes renovar tu membresía contactando a Soporte. Una vez que
-            realices el pago, tu cuenta se reactivará y se asignará el nuevo período de membresía.'),
-            ('¿Qué sucede si mi cuenta se desactiva por falta de pago?', '✅ Si tu cuenta se desactiva, tendrás que
-            ponerte en contacto con el soporte para reactivarla. El costo de la reactivación será determinado por el
-            tipo de membresía que elijas.'),
-            ('¿Puedo cambiar mi plan de membresía?', '✅ Sí, puedes cambiar tu plan de membresía en cualquier momento. Si
-            deseas cambiar tu plan, por favor contacta a nuestro soporte.'),
-            ('¿Puedo personalizar mi plan con beneficios extras?', '✅ Si deseas un plan con beneficios que no cubren los
-            planes existentes, puedes ponerte en contacto con soporte para diseñar un plan a medida.')
-            ] %}
+    <div class="accordion" id="accordionExample">
+        {% set preguntas_respuestas = [
+        ('¿Cómo me registro y qué pasa después de los 7 días de prueba?', '✅ Después de registrarte, tendrás 7 días de
+        prueba. Luego, si decides continuar, puedes realizar un pago y activar tu membresía. Si no pagas después de los
+        7 días, tu cuenta será desactivada.'),
+        ('¿Cómo puedo renovar mi membresía?', '✅ Puedes renovar tu membresía contactando a Soporte. Una vez que realices
+        el pago, tu cuenta se reactivará y se asignará el nuevo período de membresía.'),
+        ('¿Qué sucede si mi cuenta se desactiva por falta de pago?', '✅ Si tu cuenta se desactiva, tendrás que ponerte
+        en contacto con el soporte para reactivarla. El costo de la reactivación será determinado por el tipo de
+        membresía que elijas.'),
+        ('¿Puedo cambiar mi plan de membresía?', '✅ Sí, puedes cambiar tu plan de membresía en cualquier momento. Si
+        deseas cambiar tu plan, por favor contacta a nuestro soporte.'),
+        ('¿Puedo personalizar mi plan con beneficios extras?', '✅ Si deseas un plan con beneficios que no cubren los
+        planes existentes, puedes ponerte en contacto con soporte para diseñar un plan a medida.')
+        ] %}
 
-            {% for pregunta, respuesta in preguntas_respuestas %}
-            {% set index = loop.index0 %}
-            <div class="card">
-                <div class="card-header" id="heading{{ index }}">
-                    <h5 class="mb-0 col-lg-4 col-md-6 col-sm-12">
-                        <button class="btn btn-link {% if index != 0 %}collapsed{% endif %}" type="button"
-                            data-toggle="collapse" data-target="#collapse{{ index }}"
-                            aria-expanded="{% if index == 0 %}true{% else %}false{% endif %}"
-                            aria-controls="collapse{{ index }}">
-                            {{ pregunta }}
-                        </button>
-                    </h5>
-                </div>
+        {% for pregunta, respuesta in preguntas_respuestas %}
+        {% set index = loop.index0 %}
+        <div class="card mb-3">
+            <div class="card-header" id="heading{{ index }}" data-toggle="tooltip" title="{{ pregunta }}">
+                <h5 class="mb-0">
+                    <button class="btn btn-link {% if index != 0 %}collapsed{% endif %}" type="button"
+                        data-toggle="collapse" data-target="#collapse{{ index }}"
+                        aria-expanded="{% if index == 0 %}true{% else %}false{% endif %}"
+                        aria-controls="collapse{{ index }}">
+                        {{ pregunta }}
+                    </button>
+                </h5>
+            </div>
 
-                <div id="collapse{{ index }}" class="collapse {% if index == 0 %}show{% endif %}"
-                    aria-labelledby="heading{{ index }}" data-parent="#accordionExample">
-                    <div class="card-body">
-                        {{ respuesta }}
-                    </div>
+            <div id="collapse{{ index }}" class="collapse {% if index == 0 %}show{% endif %}"
+                aria-labelledby="heading{{ index }}" data-parent="#accordionExample">
+                <div class="card-body">
+                    {{ respuesta }}
                 </div>
             </div>
-            {% endfor %}
-
         </div>
-</div>       
-   {% endblock %}
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
