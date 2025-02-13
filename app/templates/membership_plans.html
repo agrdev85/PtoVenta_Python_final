@@ -20,6 +20,7 @@ Planes de Membresía | TIENDA-Shop
 
     <!-- Cards de Membresía -->
     <!-- Contenedor Responsivo -->
+ <div class="container"> 
     <div class="row justify-content-center gap-4">
             <!-- Plan Prueba -->
             <div class="col-lg-4 col-md-6 col-sm-12">
@@ -33,7 +34,7 @@ Planes de Membresía | TIENDA-Shop
                         <ul class="list-unstyled">
                             <li>✅ Hasta 3 empleados</li>
                             <li>✅ Hasta 5 productos</li>
-                            <li>⚠️ Acceso limitado a funciones básicas</li>
+                            <li>⚠️ Funciones básicas</li>
                         </ul>
                         <a href="{{ url_for('register_admin') }}" class="btn btn-primary w-100">Comienza tu Prueba</a>
                     </div>
@@ -70,6 +71,7 @@ Planes de Membresía | TIENDA-Shop
                         <ul class="list-unstyled">
                             <li>✅ Hasta 5 empleados</li>
                             <li>✅ Hasta 25 productos</li>
+                            <li>✅ Acceso a todas las funciones</li>
                             <li>🚀 Soporte prioritario</li>
                             <li>💰 Descuento del 15%</li>
                         </ul>
@@ -104,7 +106,7 @@ Planes de Membresía | TIENDA-Shop
             {% set index = loop.index0 %}
             <div class="card">
                 <div class="card-header" id="heading{{ index }}">
-                    <h5 class="mb-0">
+                    <h5 class="mb-0 col-lg-4 col-md-6 col-sm-12">
                         <button class="btn btn-link {% if index != 0 %}collapsed{% endif %}" type="button"
                             data-toggle="collapse" data-target="#collapse{{ index }}"
                             aria-expanded="{% if index == 0 %}true{% else %}false{% endif %}"
@@ -124,4 +126,5 @@ Planes de Membresía | TIENDA-Shop
             {% endfor %}
 
         </div>
+</div>       
    {% endblock %}
