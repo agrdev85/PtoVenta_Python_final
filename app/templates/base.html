@@ -61,12 +61,19 @@
           </div>
         </a>
       </li>
-      <li class="nav-item mr-3 {% if request.endpoint == 'cart' %}active{% endif %}">
+      <li class="nav-item mr-2 {% if request.endpoint == 'cart' %}active{% endif %}">
       <a class="nav-link" href="{{ url_for('cart') }}" data-toggle="tooltip" title="Carrito">
          <div class="icon-circle">
           <i class="fa fa-shopping-cart"></i>
         </div>
       </a>
+      </li>
+      <li class="nav-item mr-2">
+        <a class="nav-link" href="{{ url_for('membership_plans') }}" data-toggle="tooltip" title="FAQ">
+          <div class="icon-circle">
+            <i class="bi bi-question-circle-fill"></i>
+          </div>
+        </a>
       </li>
       <div class="dropdown ml-auto">
         <a class="btn btn-outline-primary dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

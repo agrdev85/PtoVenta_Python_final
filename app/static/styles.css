@@ -329,8 +329,50 @@ input[type="number"] {
 
 /*  Espaciado para compensar el navbar fijo  */
 body {
-    padding-top: 70px; /* Ajusta según el tamaño del navbar */
+    padding-top: 80px; /* Ajusta según el tamaño del navbar */
   }
+
+  .navbar {
+    position: absolute;
+    top: 0;
+    z-index: 1050; /* Asegura que esté por encima de otros elementos */
+}
+
+/* Efectos en cards de Membresias */
+.membership-card {
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.membership-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.membership-card .btn {
+    transition: all 0.3s ease;
+}
+
+.membership-card .btn:hover {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+}
+
+/* Animación fade-in */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.membership-card {
+    animation: fadeIn 0.8s ease-in-out;
+}
 
   .icon-circle {
     width: 30px;

@@ -115,7 +115,7 @@ def home():
             return render_template("home.html", items=items)
     else:
         # Si no está autenticado, lo redirigimos a la página de login
-        return redirect(url_for('login'))
+        return redirect(url_for('membership_plans'))
     
 @app.route("/membership_plans")
 def membership_plans():
