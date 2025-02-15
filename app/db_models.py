@@ -5,6 +5,13 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+# Nueva tabla de Membresía
+class Membership(db.Model):
+    __tablename__ = 'memberships'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+    max_employees = db.Column(db.Integer, nullable=False)
+    max_items = db.Column(db.Integer, nullable=False)
 
 class User(UserMixin, db.Model):
     __tablename__ = "users"
@@ -18,6 +25,8 @@ class User(UserMixin, db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # ID del creador
     registration_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))  # Fecha de registro
     membership_expiration = db.Column(db.DateTime, nullable=True)  # Fecha de vencimiento de membresía
+    membership_id = db.Column(db.Integer, db.ForeignKey('memberships.id'), nullable=True)  # Relación con membresía
+    membership = db.relationship('Membership', backref='users')
     employees = db.relationship('User', backref='creator', remote_side=[id], lazy='select')  # Relación empleados
     cart = db.relationship('Cart', backref='buyer')
     orders = db.relationship("Order", backref='customer', foreign_keys="[Order.uid]")  # Relación con clave foránea especificada

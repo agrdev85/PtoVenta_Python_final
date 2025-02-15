@@ -170,7 +170,7 @@ def register_admin():
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
-            return redirect(url_for('whatsapp'))
+            return redirect(url_for('register_admin'))
 
         new_user = User(
             name=form.name.data,
@@ -193,9 +193,12 @@ def register():
     if current_user.admin != 1:
         flash('No tienes permisos para crear empleados.', 'error')
         return redirect(url_for('admin.dashboard'))
-    numEmpleados = User.query.filter_by(created_by=current_user.id).count()  
-    if numEmpleados >= 3:
-        flash(f"Solo puedes tener {numEmpleados} empleados.", 'error')
+
+    membership = current_user.membership
+    numEmpleados = User.query.filter_by(created_by=current_user.id).count()
+
+    if numEmpleados >= membership.max_employees:
+        flash(f"Solo puedes tener {membership.max_employees} empleados.", 'error')
         return redirect(url_for('admin.dashboard'))
 
     form = RegisterForm()

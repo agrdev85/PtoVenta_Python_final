@@ -87,6 +87,13 @@ def create_user_folder(user_id):
 @login_required
 @admin_only
 def add():
+    membership = current_user.membership
+    num_items = Item.query.filter_by(created_by=current_user.id).count()
+
+    if num_items >= membership.max_items:
+        flash(f"Has alcanzado el límite de {membership.max_items} productos para tu membresía.", 'error')
+        return redirect(url_for('admin.dashboard'))
+
     form = AddItemForm()
     if form.validate_on_submit():
         # Obtener el archivo de la imagen
