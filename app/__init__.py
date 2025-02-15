@@ -179,6 +179,7 @@ def register_admin():
             admin=1,
             email_confirmed=1,  # Activo automáticamente con período de prueba
             phone=form.phone.data,
+            membership_id=form.membership.data,  # Guardar el ID de la membresía seleccionada
             membership_expiration=datetime.now(timezone.utc) + timedelta(days=7)  # 7 días de prueba
         )
         db.session.add(new_user)
