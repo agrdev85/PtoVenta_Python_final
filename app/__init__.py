@@ -189,12 +189,13 @@ def register_admin():
     return render_template("whatsapp.html", form=form)
 
 
-@app.route("/register", methods=['POST', 'GET'])  #Registrar Empleados
+@app.route("/register", methods=['POST', 'GET'])  # Registrar Empleados
 def register():
     if current_user.admin != 1:
         flash('No tienes permisos para crear empleados.', 'error')
         return redirect(url_for('admin.dashboard'))
 
+    # Obtén el tipo de membresía del administrador (creador)
     membership = current_user.membership
     numEmpleados = User.query.filter_by(created_by=current_user.id).count()
 
@@ -203,12 +204,22 @@ def register():
         return redirect(url_for('admin.dashboard'))
 
     form = RegisterForm()
+
+    # Asignar el valor de la membresía del administrador al campo 'membership'
+    form.membership.data = membership.name  # Mostrar el nombre de la membresía
+    form.membership.render_kw = {'disabled': True}  # Deshabilitar el campo
+
+    # Asignar el 'id' de la membresía del administrador al campo oculto 'membership_hidden'
+    form.membership_hidden.data = membership.id
+
     if form.validate_on_submit():
+        # Verificar si el correo ya existe
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
             return redirect(url_for('register'))
 
+        # Crear el nuevo usuario con la membresía del administrador (usando el 'id' de la membresía)
         new_user = User(
             name=form.name.data,
             email=form.email.data,
@@ -217,14 +228,18 @@ def register():
             email_confirmed=1,  # Activo automáticamente
             created_by=current_user.id,
             phone=form.phone.data,
+            membership_id=form.membership_hidden.data,  # Guardamos el 'id' de la membresía
             membership_expiration=current_user.membership_expiration  # Vence con el administrador
         )
+
+        # Guardar el nuevo usuario en la base de datos
         db.session.add(new_user)
         db.session.commit()
+
         flash('Empleado creado exitosamente.', 'success')
         return redirect(url_for('admin.dashboard'))
-    return render_template("register.html", form=form)
 
+    return render_template("register.html", form=form)
 
 @app.route('/confirm/<token>')
 def confirm_email(token):

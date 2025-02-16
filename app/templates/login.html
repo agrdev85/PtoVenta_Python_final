@@ -5,19 +5,29 @@
 {% endblock %}
 
 {% block content %}
-	<h3 class="text-center">Iniciar Sesión en TIENDA-Shop </h3>
-	<hr>
-	{% with msgs =  get_flashed_messages(with_categories=True) %}
-		{% for c, msg in msgs %}
-			{% if c == 'error' %}
-				<div class="flash-error">
-			{% else %}
-				<div class="success">
-			{% endif %}
-				{{ msg | safe }}</div><br>
-		{% endfor %}
-	{% endwith %}
-	<div class="forms">
-		{{ wtf.quick_form(form) }}
+    <div class="container">
+		<div class="row justify-content-center">
+			<div class="col-md-6">
+				<div class="card mt-5">
+					<div class="card-header bg-primary text-white text-center">
+						<h3>Iniciar Sesión en TIENDA-Shop</h3>
+					</div>
+					{% with msgs = get_flashed_messages(with_categories=True) %}
+					{% for c, msg in msgs %}
+					{% if c == 'error' %}
+					<div class="flash-error">
+						{% else %}
+						<div class="success">
+							{% endif %}
+							{{ msg | safe }}</div><br>
+						{% endfor %}
+						{% endwith %}
+					<div class="card-body">
+						{{ wtf.quick_form(form) }}
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
+
 {% endblock %}

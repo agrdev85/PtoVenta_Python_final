@@ -122,6 +122,7 @@ Admin Dashboard - TIENDA-shop
                         <label for="userPassword">Nueva Contraseña</label>
                         <input type="password" class="form-control" id="userPassword" name="password" placeholder="Ingrese nueva contraseña">
                     </div>
+                    {% if current_user.id == 1 %}
                     <div class="form-group">
                         <label for="membershipExpiration">Fecha de Vencimiento de Membresía</label>
                         <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration" required>
@@ -136,6 +137,7 @@ Admin Dashboard - TIENDA-shop
                             {% endfor %}
                         </select>
                     </div>
+                    {% endif %}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
