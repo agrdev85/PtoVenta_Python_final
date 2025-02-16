@@ -77,16 +77,12 @@ Admin Dashboard - TIENDA-shop
                         {% else %}
                             Sin Membresía
                         {% endif %}
-                    </td>                
+                    </td>               
                     <td>
-                        <a href="#" class="edit-user"
-                                data-id="{{ user.id }}"
-                                data-name="{{ user.name }}"
-                                data-email="{{ user.email }}"
-                                data-phone="{{ user.phone }}"
-                                data-membership-expiration="{{ user.membership_expiration }}"
-                                data-membership-id="{{ memberships.membership_id }}">
-                        <i class="bi bi-pencil-square text-success"></i>   
+                        <a href="#" class="edit-user" data-id="{{ user.id }}" data-name="{{ user.name }}" data-email="{{ user.email }}"
+                            data-phone="{{ user.phone }}" data-membership-expiration="{{ user.membership_expiration }}"
+                            data-membership-id="{{ user.membership_id }}"> <!-- Asegúrate de que esto esté correctamente asignado -->
+                            <i class="bi bi-pencil-square text-success"></i>
                         </a>
                         <a href="{{ url_for('admin.delete_user', id=user.id) }}" onclick="return confirm('¿Estás seguro de que deseas eliminar al usuario {{ user.name }}?');"><i class="bi bi-trash3 text-danger"></i></a>
                     </td>
@@ -173,8 +169,8 @@ Admin Dashboard - TIENDA-shop
     const userName = $(this).data('name');
     const userEmail = $(this).data('email');
     const userPhone = $(this).data('phone'); 
-    const membershipExpiration = $(this).data('membership-expiration');
-    const membershipId = $(this).data('membership-id');  // Obtener el ID de la membresía
+    const membershipExpiration = $(this).data('membershipExpiration');
+    const membershipId = $(this).data('membershipId');  // Usar camelCase aquí
 
     $('#userId').val(userId);
     $('#userName').val(userName);
@@ -191,12 +187,12 @@ Admin Dashboard - TIENDA-shop
     }
 
     $('#userModal').modal('show');
-});
+  });
     
     
         // Manejar el envío del formulario
         $('#userForm').on('submit', function (e) {
-        e.preventDefault();
+    e.preventDefault();
 
     const userId = $('#userId').val();
     const membershipId = $('#membership').val();  // Obtener el ID de la membresía seleccionada
@@ -228,8 +224,8 @@ Admin Dashboard - TIENDA-shop
         error: function () {
             alert('Hubo un error al actualizar el usuario.');
         }
-      });
-    });
+     });
+  });
 
     });
     

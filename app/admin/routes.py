@@ -5,7 +5,7 @@ from ..db_models import Membership, Order, Ordered_item, Item, db, User
 from ..admin.forms import AddItemForm, OrderEditForm
 from ..funcs import admin_only
 import logging
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased, joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime, timedelta, timezone
@@ -274,7 +274,7 @@ def configuracion():
             admin_alias.name.label('creator_name')  # Nombre del creador
         ).outerjoin(
             admin_alias, User.created_by == admin_alias.id  # Relacionar creado_por con ID del administrador
-        ).all()
+        ).options(joinedload(User.membership)).all()  # Cargar la relación membership
     else:
         # Si es un administrador normal, mostrar solo sus empleados
         users = db.session.query(
@@ -300,6 +300,7 @@ def configuracion():
             'registration_date': user.registration_date,
             'membership_expiration': user.membership_expiration,
             'membership_id': user.membership_id,  # Para que se seleccione la membresía en el modal
+            'membership': user.membership,  # Incluir la membresía en los datos
             'creator_name': creator_name if creator_name else 'Sin Admin'
         }
         for user, creator_name in users
