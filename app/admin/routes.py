@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, render_template, url_for, flash, request
 from flask_login import current_user, login_required
 from werkzeug.utils import redirect, secure_filename
-from ..db_models import Order, Ordered_item, Item, db, User
+from ..db_models import Membership, Order, Ordered_item, Item, db, User
 from ..admin.forms import AddItemForm, OrderEditForm
 from ..funcs import admin_only
 import logging
@@ -263,6 +263,9 @@ def configuracion():
     # Crear un alias para referenciar al administrador (creador)
     admin_alias = aliased(User)
 
+    # Consultar todas las membresías disponibles
+    memberships = Membership.query.all()
+
     # Verificar si el usuario actual es el superadmin
     if current_user.id == 1:  # Supongamos que el superadmin tiene ID 1
         # Si es superadmin, mostrar todos los usuarios
@@ -296,22 +299,22 @@ def configuracion():
             'created_by': user.created_by,
             'registration_date': user.registration_date,
             'membership_expiration': user.membership_expiration,
+            'membership_id': user.membership_id,  # Para que se seleccione la membresía en el modal
             'creator_name': creator_name if creator_name else 'Sin Admin'
         }
         for user, creator_name in users
     ]
     
-    # Depuración
-    # for user in user_data:
-    #     print(f"Usuario: {user['name']}, Creador: {user['creator_name']}")
-
     # Renderizar plantilla
-    return render_template('admin/configuracion.html', users=user_data)
+    return render_template('admin/configuracion.html', users=user_data, memberships=memberships, user=current_user)
 
 
-@admin.route('/update_user/<int:user_id>', methods=['POST', 'GET'])
+@admin.route('/update_user/<int:user_id>', methods=['POST'])
 def update_user(user_id):
     try:
+        # Obtener el ID de la membresía desde el formulario
+        membership_id = request.form.get('membership_id')
+
         # Obtener la fecha de vencimiento desde el formulario (YYYY-MM-DD)
         membership_expiration_input = request.form.get('membership_expiration')
 
@@ -329,12 +332,12 @@ def update_user(user_id):
         user_name = request.form.get('userName')
         user_email = request.form.get('userEmail')
         user_phone = request.form.get('userPhone')
-        password = request.form.get('userPassword')  # Nueva contraseña (opcional). Solo actualizar contraseña si se proporciona
-        
+        password = request.form.get('userPassword')  # Nueva contraseña (opcional)
+
         # Buscar al usuario en la base de datos
         user = User.query.get(user_id)
         if not user:
-            flash(f"¡Usuario no encontrado.", "error")
+            return jsonify({'success': False, 'message': 'Usuario no encontrado.'}), 404
 
         # Verificar permisos según el tipo de usuario actual
         if current_user.id == 1:  # Superadministrador
@@ -342,6 +345,7 @@ def update_user(user_id):
             user.email = user_email
             user.phone = user_phone
             user.membership_expiration = membership_expiration
+            user.membership_id = membership_id  # Asignar la nueva membresía
             user.email_confirmed = request.form.get('email_confirmed', 1)
 
             # Actualizar contraseña si se proporciona
@@ -351,7 +355,7 @@ def update_user(user_id):
             # Actualizar la fecha de vencimiento de los empleados del administrador
             if user.admin:
                 User.query.filter(User.created_by == user.id).update(
-                    {'membership_expiration': membership_expiration, 'email_confirmed': 1}
+                    {'membership_id': membership_id, 'membership_expiration': membership_expiration, 'email_confirmed': 1}
                 )
 
         else:  # Administradores normales
@@ -364,8 +368,7 @@ def update_user(user_id):
                 if password:
                     user.password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
             else:
-                flash(f"¡No tienes permisos para actualizar este usuario.", "error")
-                return jsonify({'success': False, 'message': ''}), 403
+                return jsonify({'success': False, 'message': 'No tienes permisos para actualizar este usuario.'}), 403
 
         # Guardar los cambios en la base de datos
         db.session.commit()

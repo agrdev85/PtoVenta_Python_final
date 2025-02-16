@@ -39,6 +39,7 @@ Admin Dashboard - TIENDA-shop
                     <th>Teléfono</th>
                     <th>Estado</th>
                     <th>Membresía</th>
+                    <th>Tipo</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -71,12 +72,20 @@ Admin Dashboard - TIENDA-shop
                         {% endif %}
                     </td>
                     <td>
+                        {% if user.membership %}
+                            {{ user.membership.name }}  <!-- Mostrar el nombre de la membresía -->
+                        {% else %}
+                            Sin Membresía
+                        {% endif %}
+                    </td>                
+                    <td>
                         <a href="#" class="edit-user"
                                 data-id="{{ user.id }}"
                                 data-name="{{ user.name }}"
                                 data-email="{{ user.email }}"
                                 data-phone="{{ user.phone }}"
-                                data-membership-expiration="{{ user.membership_expiration }}">
+                                data-membership-expiration="{{ user.membership_expiration }}"
+                                data-membership-id="{{ memberships.membership_id }}">
                         <i class="bi bi-pencil-square text-success"></i>   
                         </a>
                         <a href="{{ url_for('admin.delete_user', id=user.id) }}" onclick="return confirm('¿Estás seguro de que deseas eliminar al usuario {{ user.name }}?');"><i class="bi bi-trash3 text-danger"></i></a>
@@ -117,12 +126,20 @@ Admin Dashboard - TIENDA-shop
                         <label for="userPassword">Nueva Contraseña</label>
                         <input type="password" class="form-control" id="userPassword" name="password" placeholder="Ingrese nueva contraseña">
                     </div>
-                    {% if current_user.id == 1 %}
                     <div class="form-group">
                         <label for="membershipExpiration">Fecha de Vencimiento de Membresía</label>
                         <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration" required>
                     </div>
-                    {% endif %}
+                    <div class="form-group">
+                        <label for="membership">Tipo de Membresía</label>
+                        <select class="form-control" name="membership_id" id="membership">
+                            {% for membership in memberships %}
+                                <option value="{{ membership.id }}" {% if membership.id == user.membership_id %} selected {% endif %}>
+                                    {{ membership.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
@@ -152,66 +169,68 @@ Admin Dashboard - TIENDA-shop
     
         // Mostrar datos del usuario en el modal
         $(document).on('click', '.edit-user', function () {
-            const userId = $(this).data('id');
-            const userName = $(this).data('name');
-            const userEmail = $(this).data('email');
-            const userPhone = $(this).data('phone'); 
-            const userPassword = $(this).data('password'); 
-            const membershipExpiration = $(this).data('membership-expiration');
-    
-            $('#userId').val(userId);
-            $('#userName').val(userName);
-            $('#userEmail').val(userEmail);
-            $('#userPhone').val(userPhone);
-            $('#userPassword').val(userPassword);
-    
-            // Rellenar la fecha de vencimiento de la membresía en el campo de fecha
-            if (membershipExpiration) {
-                // Asegurarse de que la fecha está en el formato correcto YYYY-MM-DD
-                const formattedDate = new Date(membershipExpiration).toISOString().split('T')[0];
-                $('#membershipExpiration').val(formattedDate);
-            } else {
-                $('#membershipExpiration').val('');
-            }
-    
-            $('#userModal').modal('show');
-        });
+    const userId = $(this).data('id');
+    const userName = $(this).data('name');
+    const userEmail = $(this).data('email');
+    const userPhone = $(this).data('phone'); 
+    const membershipExpiration = $(this).data('membership-expiration');
+    const membershipId = $(this).data('membership-id');  // Obtener el ID de la membresía
+
+    $('#userId').val(userId);
+    $('#userName').val(userName);
+    $('#userEmail').val(userEmail);
+    $('#userPhone').val(userPhone);
+    $('#membership').val(membershipId);  // Asignar el valor correcto al select de membresía
+
+    // Rellenar la fecha de vencimiento de la membresía en el campo de fecha
+    if (membershipExpiration) {
+        const formattedDate = new Date(membershipExpiration).toISOString().split('T')[0];
+        $('#membershipExpiration').val(formattedDate);
+    } else {
+        $('#membershipExpiration').val('');
+    }
+
+    $('#userModal').modal('show');
+});
     
     
         // Manejar el envío del formulario
         $('#userForm').on('submit', function (e) {
-            e.preventDefault();
-    
-            const userId = $('#userId').val();
-            const membershipExpiration = $('#membershipExpiration').val(); // Obtener la fecha seleccionada
-    
-            const formData = {
-                userId: userId,
-                membership_expiration: membershipExpiration,  // Enviar la fecha seleccionada
-                userName: $('#userName').val(),
-                userEmail: $('#userEmail').val(),
-                userPhone: $('#userPhone').val(),
-                userPassword: $('#userPassword').val(),
-            };
-    
-            $.ajax({
-                url: `/admin/update_user/${userId}`,
-                type: 'POST',
-                data: formData,
-                success: function (response) {
-                    if (response.success) {
-                        alert(response.message);
-                        $('#userModal').modal('hide');
-                        location.reload();
-                    } else {
-                        alert(response.message);
-                    }
-                },
-                error: function () {
-                    alert('Hubo un error al actualizar el usuario.');
-                }
-            });
-        });
+        e.preventDefault();
+
+    const userId = $('#userId').val();
+    const membershipId = $('#membership').val();  // Obtener el ID de la membresía seleccionada
+    const membershipExpiration = $('#membershipExpiration').val(); // Obtener la fecha seleccionada
+
+    const formData = {
+        userId: userId,
+        membership_id: membershipId, // Incluir el ID de la membresía
+        membership_expiration: membershipExpiration,  // Enviar la fecha seleccionada
+        userName: $('#userName').val(),
+        userEmail: $('#userEmail').val(),
+        userPhone: $('#userPhone').val(),
+        userPassword: $('#userPassword').val(),
+    };
+
+    $.ajax({
+        url: `/admin/update_user/${userId}`,
+        type: 'POST',
+        data: formData,
+        success: function (response) {
+            if (response.success) {
+                alert(response.message);
+                $('#userModal').modal('hide');
+                location.reload();
+            } else {
+                alert(response.message);
+            }
+        },
+        error: function () {
+            alert('Hubo un error al actualizar el usuario.');
+        }
+      });
+    });
+
     });
     
     </script>
