@@ -38,7 +38,8 @@
                             {{ form.membership(class="form-control", disabled=True) }}  <!-- Campo deshabilitado -->
                         </div>
                     
-                        {{ form.membership_hidden }}  <!-- Campo oculto para el ID de la membresía -->
+                        <input type="hidden" name="membership_hidden" value="{{ form.membership.data }}">
+                        <!-- Campo oculto para el ID de la membresía -->
                     
                         <div class="form-group">
                             {{ form.email.label }}

@@ -209,22 +209,48 @@ def register():
 
     form = RegisterForm()
 
-    # Asignar el valor de la membresía del administrador al campo 'membership'
-    form.membership.choices = [(membership.id, membership.name)]  # Mostrar el nombre de la membresía
-    form.membership.render_kw = {'disabled': True}  # Deshabilitar el campo
+    # Verificar las opciones de membresía
+    print("Opciones de membresía disponibles:")
+    for m in Membership.query.all():
+        print(f"ID: {m.id}, Name: {m.name}")
 
-    # Asignar el 'id' de la membresía del administrador al campo oculto 'membership_hidden'
-    form.membership_hidden.data = membership.id
+    # Asignar el valor de la membresía al formulario
+    form.membership.choices = [(m.id, m.name) for m in Membership.query.all()]
+    # Depuración
+    print(f"Opciones disponibles en form.membership.choices: {form.membership.choices}")
+
+    # Establecer el valor predeterminado de la membresía
+    form.membership.data = int(membership.id)  # Asegurarte de que es un valor entero
+    print(f"Valor de form.membership.data antes de la validación: {form.membership.data}")
+
+    if form.membership.data not in [x[0] for x in form.membership.choices]:
+       print(f"Error: El valor {form.membership.data} no está en las opciones")
+
+    form.membership_hidden.data = form.membership.data 
+    # Verificar si el valor asignado a 'membership.data' existe en las opciones
+    print(f"ID asignado a membership.data: {form.membership.data}")
+    # Depuración para ver qué valor se está recibiendo en la solicitud POST
+    print(f"Valor de membership en el formulario: {form.membership.data}")
+    print(f"Valor de membership_hidden en el formulario: {form.membership_hidden.data}")
+    print(f"Tipo de form.membership.data: {type(form.membership.data)}")
+
+
 
     if form.validate_on_submit():
+        # Depuración
+        print(f"Valor de membership_hidden recibido: {form.membership_hidden.data}")
+        print(f"Formulario validado correctamente")
         print(f"Nombre: {form.name.data}")
         print(f"Correo: {form.email.data}")
-        print(f"Membresía: {form.membership_hidden.data}")
+        print(f"Membresía seleccionada: {form.membership.data}")
+        print(f"Errores del formulario: {form.errors}")
+
         # Verificar si el correo ya existe
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
             return redirect(url_for('register'))
+        
         # Depuración
         print("Formulario validado correctamente")
 
@@ -249,6 +275,7 @@ def register():
         return redirect(url_for('admin.dashboard'))
 
     return render_template("register.html", form=form)
+
 
 @app.route('/confirm/<token>')
 def confirm_email(token):
