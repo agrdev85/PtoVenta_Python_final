@@ -1,5 +1,7 @@
 import os, stripe, json
 from datetime import datetime, timedelta, timezone
+from flask_wtf import FlaskForm
+from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, session, render_template, redirect, url_for, flash, request, abort, Response
 from flask_bootstrap import Bootstrap
 from .forms import LoginForm, RegisterForm
@@ -33,6 +35,7 @@ app.config['MAIL_PASSWORD'] = os.environ.get("PASSWORD", "root")
 app.config['MAIL_SERVER'] = "smtp.googlemail.com"
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_PORT'] = 587
+app.config['WTF_CSRF_ENABLED'] = True  # Asegúrate de que esté habilitado
 stripe.api_key = os.environ.get("STRIPE_PRIVATE", "123456")
 
 # Configuración de la clase para APScheduler
@@ -235,6 +238,9 @@ def register():
     print(f"Tipo de form.membership.data: {type(form.membership.data)}")
 
 
+    print("Formulario recibido, validando...")
+    print(f"Errores del formulario: {form.errors}")
+    print(f"Tipo de solicitud: {request.method}")
 
     if form.validate_on_submit():
         # Depuración

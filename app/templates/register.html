@@ -21,7 +21,7 @@
                 {% endwith %}
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('register') }}">
-                        {{ form.hidden_tag() }}  <!-- Incluye el campo oculto CSRF token -->
+                        {{ form.hidden_tag() }}  <!-- Esto incluye el campo oculto CSRF token -->
                     
                         <div class="form-group">
                             {{ form.name.label }}
@@ -39,7 +39,6 @@
                         </div>
                     
                         <input type="hidden" name="membership_hidden" value="{{ form.membership.data }}">
-                        <!-- Campo oculto para el ID de la membresía -->
                     
                         <div class="form-group">
                             {{ form.email.label }}

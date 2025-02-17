@@ -11,11 +11,7 @@ class LoginForm(FlaskForm):
 class RegisterForm(FlaskForm):
     name = StringField("Nombre:", validators=[DataRequired(), Length(max=50)])
     phone = StringField("Movil:", validators=[DataRequired(), Length(max=30)])
-    membership = SelectField(
-        "Membresía:",
-        choices=[],  # Las opciones se llenan dinámicamente en la vista
-        validators=[DataRequired()]
-    )
+    membership = SelectField('Membresía', coerce=int, validators=[DataRequired()])
     membership_hidden = HiddenField("Membresía (oculta)")  # Campo oculto para almacenar membership
     email = StringField("Email:", validators=[DataRequired(), Email()])
     password = PasswordField("Contraseña:", validators=[DataRequired(), Regexp("^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$", message='La contraseña debe tener 8 caracteres y debe contener letras, números y símbolos.')])
