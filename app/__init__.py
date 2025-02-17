@@ -169,29 +169,45 @@ def login():
 @app.route('/whatsapp', methods=['GET', 'POST'])
 def register_admin():
     form = RegisterForm()
+    
     # Llenar las opciones del campo membership con (id, nombre)
     memberships = Membership.query.all()
     form.membership.choices = [(m.id, m.name) for m in memberships]  # (id, nombre)
+    
     if form.validate_on_submit():
+        # Verificar si el correo ya existe
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
             return redirect(url_for('register_admin'))
         
+        # Determinar el valor de email_confirmed basado en la membresía seleccionada
+        if form.membership.data == 1:  # Si la membresía seleccionada es "Prueba"
+            email_confirmed = 1
+            membership_expiration=datetime.now(timezone.utc) + timedelta(days=7)  # 7 días de prueba
+        else:  # Para otras membresías, email_confirmed será 0
+            email_confirmed = 0
+            membership_expiration = datetime.now(timezone.utc)  # No tiene expiración para otras membresías (o poner None si no aplica)
+        
+        # Crear el nuevo usuario
         new_user = User(
             name=form.name.data,
             email=form.email.data,
             password=generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8),
-            admin=1,
-            email_confirmed=1,  # Activo automáticamente con período de prueba
+            admin=1,  # Marca como administrador
+            email_confirmed=email_confirmed,  # Establecer según la membresía
             phone=form.phone.data,
             membership_id=form.membership.data,  # Guardar el ID de la membresía seleccionada
-            membership_expiration=datetime.now(timezone.utc) + timedelta(days=7)  # 7 días de prueba
+            membership_expiration=membership_expiration  # Asignar la fecha de expiración (si aplica)
         )
+        
+        # Guardar el nuevo usuario en la base de datos
         db.session.add(new_user)
         db.session.commit()
+        
         flash('¡Registro exitoso! Puede iniciar sesión ahora.', 'success')
         return redirect(url_for('login'))
+    
     return render_template("whatsapp.html", form=form)
 
 
