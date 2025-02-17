@@ -5,7 +5,7 @@ from flask_bootstrap import Bootstrap
 from .forms import LoginForm, RegisterForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
-from .db_models import db, User, Item, Order, Ordered_item
+from .db_models import Membership, db, User, Item, Order, Ordered_item
 from itsdangerous import URLSafeTimedSerializer
 from .funcs import mail, send_confirmation_email, fulfill_order
 from dotenv import load_dotenv
@@ -166,12 +166,15 @@ def login():
 @app.route('/whatsapp', methods=['GET', 'POST'])
 def register_admin():
     form = RegisterForm()
+    # Llenar las opciones del campo membership con (id, nombre)
+    memberships = Membership.query.all()
+    form.membership.choices = [(m.id, m.name) for m in memberships]  # (id, nombre)
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
             return redirect(url_for('register_admin'))
-
+        
         new_user = User(
             name=form.name.data,
             email=form.email.data,
@@ -191,6 +194,7 @@ def register_admin():
 
 @app.route("/register", methods=['POST', 'GET'])  # Registrar Empleados
 def register():
+    # Verifica si el usuario está autenticado antes de acceder al atributo 'admin'
     if current_user.admin != 1:
         flash('No tienes permisos para crear empleados.', 'error')
         return redirect(url_for('admin.dashboard'))
@@ -206,18 +210,23 @@ def register():
     form = RegisterForm()
 
     # Asignar el valor de la membresía del administrador al campo 'membership'
-    form.membership.data = membership.name  # Mostrar el nombre de la membresía
+    form.membership.choices = [(membership.id, membership.name)]  # Mostrar el nombre de la membresía
     form.membership.render_kw = {'disabled': True}  # Deshabilitar el campo
 
     # Asignar el 'id' de la membresía del administrador al campo oculto 'membership_hidden'
     form.membership_hidden.data = membership.id
 
     if form.validate_on_submit():
+        print(f"Nombre: {form.name.data}")
+        print(f"Correo: {form.email.data}")
+        print(f"Membresía: {form.membership_hidden.data}")
         # Verificar si el correo ya existe
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
             return redirect(url_for('register'))
+        # Depuración
+        print("Formulario validado correctamente")
 
         # Crear el nuevo usuario con la membresía del administrador (usando el 'id' de la membresía)
         new_user = User(

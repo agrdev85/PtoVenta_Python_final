@@ -14,54 +14,51 @@
                 </div>
                 {% with msgs = get_flashed_messages(with_categories=True) %}
                 {% for c, msg in msgs %}
-                {% if c == 'error' %}
-                <div class="flash-error">
-                    {% else %}
-                    <div class="success">
-                        {% endif %}
-                        {{ msg | safe }}</div><br>
-                    {% endfor %}
-                    {% endwith %}
+                <div class="alert alert-{{ 'danger' if c == 'error' else 'success' }}">
+                    {{ msg | safe }}
+                </div>
+                {% endfor %}
+                {% endwith %}
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('register') }}">
                         {{ form.hidden_tag() }}  <!-- Incluye el campo oculto CSRF token -->
-
+                    
                         <div class="form-group">
                             {{ form.name.label }}
                             {{ form.name(class="form-control") }}
                         </div>
-
+                    
                         <div class="form-group">
                             {{ form.phone.label }}
                             {{ form.phone(class="form-control") }}
                         </div>
-
+                    
                         <div class="form-group">
                             {{ form.membership.label }}
-                            {{ form.membership(class="form-control", disabled=True) }}  <!-- Deshabilitar el campo -->
+                            {{ form.membership(class="form-control", disabled=True) }}  <!-- Campo deshabilitado -->
                         </div>
-
+                    
                         {{ form.membership_hidden }}  <!-- Campo oculto para el ID de la membresía -->
-
+                    
                         <div class="form-group">
                             {{ form.email.label }}
                             {{ form.email(class="form-control") }}
                         </div>
-
+                    
                         <div class="form-group">
                             {{ form.password.label }}
                             {{ form.password(class="form-control") }}
                         </div>
-
+                    
                         <div class="form-group">
                             {{ form.confirm.label }}
                             {{ form.confirm(class="form-control") }}
                         </div>
-
+                    
                         <div class="form-group text-center">
                             {{ form.submit(class="btn btn-primary") }}
                         </div>
-                    </form>
+                    </form>                    
                 </div>
             </div>
         </div>
