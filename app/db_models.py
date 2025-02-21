@@ -64,7 +64,7 @@ class Item(db.Model):
     category = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(250), nullable=False)
     details = db.Column(db.String(250), nullable=False)
-    price_id = db.Column(db.String(250), nullable=False)
+    stock_min = db.Column(db.Integer, default=0)
     costo = db.Column(db.Integer)
     stock = db.Column(db.Integer, default=0)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Vincular con el creador
