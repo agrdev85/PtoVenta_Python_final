@@ -5,6 +5,17 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+class Alert(db.Model):
+    __tablename__ = 'alert'
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(db.String(255), nullable=False)
+    category = db.Column(db.String(50), nullable=False)  # 'error', 'warning', etc.
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Opcional: asociar alertas a un usuario
+
+     # Relación con el usuario
+    user = db.relationship('User', backref='alerts')
+
 # Nueva tabla de Membresía
 class Membership(db.Model):
     __tablename__ = 'memberships'

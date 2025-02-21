@@ -43,6 +43,17 @@ th {
 	margin-bottom: 20px;
 }
 
+.alert {
+	padding: 10px;
+	margin-bottom: 15px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+}
+.alert-warning {
+	color: #856404;
+	background-color: #fff3cd;
+	border-color: #ffeeba;
+}
 /* .navbar-nav .nav-item.active .nav-link {
 	background-color: #ff5722;
 	/* Cambia este color al que prefieras */

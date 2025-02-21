@@ -7,7 +7,7 @@ from flask_bootstrap import Bootstrap
 from .forms import LoginForm, RegisterForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
-from .db_models import Membership, db, User, Item, Order, Ordered_item
+from .db_models import Membership, db, User, Item, Alert, Order, Ordered_item
 from itsdangerous import URLSafeTimedSerializer
 from .funcs import mail, send_confirmation_email, fulfill_order
 from dotenv import load_dotenv
@@ -42,6 +42,10 @@ stripe.api_key = os.environ.get("STRIPE_PRIVATE", "123456")
 class Config:
     SCHEDULER_API_ENABLED = True
 
+
+# Instancia de APScheduler
+scheduler = APScheduler()
+
 # Función para desactivar usuarios con membresías vencidas
 def deactivate_expired_users():
     now = datetime.now(timezone.utc)
@@ -61,8 +65,33 @@ def deactivate_expired_users():
     except Exception as e:
         app.logger.error(f"Error al desactivar usuarios con membresías vencidas: {e}")
 
-# Instancia de APScheduler
-scheduler = APScheduler()
+# Función para verificar el stock
+def check_stock():
+    with app.app_context():
+        # Obtener todos los productos
+        items = Item.query.all()
+        alert_messages = []
+
+        for item in items:
+            if item.stock <= item.stock_min:
+                message = {
+                    'item_name': item.name,
+                    'stock': item.stock,
+                    'stock_min': item.stock_min,
+                    'created_by': item.created_by  # ID del usuario que creó el producto
+                }
+                alert_messages.append(message)
+
+        # Guardar los mensajes en la sesión para mostrarlos en la plantilla
+        session['alerts'] = alert_messages
+
+def clean_old_alerts():
+    with app.app_context():
+        # Eliminar alertas con más de 7 días
+        old_alerts = Alert.query.filter(Alert.created_at < datetime.now(timezone.utc) - timedelta(days=7)).all()
+        for alert in old_alerts:
+            db.session.delete(alert)
+        db.session.commit()                
 
 Bootstrap(app)
 db.init_app(app)
@@ -74,13 +103,29 @@ login_manager.init_app(app)
 scheduler.init_app(app)
 scheduler.start()
 
-# Agregar la tarea al programador
+# Agregar la tarea deactivate_expired_users al programador
 scheduler.add_job(
         id='deactivate_expired_users',
         func=deactivate_expired_users,
         trigger='interval',
         hours=24
-    )
+    ) 
+
+# Agregar la tarea clean_old_alerts al programador
+scheduler.add_job(
+    id='clean_old_alerts',
+    func=clean_old_alerts,
+    trigger='interval',
+    days=1  # Ejecutar diariamente
+)  
+
+# Agregar la tarea check_stock al programador
+scheduler.add_job(
+    id='check_stock',
+    func=check_stock,
+    trigger='interval',
+    minutes=1
+)
 
 with app.app_context():
 	db.create_all()
@@ -348,20 +393,18 @@ def add_to_cart(id):
 @login_required
 def cart():
 	price = 0
-	price_ids = []
 	items = []
 	quantity = []
 	for cart in current_user.cart:
 		items.append(cart.item)
 		quantity.append(cart.quantity)
 		price_id_dict = {
-			"price": cart.item.price_id,
+			"price": cart.item.price,
 			"quantity": cart.quantity,
 			}
-		price_ids.append(price_id_dict)
 		price += cart.item.price*cart.quantity
 		redirect(url_for('cart'))
-	return render_template('cart.html', items=items, price=price, price_ids=price_ids, quantity=quantity)
+	return render_template('cart.html', items=items, price=price, quantity=quantity)
 
 @app.route('/orders')
 @login_required
@@ -410,7 +453,7 @@ def payment_failure():
 
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
-	data = json.loads(request.form['price_ids'].replace("'", '"'))
+	data = json.loads(request.form['price_id_dict'].replace("'", '"'))
 	try:
 		checkout_session = stripe.checkout.Session.create(
 			client_reference_id=current_user.id,

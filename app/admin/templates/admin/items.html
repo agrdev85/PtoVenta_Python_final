@@ -17,6 +17,22 @@ Admin items - TIENDA-shop
 	{% endfor %}
 	{% endwith %}
 
+	{% if session.alerts %}
+        <div class="alert-container">
+            {% for alert in session.alerts %}
+                {% if alert.created_by == current_user.id %}
+                    <div class="alert alert-warning">
+                        ALERTA: El ítem '{{ alert.item_name }}' tiene un stock de {{ alert.stock }}, que es menor o igual al stock mínimo de {{ alert.stock_min }}.
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No hay alertas de stock en este momento.
+        </div>
+    {% endif %}
+
 	{% if not items %}
 	<div class="flash-error">No hay Items.</div>
 	<div class="d-flex justify-content-end mb-3">
@@ -42,7 +58,7 @@ Admin items - TIENDA-shop
 					<th>Nombre</th>
 					<th>Precio</th>
 					<th>Costo</th>
-					<th>Stock</th>
+					<th>Min | Stock</th>
 					<th>Categoria</th>
 					<th>Detalles</th>
 					<th>Operaciones</th>
@@ -55,7 +71,7 @@ Admin items - TIENDA-shop
 					<td>{{ item.name }}</td>
 					<td>{{ item.price }}</td>
 					<td>{{ item.costo }}</td>
-					<td>{{ item.stock }}</td>
+					<td>{{ item.stock_min }} | {{ item.stock }}</td>
 					<td>{{ item.category }}</td>
 					<td>{{ item.details[:40] | safe }}...</td>
 					<td>

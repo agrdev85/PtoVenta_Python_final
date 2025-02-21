@@ -20,7 +20,7 @@ class AddItemForm(FlaskForm):
     details = StringField("Detalles:", validators=[DataRequired()])
     costo = IntegerField("Costo:", validators=[DataRequired(), NumberRange(min=0, message="El costo debe ser un número positivo.")])
     stock = IntegerField("Stock:", validators=[NumberRange(min=0, message="El stock debe ser un número positivo.")])
-    price_id = StringField("Stripe id:")
+    stock_min = IntegerField("Stock Min:", validators=[NumberRange(min=0, message="El stock minimo debe ser un número positivo.")])
     submit = SubmitField("Guardar", render_kw={"class": "btn btn-success mr-4"}) # Cambia la clase CSS del botón aquí
 
 class OrderEditForm(FlaskForm):

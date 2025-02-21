@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, render_template, url_for, flash, request
+from flask import Blueprint, jsonify, render_template, session, url_for, flash, request
 from flask_login import current_user, login_required
 from werkzeug.utils import redirect, secure_filename
 from ..db_models import Membership, Order, Ordered_item, Item, db, User
@@ -42,11 +42,13 @@ def update_order_status(id):
 @admin.route('/items')
 @admin_only
 def items():
+    # Obtener las alertas de la sesión
+    alerts = session.pop('alerts', [])
     # Filtrar productos creados por el administrador actual o sus empleados
     items = Item.query.join(User, Item.created_by == User.id).filter(
         (User.id == current_user.id) | (User.created_by == current_user.id)
     ).all()
-    return render_template("admin/items.html", items=items)
+    return render_template("admin/items.html", items=items, alerts=alerts)
 
 @admin.route('/statictics')
 @admin_only
@@ -122,7 +124,7 @@ def add():
             details=form.details.data,
             costo=form.costo.data,
             stock=form.stock.data,
-            price_id=form.price_id.data,
+            stock_min=form.stock_min.data,
             created_by=current_user.id
         )
 
@@ -150,7 +152,7 @@ def edit(id):
         price=item.price,
         category=item.category,
         details=item.details,
-        price_id=item.price_id,
+        stock_min=item.stock_min,
         costo=item.costo,
         stock=item.stock
     )
@@ -160,7 +162,7 @@ def edit(id):
         item.price = form.price.data
         item.category = form.category.data
         item.details = form.details.data
-        item.price_id = form.price_id.data
+        item.stock_min = form.stock_min.data
         item.costo = form.costo.data
         item.stock = form.stock.data
 
