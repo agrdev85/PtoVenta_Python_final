@@ -4,8 +4,14 @@ from wtforms.validators import DataRequired, Email, Length, EqualTo, Regexp
 
 
 class LoginForm(FlaskForm):
-	email = StringField("Email", validators=[DataRequired()])
-	password = PasswordField("Contraseña", validators=[DataRequired()])
+	email = StringField("Email", validators=[
+        DataRequired(message="El email es requerido."),
+        Email(message="Debe ingresar un email válido.")
+    ])
+	password = PasswordField("Contraseña:", validators=[
+        DataRequired(message="La contraseña es requerida."),
+        Regexp(regex=r'^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$', message='La contraseña debe tener entre 8 y 30 caracteres y contener letras, números y símbolos.')
+    ])
 	submit = SubmitField("Acceder")
 
 from flask_wtf import FlaskForm
@@ -33,7 +39,7 @@ class RegisterForm(FlaskForm):
     
     password = PasswordField("Contraseña:", validators=[
         DataRequired(message="La contraseña es requerida."),
-        Regexp(regex=r'^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$', message='La contraseña debe tener entre 8 y 30 caracteres y puede contener letras, números y símbolos.')
+        Regexp(regex=r'^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$', message='La contraseña debe tener entre 8 y 30 caracteres y contener letras, números y símbolos.')
     ])
     
     confirm = PasswordField("Confirma la Contraseña:", validators=[

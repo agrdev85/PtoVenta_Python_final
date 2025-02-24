@@ -557,6 +557,24 @@
       });
     });
 
+    document.getElementById('userForm').addEventListener('submit', function (e) {
+      // Validar el campo de teléfono
+      const phone = document.getElementById('userPhone').value;
+      if (!/^\d{8}$/.test(phone)) {
+          alert("El teléfono debe tener exactamente 8 dígitos.");
+          e.preventDefault();
+          return;
+      }
+
+      // Validar la contraseña (si se ingresa)
+      const password = document.getElementById('userPassword').value;
+      if (password && !/^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$/.test(password)) {
+          alert("La contraseña debe tener entre 8 y 30 caracteres y puede contener letras, números y símbolos.");
+          e.preventDefault();
+          return;
+      }
+  });
+
   </script>
    
   <!-- Enlazar el archivo JS que maneja el comportamiento del botón -->

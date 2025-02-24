@@ -159,7 +159,13 @@
       });
     });
 
+    // JavaScript para asegurar que solo se ingresen números
+    document.querySelector('input[name="phone"]').addEventListener('input', function (e) {
+        this.value = this.value.replace(/[^0-9]/g, ''); // Elimina todo lo que no sea un número
+    });
+
   </script>
+
 
   <!-- Enlazar el archivo JS que maneja el comportamiento del botón -->
   <script src="{{ url_for('static', filename='styles.js') }}"></script>

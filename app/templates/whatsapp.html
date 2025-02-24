@@ -12,13 +12,15 @@
                 <div class="card-header bg-primary text-white text-center">
                     <h3>Registrarse en TIENDA-Shop</h3>
                 </div>
+
                 {% with msgs = get_flashed_messages(with_categories=True) %}
-                {% for c, msg in msgs %}
-                <div class="alert alert-{{ 'danger' if c == 'error' else 'success' }}">
-                    {{ msg | safe }}
+                {% if msgs %}
+                <div class="alert alert-{{ msgs[0][0] }}">
+                    {{ msgs[0][1] }}
                 </div>
-                {% endfor %}
+                {% endif %}
                 {% endwith %}
+
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('register_admin') }}">
                         {{ form.hidden_tag() }}  <!-- Incluye el campo oculto CSRF token -->
@@ -26,31 +28,79 @@
                         <div class="form-group">
                             {{ form.name.label }}
                             {{ form.name(class="form-control") }}
+                            {% if form.name.errors %}
+                            <div class="text-danger">
+                                {% for error in form.name.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="form-group">
                             {{ form.phone.label }}
-                            {{ form.phone(class="form-control") }}
+                            {{ form.phone(
+                                class="form-control",
+                                maxlength="8",
+                                pattern="\\d{8}",
+                                inputmode="numeric",
+                                title="El teléfono debe tener exactamente 8 dígitos."
+                            ) }}
+                            {% if form.phone.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.phone.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
 
                         <div class="form-group">
                             {{ form.membership.label }}
-                            {{ form.membership(class="form-control") }}  <!-- Campo de selección de membresía -->
+                            {{ form.membership(class="form-control") }}
+                            {% if form.membership.errors %}
+                            <div class="text-danger">
+                                {% for error in form.membership.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="form-group">
                             {{ form.email.label }}
                             {{ form.email(class="form-control") }}
+                            {% if form.email.errors %}
+                            <div class="text-danger">
+                                {% for error in form.email.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="form-group">
                             {{ form.password.label }}
                             {{ form.password(class="form-control") }}
+                            {% if form.password.errors %}
+                            <div class="text-danger">
+                                {% for error in form.password.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="form-group">
                             {{ form.confirm.label }}
                             {{ form.confirm(class="form-control") }}
+                            {% if form.confirm.errors %}
+                            <div class="text-danger">
+                                {% for error in form.confirm.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="form-group text-center">
