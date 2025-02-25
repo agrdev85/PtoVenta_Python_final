@@ -5,16 +5,16 @@ Admin Dashboard - TIENDA-shop
 {% endblock %}
 
 {% block content %}
+<!-- Incluye SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <div class="container-fluid">
 
     <!-- Mostrar mensajes de flash -->
     {% with msgs = get_flashed_messages(with_categories=True) %}
     {% for c, msg in msgs %}
-    <div class="alert {{ 'alert-danger' if c == 'error' else 'alert-success' }} alert-dismissible fade show" role="alert">
+    <div class="alert alert-{{ 'danger' if c == 'error' else 'success' }}">
         {{ msg }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
     </div>
     {% endfor %}
     {% endwith %}
