@@ -80,7 +80,7 @@ Admin Dashboard - TIENDA-shop
                     </td>               
                     <td>
                         <a href="#" class="edit-user" data-id="{{ user.id }}" data-name="{{ user.name }}" data-email="{{ user.email }}"
-                            data-phone="{{ user.phone }}" data-membership-expiration="{{ user.membership_expiration }}"
+                            data-phone="{{ user.phone }}" data-registration-date="{{ user.registration_date }}" data-membership-expiration="{{ user.membership_expiration }}"
                             data-membership-id="{{ user.membership_id }}"> <!-- Asegúrate de que esto esté correctamente asignado -->
                             <i class="bi bi-pencil-square text-success"></i>
                         </a>
@@ -124,6 +124,10 @@ Admin Dashboard - TIENDA-shop
                     </div>
                     {% if current_user.id == 1 %}
                     <div class="form-group">
+                        <label for="registrationDate">Fecha de Registro</label>
+                        <input type="date" class="form-control" id="registrationDate" name="registration_date" readonly>
+                    </div>
+                    <div class="form-group">
                         <label for="membershipExpiration">Fecha de Vencimiento de Membresía</label>
                         <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration" required>
                     </div>
@@ -150,86 +154,98 @@ Admin Dashboard - TIENDA-shop
 
 <script>
     $(document).ready(function () {
-        const table = $('#userTable').DataTable({
-            "lengthMenu": [5, 10, 25, 50],
-            "ordering": true,
-            "searching": true,
-            "paging": true,
-            "info": true,
-            "columnDefs": [
-                {
-                    "targets": 0, // Índice de la columna "Order ID"
-                    "visible": false, // Oculta la columna
-                    "searchable": false // También evita que sea buscable
-                }
-            ]
-        });
-    
-        // Mostrar datos del usuario en el modal
-        $(document).on('click', '.edit-user', function () {
+    const table = $('#userTable').DataTable({
+        "lengthMenu": [5, 10, 25, 50],
+        "ordering": true,
+        "searching": true,
+        "paging": true,
+        "info": true,
+        "columnDefs": [
+            {
+                "targets": 0, // Índice de la columna "Order ID"
+                "visible": false, // Oculta la columna
+                "searchable": false // También evita que sea buscable
+            }
+        ]
+    });
+
+    // Mostrar datos del usuario en el modal
+    $(document).on('click', '.edit-user', function () {
     const userId = $(this).data('id');
     const userName = $(this).data('name');
     const userEmail = $(this).data('email');
-    const userPhone = $(this).data('phone'); 
+    const userPhone = $(this).data('phone');
+    const registrationDate = $(this).data('registrationDate'); // Puede ser undefined
     const membershipExpiration = $(this).data('membershipExpiration');
-    const membershipId = $(this).data('membershipId');  // Usar camelCase aquí
+    const membershipId = $(this).data('membershipId');
 
+    console.log("Datos del usuario:", { userId, userName, userEmail, userPhone, registrationDate, membershipExpiration, membershipId });
+
+    // Asignar valores al modal
     $('#userId').val(userId);
     $('#userName').val(userName);
     $('#userEmail').val(userEmail);
     $('#userPhone').val(userPhone);
-    $('#membership').val(membershipId);  // Asignar el valor correcto al select de membresía
 
-    // Rellenar la fecha de vencimiento de la membresía en el campo de fecha
+    // Formatear registrationDate si está definido
+    if (registrationDate) {
+        const formattedRegistrationDate = new Date(registrationDate).toISOString().split('T')[0];
+        $('#registrationDate').val(formattedRegistrationDate);
+    } else {
+        $('#registrationDate').val(''); // Asignar un valor vacío si no está definido
+    }
+
+    // Formatear membershipExpiration
     if (membershipExpiration) {
-        const formattedDate = new Date(membershipExpiration).toISOString().split('T')[0];
-        $('#membershipExpiration').val(formattedDate);
+        const formattedMembershipExpiration = new Date(membershipExpiration.replace(' ', 'T')).toISOString().split('T')[0];
+        $('#membershipExpiration').val(formattedMembershipExpiration);
     } else {
         $('#membershipExpiration').val('');
     }
 
+    $('#membership').val(membershipId); // Asignar el valor correcto al select de membresía
+
+    // Mostrar el modal
     $('#userModal').modal('show');
-  });
-    
-    
-        // Manejar el envío del formulario
-        $('#userForm').on('submit', function (e) {
-    e.preventDefault();
+});
 
-    const userId = $('#userId').val();
-    const membershipId = $('#membership').val();  // Obtener el ID de la membresía seleccionada
-    const membershipExpiration = $('#membershipExpiration').val(); // Obtener la fecha seleccionada
+    // Manejar el envío del formulario
+    $('#userForm').on('submit', function (e) {
+        e.preventDefault();
 
-    const formData = {
-        userId: userId,
-        membership_id: membershipId, // Incluir el ID de la membresía
-        membership_expiration: membershipExpiration,  // Enviar la fecha seleccionada
-        userName: $('#userName').val(),
-        userEmail: $('#userEmail').val(),
-        userPhone: $('#userPhone').val(),
-        userPassword: $('#userPassword').val(),
-    };
+        const userId = $('#userId').val();
+        const membershipId = $('#membership').val();
+        const membershipExpiration = $('#membershipExpiration').val();
 
-    $.ajax({
-        url: `/admin/update_user/${userId}`,
-        type: 'POST',
-        data: formData,
-        success: function (response) {
-            if (response.success) {
-                alert(response.message);
-                $('#userModal').modal('hide');
-                location.reload();
-            } else {
-                alert(response.message);
+        const formData = {
+            userId: userId,
+            membership_id: membershipId,
+            membership_expiration: membershipExpiration,
+            userName: $('#userName').val(),
+            userEmail: $('#userEmail').val(),
+            userPhone: $('#userPhone').val(),
+            userPassword: $('#userPassword').val(),
+        };
+
+        $.ajax({
+            url: `/admin/update_user/${userId}`,
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    alert(response.message);
+                    $('#userModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert('Hubo un error al actualizar el usuario.');
             }
-        },
-        error: function () {
-            alert('Hubo un error al actualizar el usuario.');
-        }
-     });
-  });
-
+        });
     });
+});
     
     </script>
 
