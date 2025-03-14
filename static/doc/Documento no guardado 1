@@ -1,0 +1,266 @@
+# Tareas Pendientes
+
+
+
+# 4- Hacer una exportacion eficiente ya sea en pdf(puede cambiarse a modo plano) y excel que ahora no funciona del todo y los pdf muy pesados.
+
+# 5-(Esto es opcional) Cambiar dinamicamente el Nombre de la tienda y tener temas personalizados para que cada Administrador personalice el suyo.
+
+# Para lo Ultimo- Definir un trabajo por lotes para las ordenes
+
+
+El usuario superadmin es el que tiene id=1. Comprobar si el usuario a loguearse esta activo(activo significa que este usuario realizo un pago, esto el superadmin lo activara manualmente una ves verifique que el pago se efectuo bien)es decir activo significa que el campo email_confirmed en la tabla users tiene valor 1, al registrarse tendra valor cero por defecto.Al registrar un usuario desde la ruta http://127.0.0.1:5000/whasapp que es al principio de la pagina este sera administrador por defecto pero el campo email_confirmed en la tabla users tiene valor 0(no activo). Solo los usuarios administradores pueden crear maximo 3 usuarios que no son administradores en la tabla user eso se refleja en el campo admin = 0 es usuario normal(seria un empleado) y admin = 1 es un Administrador. Cuando el Administrador crea a sus empleados estos automaticamente estaran activos es decir el campo email_confirmed en la tabla users tiene valor 1. Cada Administrador tiene control unico de sus empleados
+
+
+
+Cada Administrador tiene control unico de sus empleados. Quiero que cada Administrador vea solo las ordenes de sus empleados para ello te dare mis dos modelos de user y orders y mis funciones para que las modifiques. 
+
+
+//Models//
+
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, nullable=False)
+    email = db.Column(db.String(50), nullable=False, unique=True)
+    phone = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(250), nullable=False)
+    admin = db.Column(db.Integer, nullable=False, default=0)
+    email_confirmed = db.Column(db.Integer, nullable=False, default=1)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # ID del creador
+    employees = db.relationship('User', backref='creator', remote_side=[id])  # Relación inversa
+    cart = db.relationship('Cart', backref='buyer')
+    orders = db.relationship("Order", backref='customer', foreign_keys="[Order.uid]")  # Relación con clave foránea especificada
+
+    def add_to_cart(self, itemid, quantity):
+        item_to_add = Cart(itemid=itemid, uid=self.id, quantity=quantity)
+        db.session.add(item_to_add)
+        db.session.commit()
+
+    def remove_from_cart(self, itemid, quantity):
+        item_to_remove = Cart.query.filter_by(itemid=itemid, uid=self.id, quantity=quantity).first()
+        db.session.delete(item_to_remove)
+        db.session.commit()
+
+class Order(db.Model):
+    __tablename__ = "orders"
+    id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Clave foránea del cliente
+    date = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    items = db.relationship("Ordered_item", backref="order", cascade="all, delete-orphan")
+
+@admin_only
+def delete_order(id):
+    # Validar que la orden pertenece al administrador actual
+    order = Order.query.filter_by(id=id, created_by=current_user.id).first_or_404()
+    
+    if not order:
+        flash("No se encontró la orden.", "error")
+        return redirect(url_for('admin.dashboard'))
+
+    if order.status == 'Reservado':
+        # Restablecer el stock de los ítems en la orden
+        for ordered_item in order.items:
+            item = Item.query.get(ordered_item.itemid)
+            if item:
+                item.stock += ordered_item.quantity
+
+        # Eliminar los ítems asociados a la orden
+        Ordered_item.query.filter_by(oid=id).delete()
+
+        # Eliminar la orden
+        db.session.delete(order)
+        db.session.commit()
+
+        flash("Orden eliminada exitosamente.", "success")
+    else:=
+        flash("No se puede eliminar la orden porque no está en estado 'Reservado'.", "error")
+
+    return redirect(url_for('admin.dashboard'))
+
+
+
+
+
+Cada Administrador tiene control unico de sus productos. Quiero que cada Administrador y sus empleados asociados es decir los que el creo vean solo sus productos, para ello te dare mis modelos y mis funciones para que las modifiques. Solo los administradores por supuesto crean productos.
+
+//Models//
+
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, nullable=False)
+    email = db.Column(db.String(50), nullable=False, unique=True)
+    phone = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(250), nullable=False)
+    admin = db.Column(db.Integer, nullable=False, default=0)
+    email_confirmed = db.Column(db.Integer, nullable=False, default=1)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # ID del creador
+    employees = db.relationship('User', backref='creator', remote_side=[id], lazy='select')  # Relación empleados
+    cart = db.relationship('Cart', backref='buyer')
+    orders = db.relationship("Order", backref='customer', foreign_keys="[Order.uid]")  # Relación con clave foránea especificada
+
+    def add_to_cart(self, itemid, quantity):
+        item_to_add = Cart(itemid=itemid, uid=self.id, quantity=quantity)
+        db.session.add(item_to_add)
+        db.session.commit()
+
+    def remove_from_cart(self, itemid, quantity):
+        item_to_remove = Cart.query.filter_by(itemid=itemid, uid=self.id, quantity=quantity).first()
+        db.session.delete(item_to_remove)
+        db.session.commit()
+
+
+class Item(db.Model):
+    __tablename__ = "items"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    category = db.Column(db.Text, nullable=False)
+    image = db.Column(db.String(250), nullable=False)
+    details = db.Column(db.String(250), nullable=False)
+    price_id = db.Column(db.String(250), nullable=False)
+    costo = db.Column(db.Integer)
+    stock = db.Column(db.Integer, default=0)
+    orders = db.relationship('Ordered_item', backref='item', lazy=True, cascade="all, delete, delete-orphan")
+    in_cart = db.relationship("Cart", backref="item", lazy=True, cascade="all, delete, delete-orphan")
+
+
+class Cart(db.Model):
+    __tablename__ = "cart"
+    id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    itemid = db.Column(db.Integer, db.ForeignKey('items.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+
+
+class Order(db.Model):
+    __tablename__ = "orders"
+    id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Clave foránea del cliente
+    date = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    items = db.relationship("Ordered_item", backref="order", cascade="all, delete-orphan")
+
+
+class Ordered_item(db.Model):
+    __tablename__ = "ordered_items"
+    id = db.Column(db.Integer, primary_key=True)
+    oid = db.Column(db.Integer, db.ForeignKey('orders.id'))
+    itemid = db.Column(db.Integer, db.ForeignKey('items.id'))
+    quantity = db.Column(db.Integer, nullable=False)
+
+
+//Funciones //
+
+@admin.route('/items')
+@admin_only
+def items():
+    items = Item.query.all()
+    return render_template("admin/items.html", items=items)
+
+@admin.route('/statictics')
+@admin_only
+def statictics():
+    # Filtrar órdenes relacionadas con los empleados creados por el administrador actual
+    orders = Order.query.join(User, Order.uid == User.id).filter(User.created_by == current_user.id).all()
+    items = Item.query.all()
+    return render_template("admin/statictics.html", orders=orders, items=items)
+
+@admin.route('/add', methods=['POST', 'GET'])
+@admin_only
+def add():
+    form = AddItemForm()
+    if form.validate_on_submit():
+        image_file = form.image.data
+        if image_file:
+            image_file.save('app/static/uploads/' + image_file.filename)
+            image_file = url_for('static', filename=f'uploads/{image_file.filename}')
+        else:
+            image_file = None  # O maneja un valor por defecto si no se sube imagen
+
+        # Asignar la imagen predeterminada de agotado si el stock es cero o menor
+        if form.stock.data <= 0:
+            image_file = url_for('static', filename='uploads/agotado.png')
+
+        new_item = Item(
+            name=form.name.data,
+            price=form.price.data,
+            category=form.category.data,
+            image=image_file,
+            details=form.details.data,
+            costo=form.costo.data,
+            stock=form.stock.data,
+            price_id=form.price_id.data
+        )
+        db.session.add(new_item)
+        try:
+            db.session.commit()
+            flash("¡Artículo agregado exitosamente!", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error: {str(e)}", "error")
+        return redirect(url_for('admin.items'))
+    return render_template('admin/add.html', form=form)
+
+@admin.route('/edit/<string:type>/<int:id>', methods=['POST', 'GET'])
+@admin_only
+def edit(type, id):
+    if type == "item":
+        item = Item.query.get(id)
+        form = AddItemForm(
+            name=item.name,
+            price=item.price,
+            category=item.category,
+            details=item.details,
+            image=item.image,
+            price_id=item.price_id,
+            costo=item.costo,
+            stock=item.stock
+        )
+        if form.validate_on_submit():
+            item.name = form.name.data
+            item.price = form.price.data
+            item.category = form.category.data
+            item.details = form.details.data
+            item.price_id = form.price_id.data
+            item.costo = form.costo.data
+            item.stock = form.stock.data
+
+            # Si se sube una nueva imagen, la guardamos y actualizamos el valor de item.image
+            if form.image.data:
+                form.image.data.save('app/static/uploads/' + form.image.data.filename)
+                item.image = url_for('static', filename=f'uploads/{form.image.data.filename}')
+        
+            db.session.commit()
+            flash("¡Artículo actualizado exitosamente!", "success")
+            return redirect(url_for('admin.items'))
+
+    elif type == "order":
+        order = Order.query.get(id)
+        form = OrderEditForm(status=order.status)
+        if form.validate_on_submit():
+            order.status = form.status.data
+            db.session.commit()
+            flash("¡Pedido actualizado exitosamente!", "success")
+            return redirect(url_for('admin.dashboard'))
+
+    return render_template('admin/add.html', form=form)
+
+@admin.route('/delete/<int:id>')
+@admin_only
+def delete(id):
+    to_delete = Item.query.get(id)
+    if to_delete is None:
+        flash("Artículo no encontrado.", "error")
+        return redirect(url_for('admin.items')) 
+
+    if not to_delete.ordered_items:
+        db.session.delete(to_delete)
+        db.session.commit()
+        flash("¡Artículo eliminado exitosamente!", "success")
+    else:
+        flash("No se pudo eliminar el elemento. Es posible que tenga artículos pedidos relacionados.", "error")
+
+    return redirect(url_for('admin.items'))

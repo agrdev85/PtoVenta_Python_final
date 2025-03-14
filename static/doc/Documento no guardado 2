@@ -1,0 +1,206 @@
+Definir una gestion de membresias de usuarios donde se compruebe en el login si se vencio la lic mensual pagada por el usuario
+
+Modelo User//
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, nullable=False)
+    email = db.Column(db.String(50), nullable=False, unique=True)
+    phone = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(250), nullable=False)
+    admin = db.Column(db.Integer, nullable=False, default=0)
+    email_confirmed = db.Column(db.Integer, nullable=False, default=1)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # ID del creador
+    employees = db.relationship('User', backref='creator', remote_side=[id], lazy='select')  # Relación empleados
+    cart = db.relationship('Cart', backref='buyer')
+    orders = db.relationship("Order", backref='customer', foreign_keys="[Order.uid]")  # Relación con clave foránea especificada
+
+    def add_to_cart(self, itemid, quantity):
+        item_to_add = Cart(itemid=itemid, uid=self.id, quantity=quantity)
+        db.session.add(item_to_add)
+        db.session.commit()
+
+    def remove_from_cart(self, itemid, quantity):
+        item_to_remove = Cart.query.filter_by(itemid=itemid, uid=self.id, quantity=quantity).first()
+        db.session.delete(item_to_remove)
+        db.session.commit()
+
+Esto es para que entres en contexto y recuerdes en lo que hemos estado trabajando 
+
+El usuario superadmin es el que tiene id=1. Comprobar si el usuario a loguearse esta activo(activo significa que este usuario realizo un pago, esto el superadmin lo activara manualmente una ves verifique que el pago se efectuo bien)es decir activo significa que el campo email_confirmed en la tabla users tiene valor 1, al registrarse tendra valor cero por defecto.Al registrar un usuario desde la ruta http://127.0.0.1:5000/whasapp que es al principio de la pagina este sera administrador por defecto pero el campo email_confirmed en la tabla users tiene valor 0(no activo). Solo los usuarios administradores pueden crear maximo 3 usuarios que no son administradores en la tabla user eso se refleja en el campo admin = 0 es usuario normal(seria un empleado) y admin = 1 es un Administrador. Cuando el Administrador crea a sus empleados estos automaticamente estaran activos es decir el campo email_confirmed en la tabla users tiene valor 1. Cada Administrador tiene control unico de sus empleados.
+
+Lo que queremos hacer aca es que el usuario cuando se registre se ponga automaticamente una fecha de registro y a partir de ahi se contara 7 dias a partir de esa fecha para que pruebe la app una ves vencido esos 7 dias se le desabilitara la cuenta es decir el campo email_confirmed en la tabla users que tiene valor 1 cuando se registro se pondra en 0. Luego que el usuario decida si seguir con el uso de la aplicacion debera ponerse en contacto con Soporte al cual le pagara una membresia y esntoces se le activara su cuenta por un mes pasado ese mes de membresia se desabilitara su cuenta hasta que realice un nuevo pago. Dime si te hace falta que te de el codigo donde realizo el registro de usuario
+
+
+Quiero llamar a esta funcion cada ves que se haga el login para desabilitar cuentas que ya hayan expirado su membresia, y esta se llama normalmente cada 1 dia. Recuerda que cuando ya se vence los 7 dia de prueba, se desactiva la cuenta pero quiero poder activar un usuario desde un administrador de usuario donde se muestre una tabla con datatable de jquery y poder editar yo que soy el superadmin todos los datos de los usuarios, desde alli puedo activar el usuario y cuando lo active debo poder escoger el tiempo de membresia 1 mes 3 meses o 6 meses. Esta gestion de usuario debe estar en un modal para mejor facilidad, el boton del mismo estara en una pagina configuracion.html la cual se llamara desde el menu del aministrador 
+
+from apscheduler.schedulers.background import BackgroundScheduler
+
+def deactivate_expired_users():
+    now = datetime.now(timezone.utc)
+    expired_users = User.query.filter(
+        User.membership_expiration < now,
+        User.email_confirmed == 1
+    ).all()
+    for user in expired_users:
+        user.email_confirmed = 0
+    db.session.commit()
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(deactivate_expired_users, 'interval', hours=24)  # Ejecutar cada 24 horas
+scheduler.start()
+
+//Login Actual//
+@app.route("/login", methods=['POST', 'GET'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
+    form = LoginForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        user = User.query.filter_by(email=email).first()
+
+        if user is None:
+            flash(f'El usuario con correo electrónico {email} no existe. <a href={url_for("register_admin")}>Regístrese aquí.</a>', 'error')
+            return redirect(url_for('login'))
+
+        # Verificar estado de membresía
+        if not user.check_membership_status():
+            flash('Su membresía ha vencido. Contacte al soporte para renovarla.', 'error')
+            return redirect(url_for('login'))
+
+        # Verificar si el administrador está activo (para empleados)
+        if not user.admin and user.creator and not user.creator.email_confirmed:
+            flash('Su administrador está inactivo. No puede iniciar sesión.', 'error')
+            return redirect(url_for('login'))
+
+        if check_password_hash(user.password, form.password.data):
+            session['client_reference_id'] = user.id
+            login_user(user)
+            return redirect(url_for('home'))
+
+        flash("Correo electrónico o contraseña incorrectos.", "error")
+    return render_template("login.html", form=form)
+
+
+
+Uso esta libreria from flask_apscheduler import APScheduler adapta este codigo para usarla 
+
+def deactivate_expired_users():
+    now = datetime.now(timezone.utc)
+    expired_users = User.query.filter(
+        User.membership_expiration < now,
+        User.email_confirmed == 1
+    ).all()
+    for user in expired_users:
+        user.email_confirmed = 0
+    db.session.commit()
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(deactivate_expired_users, 'interval', hours=24)  # Ejecutar cada 24 horas
+scheduler.start()
+
+2025-01-16 18:41:55.631080
+
+2025-01-17 18:41:55.631080
+
+
+Si el usuario actual es el superadmin es decir el que tiene el id=1 el campo User de la tabla dira ademas de Empleado + "el nombre de su administrador", si es un Administrador normal dira Empleado solamente. Si el usuario actual es el superadmin el modal mostrara todos los campos y si es un Admin normal mostrara todos los campos menos el de fecha de vencimiento.
+// Aca mi codigo actual //
+//Tabla//
+<!-- Tabla de usuarios -->
+    <table id="userTable" class="table table-striped table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>User</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Estado</th>
+                <th>Membresía</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="userTableBody">
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.name }}</td>
+                <td>
+                    <span class="badge {{ 'badge-success' if user.admin else 'badge-danger' }}">
+                        {{ 'Admin' if user.admin else 'Empleado' }}
+                    </span>
+                </td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone }}</td>
+                <td>
+                    <span class="badge {{ 'badge-success' if user.email_confirmed else 'badge-danger' }}">
+                        {{ 'Activo' if user.email_confirmed else 'Inactivo' }}
+                    </span>
+                </td>
+                <td>
+                    {% if user.membership_expiration %}
+                        {{ user.membership_expiration.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        Sin Membresía
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn btn-warning edit-user"
+                            data-id="{{ user.id }}"
+                            data-name="{{ user.name }}"
+                            data-email="{{ user.email }}"
+                            data-phone="{{ user.phone }}"
+                            data-membership-expiration="{{ user.membership_expiration }}">
+                        Editar
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+//Modal //
+ <!-- Modal de gestión de usuarios -->
+<div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="userForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userModalLabel">Editar Usuario</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="userId" name="user_id">
+                    <div class="form-group">
+                        <label for="userName">Nombre</label>
+                        <input type="text" class="form-control" id="userName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">Email</label>
+                        <input type="email" class="form-control" id="userEmail" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPhone">Teléfono</label>
+                        <input type="text" class="form-control" id="userPhone" name="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="membershipExpiration">Fecha de Vencimiento de Membresía</label>
+                        <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration" required>
+                    </div>            
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+

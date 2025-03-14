@@ -1,0 +1,723 @@
+Tengo la pagina de membresia solo informativa y en la pag de registro se escoge el tipo de membresia y se valida segun corresponda se cambia los valores dinamicos en el numero de empleados a tener(numEmpleados) en el endpoint #Registrar Empleados y en el add item en la funcion (def add():) debe comprobarse antes de crear un nuevo producto de que no haya excedido el limite de productos a añadir segun su membresia. Para esto te voy a dar mis modelos User y Item que son los involucrados y creame la nueva tabla membresia para que todo esto se integre recuerda que lo que  ya esta funciona bien has los cambios sin perder las actuales funcionalidades que ye estan y funcionan.
+//Modelos//
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, nullable=False)
+    email = db.Column(db.String(50), nullable=False, unique=True)
+    phone = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(250), nullable=False)
+    admin = db.Column(db.Integer, nullable=False, default=0)
+    email_confirmed = db.Column(db.Integer, nullable=False, default=1)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # ID del creador
+    registration_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))  # Fecha de registro
+    membership_expiration = db.Column(db.DateTime, nullable=True)  # Fecha de vencimiento de membresía
+    employees = db.relationship('User', backref='creator', remote_side=[id], lazy='select')  # Relación empleados
+    cart = db.relationship('Cart', backref='buyer')
+    orders = db.relationship("Order", backref='customer', foreign_keys="[Order.uid]")  # Relación con clave foránea especificada
+
+    def check_membership_status(self):
+      if self.membership_expiration:
+        # Convierte fechas naive a UTC antes de comparar
+        now = datetime.now(timezone.utc)
+        expiration = self.membership_expiration
+        if expiration.tzinfo is None:
+            expiration = expiration.replace(tzinfo=timezone.utc)
+
+        return now <= expiration
+      self.email_confirmed = 0
+      db.session.commit()
+      return False
+
+
+    def add_to_cart(self, itemid, quantity):
+        item_to_add = Cart(itemid=itemid, uid=self.id, quantity=quantity)
+        db.session.add(item_to_add)
+        db.session.commit()
+
+    def remove_from_cart(self, itemid, quantity):
+        item_to_remove = Cart.query.filter_by(itemid=itemid, uid=self.id, quantity=quantity).first()
+        db.session.delete(item_to_remove)
+        db.session.commit()
+
+
+class Item(db.Model):
+    __tablename__ = "items"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    category = db.Column(db.Text, nullable=False)
+    image = db.Column(db.String(250), nullable=False)
+    details = db.Column(db.String(250), nullable=False)
+    price_id = db.Column(db.String(250), nullable=False)
+    costo = db.Column(db.Integer)
+    stock = db.Column(db.Integer, default=0)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Vincular con el creador
+    creator = db.relationship('User', backref='items_created')  # Relación con el usuario que creó el producto
+    orders = db.relationship('Ordered_item', backref='item', lazy=True, cascade="all, delete, delete-orphan")
+    in_cart = db.relationship("Cart", backref="item", lazy=True, cascade="all, delete, delete-orphan")
+
+
+@app.route("/")
+def home():
+    # Verifica si el usuario está autenticado
+    if current_user.is_authenticated:
+        # Si el usuario está autenticado, revisamos si tiene membresía activa
+        if not current_user.check_membership_status():
+            # Si no tiene una membresía activa, redirige a la página de membresía
+            return redirect(url_for('membership_plans'))  # Página de planes de membresía
+        else:
+            # Si tiene membresía, mostrar los productos
+            if current_user.admin:
+                items = Item.query.filter(Item.created_by == current_user.id).all()
+            else:
+                items = Item.query.filter(Item.created_by == current_user.created_by).all()
+            return render_template("home.html", items=items)
+    else:
+        # Si no está autenticado, lo redirigimos a la página de login
+        return redirect(url_for('membership_plans'))
+    
+@app.route("/membership_plans")
+def membership_plans():
+    return render_template("membership_plans.html")
+
+
+@app.route("/login", methods=['POST', 'GET'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    
+    deactivate_expired_users()  # Verificar membresías expiradas
+
+    form = LoginForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        user = User.query.filter_by(email=email).first()
+
+        if user is None:
+            flash(f'El usuario con correo electrónico {email} no existe. <a href={url_for("register_admin")}>Regístrese aquí.</a>', 'error')
+            return redirect(url_for('login'))
+
+        # Verificar si el administrador está activo (para empleados)
+        if not user.admin and user.creator and not user.creator.email_confirmed:
+            flash('Su administrador está inactivo. No puede iniciar sesión.', 'error')
+            return redirect(url_for('login'))
+        
+        # Verificar estado de membresía
+        if not user.check_membership_status():
+            flash('Su membresía ha vencido. Contacte al Soporte para renovarla.', 'error')
+            return redirect(url_for('login'))
+
+        # Verificar si el correo electrónico está confirmado
+        if not user.email_confirmed:
+            flash('Debe confirmar su correo electrónico antes de iniciar sesión. Contacte a Soporte', 'error')
+            return redirect(url_for('login'))
+
+
+        # Verificar la contraseña
+        if check_password_hash(user.password, form.password.data):
+            session['client_reference_id'] = user.id
+            login_user(user)
+            return redirect(url_for('home'))
+
+        flash("Correo electrónico o contraseña incorrectos.", "error")
+    return render_template("login.html", form=form)
+
+@app.route('/whatsapp', methods=['GET', 'POST'])
+def register_admin():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
+            return redirect(url_for('register_admin'))
+
+        new_user = User(
+            name=form.name.data,
+            email=form.email.data,
+            password=generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8),
+            admin=1,
+            email_confirmed=1,  # Activo automáticamente con período de prueba
+            phone=form.phone.data,
+            membership_expiration=datetime.now(timezone.utc) + timedelta(days=7)  # 7 días de prueba
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        flash('¡Registro exitoso! Puede iniciar sesión ahora.', 'success')
+        return redirect(url_for('login'))
+    return render_template("whatsapp.html", form=form)
+
+
+@app.route("/register", methods=['POST', 'GET'])  #Registrar Empleados
+def register():
+    if current_user.admin != 1:
+        flash('No tienes permisos para crear empleados.', 'error')
+        return redirect(url_for('admin.dashboard'))
+    numEmpleados = User.query.filter_by(created_by=current_user.id).count()  
+    if numEmpleados >= 3:
+        flash(f"Solo puedes tener {numEmpleados} empleados.", 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    form = RegisterForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
+            return redirect(url_for('register'))
+
+        new_user = User(
+            name=form.name.data,
+            email=form.email.data,
+            password=generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8),
+            admin=0,  # Usuario normal
+            email_confirmed=1,  # Activo automáticamente
+            created_by=current_user.id,
+            phone=form.phone.data,
+            membership_expiration=current_user.membership_expiration  # Vence con el administrador
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Empleado creado exitosamente.', 'success')
+        return redirect(url_for('admin.dashboard'))
+    return render_template("register.html", form=form)
+
+
+@admin.route('/add', methods=['POST', 'GET'])
+@login_required
+@admin_only
+def add():
+    form = AddItemForm()
+    if form.validate_on_submit():
+        # Obtener el archivo de la imagen
+        image_file = form.image.data
+
+        # Crear la carpeta específica para el usuario administrador si no existe
+        user_folder = create_user_folder(current_user.id)  # Llamada a la función
+
+        if image_file:
+            # Asegurarse de que el nombre del archivo sea seguro
+            filename = secure_filename(image_file.filename)
+            file_path = os.path.join(user_folder, filename)  # Ruta relativa dentro de la carpeta del usuario
+
+            # Guardar la imagen en la carpeta del usuario
+            image_file.save(os.path.join(os.getcwd(), file_path))  # Ruta absoluta para guardar la imagen
+        else:
+            # Si no se carga ninguna imagen, asignar una por defecto
+            file_path = 'static/uploads/default.png'
+
+        # Crear un nuevo artículo
+        new_item = Item(
+            name=form.name.data,
+            price=form.price.data,
+            category=form.category.data,
+            image=f'/{file_path}',  # Guardar la ruta relativa en la base de datos
+            details=form.details.data,
+            costo=form.costo.data,
+            stock=form.stock.data,
+            price_id=form.price_id.data,
+            created_by=current_user.id
+        )
+
+        db.session.add(new_item)
+        try:
+            db.session.commit()
+            flash(f"¡Artículo '{form.name.data}' agregado exitosamente!", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al agregar el artículo: {str(e)}", "error")
+
+        return redirect(url_for('admin.items'))
+    
+    return render_template('admin/add.html', form=form)
+
+
+*****
+
+Quiero mostrar en la tabla el tipo de membresia en el html, el name esta en la tabla membresia. Quiero poder desde un select que esta en el html actualizar el valor del tipo de membresia y se actualice el id en la tabla de usuario al enviar el formulario
+
+//Modelo membresia//
+class Membership(db.Model):
+    __tablename__ = 'memberships'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+    max_employees = db.Column(db.Integer, nullable=False)
+    max_items = db.Column(db.Integer, nullable=False)
+
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, nullable=False)
+    email = db.Column(db.String(50), nullable=False, unique=True)
+    phone = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(250), nullable=False)
+    admin = db.Column(db.Integer, nullable=False, default=0)
+    email_confirmed = db.Column(db.Integer, nullable=False, default=1)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # ID del creador
+    registration_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))  # Fecha de registro
+    membership_expiration = db.Column(db.DateTime, nullable=True)  # Fecha de vencimiento de membresía
+    membership_id = db.Column(db.Integer, db.ForeignKey('memberships.id'), nullable=True)  # Relación con membresía
+    membership = db.relationship('Membership', backref='users')
+    employees = db.relationship('User', backref='creator', remote_side=[id], lazy='select')  # Relación empleados
+    cart = db.relationship('Cart', backref='buyer')
+    orders = db.relationship("Order", backref='customer', foreign_keys="[Order.uid]")  # Relación con clave foránea especificada
+
+    def check_membership_status(self):
+      if self.membership_expiration:
+        # Convierte fechas naive a UTC antes de comparar
+        now = datetime.now(timezone.utc)
+        expiration = self.membership_expiration
+        if expiration.tzinfo is None:
+            expiration = expiration.replace(tzinfo=timezone.utc)
+
+        return now <= expiration
+      self.email_confirmed = 0
+      db.session.commit()
+      return False
+
+
+    def add_to_cart(self, itemid, quantity):
+        item_to_add = Cart(itemid=itemid, uid=self.id, quantity=quantity)
+        db.session.add(item_to_add)
+        db.session.commit()
+
+    def remove_from_cart(self, itemid, quantity):
+        item_to_remove = Cart.query.filter_by(itemid=itemid, uid=self.id, quantity=quantity).first()
+        db.session.delete(item_to_remove)
+        db.session.commit()
+
+/html//
+{% extends "admin/base.html" %}
+
+{% block title %}
+Admin Dashboard - TIENDA-shop
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Mostrar mensajes de flash -->
+    {% with msgs = get_flashed_messages(with_categories=True) %}
+    {% for c, msg in msgs %}
+    <div class="alert {{ 'alert-danger' if c == 'error' else 'alert-success' }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {% endfor %}
+    {% endwith %}
+    
+    <div class="d-flex justify-content-end mb-3">
+        <div class="add-new btn-success btn">
+           <a href="{{ url_for('register') }}" data-toggle="tooltip" title="Añadir Empleado" class="text-light">
+              <i class="bi bi-person-plus"></i>
+           </a>
+        </div>
+      </div>
+
+    <!-- Tabla de usuarios -->
+    <div class="table-responsive">
+        <table id="userTable" class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Membresía</th>
+                    <th>Tipo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-success' if user.admin else 'badge-danger' }}">
+                            {% if current_user.id == 1 and not user.admin %}
+                                Empleado + {{ user['creator_name'] if user['creator_name'] else 'Sin Admin' }}
+                            {% else %}
+                                {{ 'Admin' if user.admin else 'Empleado' }}
+                            {% endif %}
+                        </span>                              
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.phone }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-success' if user.email_confirmed else 'badge-danger' }}">
+                            {{ 'Enable' if user.email_confirmed else 'Disable' }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if user.membership_expiration %}
+                            {{ user.membership_expiration.strftime('%Y-%m-%d') }}
+                        {% else %}
+                            Sin Membresía
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.membership_id %}
+                            {{ user.membership_id }}  <!-- Mostrar el nombre de la membresía -->
+                        {% else %}
+                            Sin Membresía
+                        {% endif %}
+                    </td>                    
+                    <td>
+                        <a href="#" class="edit-user"
+                                data-id="{{ user.id }}"
+                                data-name="{{ user.name }}"
+                                data-email="{{ user.email }}"
+                                data-phone="{{ user.phone }}"
+                                data-membership-expiration="{{ user.membership_expiration }}"
+                                data-membership-id="{{ memberships.membership_id }}">
+                        <i class="bi bi-pencil-square text-success"></i>   
+                        </a>
+                        <a href="{{ url_for('admin.delete_user', id=user.id) }}" onclick="return confirm('¿Estás seguro de que deseas eliminar al usuario {{ user.name }}?');"><i class="bi bi-trash3 text-danger"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de gestión de usuarios -->
+<div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="userForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userModalLabel">Editar Usuario</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="userId" name="user_id">
+                    <div class="form-group">
+                        <label for="userName">Nombre</label>
+                        <input type="text" class="form-control" id="userName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">Email</label>
+                        <input type="email" class="form-control" id="userEmail" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPhone">Teléfono</label>
+                        <input type="text" class="form-control" id="userPhone" name="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPassword">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="userPassword" name="password" placeholder="Ingrese nueva contraseña">
+                    </div>
+                    {% if current_user.id == 1 %}
+                    <div class="form-group">
+                        <label for="membershipExpiration">Fecha de Vencimiento de Membresía</label>
+                        <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="membership">Tipo de Membresía</label>
+                        <select class="form-control" name="membership_id" id="membership">
+                            {% for membership in memberships %}
+                                <option value="{{ membership.id }}" {% if membership.id == user.membership_id %} selected {% endif %}>
+                                    {{ membership.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>                    
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        const table = $('#userTable').DataTable({
+            "lengthMenu": [5, 10, 25, 50],
+            "ordering": true,
+            "searching": true,
+            "paging": true,
+            "info": true,
+            "columnDefs": [
+                {
+                    "targets": 0, // Índice de la columna "Order ID"
+                    "visible": false, // Oculta la columna
+                    "searchable": false // También evita que sea buscable
+                }
+            ]
+        });
+    
+        // Mostrar datos del usuario en el modal
+        $(document).on('click', '.edit-user', function () {
+            const userId = $(this).data('id');
+            const userName = $(this).data('name');
+            const userEmail = $(this).data('email');
+            const userPhone = $(this).data('phone'); 
+            const userPassword = $(this).data('password'); 
+            const membershipExpiration = $(this).data('membership-expiration');
+            const Tipomembership = $(this).data('membership'); 
+    
+            $('#userId').val(userId);
+            $('#userName').val(userName);
+            $('#userEmail').val(userEmail);
+            $('#userPhone').val(userPhone);
+            $('#userPassword').val(Tipomembership);
+            $('#membership').val(userPassword);
+    
+            // Rellenar la fecha de vencimiento de la membresía en el campo de fecha
+            if (membershipExpiration) {
+                // Asegurarse de que la fecha está en el formato correcto YYYY-MM-DD
+                const formattedDate = new Date(membershipExpiration).toISOString().split('T')[0];
+                $('#membershipExpiration').val(formattedDate);
+            } else {
+                $('#membershipExpiration').val('');
+            }
+    
+            $('#userModal').modal('show');
+        });
+    
+    
+        // Manejar el envío del formulario
+        $('#userForm').on('submit', function (e) {
+        e.preventDefault();
+
+    const userId = $('#userId').val();
+    const membershipId = $('#membership').val();  // Obtener el ID de la membresía seleccionada
+    const membershipExpiration = $('#membershipExpiration').val(); // Obtener la fecha seleccionada
+
+    const formData = {
+        userId: userId,
+        membership_id: membershipId, // Incluir el ID de la membresía
+        membership_expiration: membershipExpiration,  // Enviar la fecha seleccionada
+        userName: $('#userName').val(),
+        userEmail: $('#userEmail').val(),
+        userPhone: $('#userPhone').val(),
+        userPassword: $('#userPassword').val(),
+    };
+
+    $.ajax({
+        url: `/admin/update_user/${userId}`,
+        type: 'POST',
+        data: formData,
+        success: function (response) {
+            if (response.success) {
+                alert(response.message);
+                $('#userModal').modal('hide');
+                location.reload();
+            } else {
+                alert(response.message);
+            }
+        },
+        error: function () {
+            alert('Hubo un error al actualizar el usuario.');
+        }
+      });
+    });
+
+    });
+    
+    </script>
+
+{% endblock %}
+
+
+//Funciones en el backend//
+@admin.route('/configuracion', methods=['GET'])
+def configuracion():
+    # Crear un alias para referenciar al administrador (creador)
+    admin_alias = aliased(User)
+
+    # Consultar todas las membresías disponibles
+    memberships = Membership.query.all()
+
+    # Verificar si el usuario actual es el superadmin
+    if current_user.id == 1:  # Supongamos que el superadmin tiene ID 1
+        # Si es superadmin, mostrar todos los usuarios
+        users = db.session.query(
+            User,  # El usuario actual
+            admin_alias.name.label('creator_name')  # Nombre del creador
+        ).outerjoin(
+            admin_alias, User.created_by == admin_alias.id  # Relacionar creado_por con ID del administrador
+        ).all()
+    else:
+        # Si es un administrador normal, mostrar solo sus empleados
+        users = db.session.query(
+            User,
+            admin_alias.name.label('creator_name')
+        ).outerjoin(
+            admin_alias, User.created_by == admin_alias.id
+        ).filter(
+            User.created_by == current_user.id  # Filtrar solo usuarios creados por el administrador actual
+        ).all()
+
+    # Formatear datos para la plantilla
+    user_data = [
+        {
+            'id': user.id,
+            'name': user.name,
+            'email': user.email,
+            'admin': user.admin,
+            'phone': user.phone,
+            'password': user.password,
+            'email_confirmed': user.email_confirmed,
+            'created_by': user.created_by,
+            'registration_date': user.registration_date,
+            'membership_expiration': user.membership_expiration,
+            'membership_id': user.membership_id,  # Para que se seleccione la membresía en el modal
+            'creator_name': creator_name if creator_name else 'Sin Admin'
+        }
+        for user, creator_name in users
+    ]
+    
+    # Renderizar plantilla
+    return render_template('admin/configuracion.html', users=user_data, memberships=memberships, user=current_user)
+
+
+@admin.route('/update_user/<int:user_id>', methods=['POST', 'GET'])
+def update_user(user_id):
+    try:
+        # Obtener el ID de la membresía desde el formulario
+        membership_id = request.form.get('membership_id')
+
+        # Verificar si la membresía es válida
+        if membership_id:
+            membership = Membership.query.get(membership_id)
+            if not membership:
+                flash("Membresía no válida.", "error")
+                return redirect(url_for('admin.configuracion'))
+        else:
+            flash("Debe seleccionar una membresía.", "error")
+            return redirect(url_for('admin.configuracion'))
+
+        # Obtener los demás datos del formulario
+        user_name = request.form.get('userName')
+        user_email = request.form.get('userEmail')
+        user_phone = request.form.get('userPhone')
+        password = request.form.get('userPassword')  # Nueva contraseña (opcional)
+
+        # Buscar al usuario en la base de datos
+        user = User.query.get(user_id)
+        if not user:
+            flash(f"¡Usuario no encontrado.", "error")
+
+        # Verificar permisos según el tipo de usuario actual
+        if current_user.id == 1:  # Superadministrador
+            user.name = user_name
+            user.email = user_email
+            user.phone = user_phone
+            user.membership_id = membership_id  # Asignar la nueva membresía
+            user.email_confirmed = request.form.get('email_confirmed', 1)
+
+            # Actualizar contraseña si se proporciona
+            if password:
+                user.password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
+
+            # Actualizar la fecha de vencimiento de los empleados del administrador
+            if user.admin:
+                User.query.filter(User.created_by == user.id).update(
+                    {'membership_id': membership_id, 'membership_expiration': membership.max_items, 'email_confirmed': 1}
+                )
+
+        else:  # Administradores normales
+            if current_user.admin and user.created_by == current_user.id:
+                user.name = user_name
+                user.email = user_email
+                user.phone = user_phone
+
+                # Actualizar contraseña si se proporciona
+                if password:
+                    user.password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
+            else:
+                flash(f"¡No tienes permisos para actualizar este usuario.", "error")
+                return jsonify({'success': False, 'message': ''}), 403
+
+        # Guardar los cambios en la base de datos
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Usuario actualizado exitosamente.'})
+    
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f'Error al actualizar usuario: {str(e)}', exc_info=True)
+        return jsonify({'success': False, 'message': 'Error interno al actualizar el usuario.', 'details': str(e)}), 500
+        
+************************************************// Ocultar membership = SelectField  // ***********************************************
+        
+        Tengo un form.py con este codigo donde esta el formulario de registro pero tengo dos enpoint de registro uno /register y /whatsapp en el /register debe salir el membership = SelectField desabilitado y con el valor igual que del administrador que lo esta creando es decir si su creador tiene membresia basic el empleado que se esta creando tendra ese campo con basic pero desabled porque solo el superadmin puede cambiar ese valor desde su panel de gestion de usuarios que ese es otro tema que ya funciona.
+        
+        from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField, SelectField
+from wtforms.validators import DataRequired, Email, Length, EqualTo, Regexp
+
+
+class LoginForm(FlaskForm):
+	email = StringField("Email", validators=[DataRequired()])
+	password = PasswordField("Contraseña", validators=[DataRequired()])
+	submit = SubmitField("Acceder")
+
+class RegisterForm(FlaskForm):
+    name = StringField("Nombre:", validators=[DataRequired(), Length(max=50)])
+    phone = StringField("Movil:", validators=[DataRequired(), Length(max=30)])
+    membership = SelectField("Membresía:", choices=[('trial', 'Prueba'), ('basic', 'Básica'), ('premium', 'Profesional')], validators=[DataRequired()])
+    email = StringField("Email:", validators=[DataRequired(), Email()])
+    password = PasswordField("Contraseña:", validators=[DataRequired(), Regexp("^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$", message='La contraseña debe tener 8 caracteres y debe contener letras, números y símbolos.')])
+    confirm = PasswordField("Confirma la Contraseña:", validators=[EqualTo('password', message='Las contraseñas deben coincidir')])
+    submit = SubmitField("Registro")  
+    
+    //enpoint de registro uno /register //
+    @app.route("/register", methods=['POST', 'GET'])  # Registrar Empleados
+def register():
+    if current_user.admin != 1:
+        flash('No tienes permisos para crear empleados.', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    # Obtén el tipo de membresía del administrador (creador)
+    membership = current_user.membership
+    numEmpleados = User.query.filter_by(created_by=current_user.id).count()
+
+    if numEmpleados >= membership.max_employees:
+        flash(f"Solo puedes tener {membership.max_employees} empleados.", 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    form = RegisterForm()
+
+    # Asigna el 'id' de la membresía del administrador al campo oculto 'membership_hidden'
+    form.membership_hidden.data = membership.id  # Usamos solo el 'id' de la membresía del admin
+
+    if form.validate_on_submit():
+        # Verificar si el correo ya existe
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
+            return redirect(url_for('register'))
+
+        # Crear el nuevo usuario con la membresía del administrador (usando el 'id' de la membresía)
+        new_user = User(
+            name=form.name.data,
+            email=form.email.data,
+            password=generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8),
+            admin=0,  # Usuario normal
+            email_confirmed=1,  # Activo automáticamente
+            created_by=current_user.id,
+            phone=form.phone.data,
+            membership_id=form.membership_hidden.data,  # Guardamos el 'id' de la membresía
+            membership_expiration=current_user.membership_expiration  # Vence con el administrador
+        )
+
+        # Guardar el nuevo usuario en la base de datos
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('Empleado creado exitosamente.', 'success')
+        return redirect(url_for('admin.dashboard'))
+
+    return render_template("register.html", form=form)
