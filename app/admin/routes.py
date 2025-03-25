@@ -39,6 +39,17 @@ def update_order_status(id):
         flash("¡Estado no válido!", 'error')
     return redirect(url_for('admin.dashboard'))
 
+def create_user_folder(user_id):
+    """ Crea una carpeta para el usuario dentro de app/static/upload/ """
+    user_folder = f'app/static/upload/{user_id}'
+    absolute_folder = os.path.join(os.getcwd(), user_folder)
+    
+    if not os.path.exists(absolute_folder):
+        os.makedirs(absolute_folder)
+        print(f"Carpeta creada: {absolute_folder}")
+    
+    return user_folder    
+
 @admin.route('/items')
 @admin_only
 def items():
@@ -64,26 +75,16 @@ def statictics():
 
 def create_user_folder(user_id):
     """
-    Crea una carpeta específica para un usuario basado en su ID si no existe.
-    
-    Args:
-        user_id (int): ID del usuario para el cual se creará la carpeta.
-    
-    Returns:
-        str: Ruta relativa de la carpeta creada o existente.
+    Crea una carpeta específica para un usuario dentro de 'app/static/uploads'
     """
-    # Ruta relativa basada en el ID del usuario
-    user_folder = f'static/uploads/{user_id}'
-    
-    # Ruta absoluta para verificar y crear la carpeta
+    user_folder = f'app/static/uploads/{user_id}'
     absolute_folder = os.path.join(os.getcwd(), user_folder)
-    
-    # Crear la carpeta si no existe
+
     if not os.path.exists(absolute_folder):
-        os.makedirs(absolute_folder)  # Crear la carpeta y subcarpetas necesarias
+        os.makedirs(absolute_folder)
         print(f"Carpeta creada: {absolute_folder}")
-    
-    return user_folder  # Retorna la ruta relativa para su uso
+
+    return user_folder  # Devuelve la ruta relativa correcta
 
 @admin.route('/add', methods=['POST', 'GET'])
 @login_required
@@ -97,30 +98,25 @@ def add():
         return redirect(url_for('admin.dashboard'))
 
     form = AddItemForm()
+
     if form.validate_on_submit():
-        # Obtener el archivo de la imagen
+        user_folder = f'static/uploads/{current_user.id}'
+        os.makedirs(f'app/{user_folder}', exist_ok=True)  # Crear carpeta si no existe
+
         image_file = form.image.data
-
-        # Crear la carpeta específica para el usuario administrador si no existe
-        user_folder = create_user_folder(current_user.id)  # Llamada a la función
-
         if image_file:
-            # Asegurarse de que el nombre del archivo sea seguro
             filename = secure_filename(image_file.filename)
-            file_path = os.path.join(user_folder, filename)  # Ruta relativa dentro de la carpeta del usuario
-
-            # Guardar la imagen en la carpeta del usuario
-            image_file.save(os.path.join(os.getcwd(), file_path))  # Ruta absoluta para guardar la imagen
+            file_path = os.path.join(user_folder, filename)  # Ruta dentro de static/
+            image_file.save(os.path.join('app', file_path))  # Guardar la imagen en app/static/uploads/
         else:
-            # Si no se carga ninguna imagen, asignar una por defecto
-            file_path = 'static/uploads/default.png'
+            file_path = 'static/uploads/default.png'  # Imagen por defecto
 
-        # Crear un nuevo artículo
+        # Crear nuevo item con la ruta de la imagen
         new_item = Item(
             name=form.name.data,
             price=form.price.data,
             category=form.category.data,
-            image=f'/{file_path}',  # Guardar la ruta relativa en la base de datos
+            image=f'/{file_path}',  # Guardar en la base de datos con formato correcto
             details=form.details.data,
             costo=form.costo.data,
             stock=form.stock.data,
@@ -137,9 +133,8 @@ def add():
             flash(f"Error al agregar el artículo: {str(e)}", "error")
 
         return redirect(url_for('admin.items'))
-    
-    return render_template('admin/add.html', form=form)
 
+    return render_template('admin/add.html', form=form)
 
 @admin.route('/edit/item/<int:id>', methods=['POST', 'GET'])
 @login_required
@@ -166,14 +161,16 @@ def edit(id):
         item.costo = form.costo.data
         item.stock = form.stock.data
 
-        # Manejar la imagen
         if form.image.data:
             image_file = form.image.data
             filename = secure_filename(image_file.filename)
-            file_path = f'static/uploads/{current_user.id}/{filename}'
-            os.makedirs(os.path.dirname(f'app/{file_path}'), exist_ok=True)
-            image_file.save(f'app/{file_path}')
-            item.image = f'/{file_path}'
+            user_folder = f'app/static/uploads/{current_user.id}'
+            os.makedirs(user_folder, exist_ok=True)  # Crear carpeta si no existe
+            file_path = os.path.join(user_folder, filename)
+            image_file.save(file_path)
+
+            # Ajustar la ruta para que sea accesible en la web
+            item.image = f'/static/uploads/{current_user.id}/{filename}'
 
         try:
             db.session.commit()
@@ -181,6 +178,7 @@ def edit(id):
         except Exception as e:
             db.session.rollback()
             flash(f"Error al actualizar el artículo: {str(e)}", "error")
+
         return redirect(url_for('admin.items'))
 
     return render_template('admin/add.html', form=form, current_image=item.image)
