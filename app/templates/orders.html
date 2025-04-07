@@ -33,6 +33,7 @@
                 <th>Ordenes items</th>
                 <th>Total a Pagar</th>
                 <th>Orden estatus</th>
+                <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -65,6 +66,12 @@
                         {{ order.status }}
                     {% endif %}
                 </td>
+                <td>
+                    <a href="{{ url_for('export_order', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary" title="Exportar PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </a>
+                </td>
+                
             </tr>
             {% endif %}
             {% endfor %}

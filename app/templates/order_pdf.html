@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Orden #{{ order.id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #888; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h2>Orden #{{ order.id }}</h2>
+    <p><strong>Fecha:</strong> {{ order.date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    <p><strong>Estatus:</strong> {{ order.status }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Precio Unitario</th>
+                <th>Cantidad</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set total = 0 %}
+            {% for item in order.items %}
+                {% set subtotal = item.item.price * item.quantity %}
+                {% set total = total + subtotal %}
+                <tr>
+                    <td>{{ item.item.name }}</td>
+                    <td>{{ item.item.price }} CUP</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ subtotal }} CUP</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Total a Pagar: {{ total }} CUP</h3>
+</body>
+</html>

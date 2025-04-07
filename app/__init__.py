@@ -2,7 +2,7 @@ import os, stripe, json
 from datetime import datetime, timedelta, timezone
 from flask_wtf import FlaskForm
 from flask_sqlalchemy import SQLAlchemy
-from flask import Flask, session, render_template, redirect, url_for, flash, request, abort, Response
+from flask import Flask, session, render_template, redirect, url_for, flash, request, abort, Response, make_response
 from flask_bootstrap import Bootstrap
 from .forms import LoginForm, RegisterForm
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -15,6 +15,8 @@ from .admin.routes import admin
 from flask_apscheduler import APScheduler 
 from markupsafe import Markup
 from flask import current_app, json
+from weasyprint import HTML
+from io import BytesIO
 
 load_dotenv()
 app = Flask(__name__)
@@ -144,6 +146,20 @@ def add_no_cache_headers(response):
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "-1"
+    return response
+
+@app.route("/export_order/<int:order_id>")
+def export_order(order_id):
+    order = Order.query.get_or_404(order_id)
+
+    html = render_template("order_pdf.html", order=order)
+    pdf_io = BytesIO()
+    HTML(string=html).write_pdf(pdf_io)
+    pdf_io.seek(0)
+
+    response = make_response(pdf_io.read())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=orden_{order.id}.pdf'
     return response
 
 @app.route("/")

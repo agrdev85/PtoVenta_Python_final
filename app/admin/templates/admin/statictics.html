@@ -420,67 +420,80 @@ Admin Dashboard - TIENDA-shop
                     }
                 }
             });
+      
+    // Función para actualizar los gráficos de productos más vendidos y total de ventas
+    function updateSalesCharts() {
+    var productSales = {}; // Ventas totales por producto
+    var productQuantities = {}; // Cantidad de ventas por producto
+    var productCosts = {}; // Costos totales por producto
+    var totalSales = {
+        'Pagado': 0,
+        'Libre': 0,
+        'Reservado': 0
+    };
 
-            // Función para actualizar los gráficos de productos más vendidos y total de ventas
-            function updateSalesCharts() {
-                var productSales = {}; // Ventas totales por producto
-                var productQuantities = {}; // Cantidad de ventas por producto
-                var totalSales = {
-                    'Pagado': 0,
-                    'Libre': 0,
-                    'Reservado': 0
-                };
+    // Variables para calcular Por Cobrar y Ganancia Neta
+    let totalPorCobrar = 0; // Sumatoria de Total to Pay con estado Reservado
+    let gananciaBruta = 0;   // Sumatoria de Total to Pay con estados Pagado y Libre
+    let costosTotales = 0;   // Sumatoria de los costos de los productos vendidos
+    let gananciaNeta = 0;    // Ganancia Bruta - Costos Totales
 
-                // Variables para calcular Por Cobrar y Ganancia Neta
-                let totalPorCobrar = 0; // Sumatoria de Total to Pay con estado Reservado
-                let gananciaNeta = 0;   // Sumatoria de Total to Pay con estados Pagado y Libre
+    table.rows({ search: 'applied' }).nodes().each(function (row) {
+        const status = row.getAttribute('data-order-status');
+        $(row).find('.my').each(function () {
+            const [productName, quantityAndPrice] = $(this).text().split('x');
+            const productQuantity = parseInt(quantityAndPrice.split('-')[0]); // Cantidad vendida
+            const itemTotal = parseFloat($(this).attr('data-item-total'));
+            
+            // Obtener el costo del producto de la tabla de productos
+            const productRow = $('#products-table').find('td:contains("' + productName.trim() + '")').closest('tr');
+            const productCost = parseFloat(productRow.find('td:nth-child(3)').text()) || 0;
+            const itemCost = productCost * productQuantity;
 
-                table.rows({ search: 'applied' }).nodes().each(function (row) {
-                    const status = row.getAttribute('data-order-status');
-                    $(row).find('.my').each(function () {
-                        const [productName, quantityAndPrice] = $(this).text().split('x');
-                        const productQuantity = parseInt(quantityAndPrice.split('-')[0]); // Cantidad vendida
-                        const itemTotal = parseFloat($(this).attr('data-item-total'));
-
-                        // Sumar las ventas y cantidades de productos
-                        if (productName.trim() in productSales) {
-                            productSales[productName.trim()] += itemTotal;
-                            productQuantities[productName.trim()] += productQuantity;
-                        } else {
-                            productSales[productName.trim()] = itemTotal;
-                            productQuantities[productName.trim()] = productQuantity;
-                        }
-
-                        // Sumar al total según el estado de la orden
-                        if (status === 'Pagado' || status === 'Libre' || status === 'Reservado') {
-                            totalSales[status] += itemTotal;
-                        }
-
-                        // Calcular Por Cobrar y Ganancia Neta según el estado
-                        if (status === 'Reservado') {
-                            totalPorCobrar += itemTotal;
-                        } else if (status === 'Pagado' || status === 'Libre') {
-                            gananciaNeta += itemTotal;
-                        }
-
-                    });
-                });
-
-                // Actualizar el gráfico de productos más vendidos
-                topProductsChart.data.labels = Object.keys(productSales);
-                topProductsChart.data.datasets[0].data = Object.values(productQuantities);
-                topProductsChart.data.datasets[0].totalAmounts = Object.values(productSales); // Almacena los montos totales para los tooltips
-                topProductsChart.update();
-
-                // Actualizar el gráfico de total de ventas por estado
-                totalSalesChart.data.labels = Object.keys(totalSales);
-                totalSalesChart.data.datasets[0].data = Object.values(totalSales);
-                totalSalesChart.update();
-
-                // Actualizar los montos mostrados en los spans correspondientes
-                document.getElementById('total-por-cobrar').textContent = `$${totalPorCobrar.toFixed(2)}`;
-                document.getElementById('ganancia-neta').textContent = `$${gananciaNeta.toFixed(2)}`;
+            // Sumar las ventas, cantidades y costos de productos
+            if (productName.trim() in productSales) {
+                productSales[productName.trim()] += itemTotal;
+                productQuantities[productName.trim()] += productQuantity;
+                productCosts[productName.trim()] += itemCost;
+            } else {
+                productSales[productName.trim()] = itemTotal;
+                productQuantities[productName.trim()] = productQuantity;
+                productCosts[productName.trim()] = itemCost;
             }
+
+            // Sumar al total según el estado de la orden
+            if (status === 'Pagado' || status === 'Libre' || status === 'Reservado') {
+                totalSales[status] += itemTotal;
+            }
+
+            // Calcular Por Cobrar y Ganancia Bruta según el estado
+            if (status === 'Reservado') {
+                totalPorCobrar += itemTotal;
+            } else if (status === 'Pagado' || status === 'Libre') {
+                gananciaBruta += itemTotal;
+                costosTotales += itemCost;
+            }
+        });
+    });
+
+    // Calcular ganancia neta
+    gananciaNeta = gananciaBruta - costosTotales;
+
+    // Actualizar el gráfico de productos más vendidos
+    topProductsChart.data.labels = Object.keys(productSales);
+    topProductsChart.data.datasets[0].data = Object.values(productQuantities);
+    topProductsChart.data.datasets[0].totalAmounts = Object.values(productSales);
+    topProductsChart.update();
+
+    // Actualizar el gráfico de total de ventas por estado
+    totalSalesChart.data.labels = Object.keys(totalSales);
+    totalSalesChart.data.datasets[0].data = Object.values(totalSales);
+    totalSalesChart.update();
+
+    // Actualizar los montos mostrados en los spans correspondientes
+    document.getElementById('total-por-cobrar').textContent = `$${totalPorCobrar.toFixed(2)}`;
+    document.getElementById('ganancia-neta').textContent = `$${gananciaNeta.toFixed(2)}`;
+}
 
             // Actualizar los gráficos al cargar la página y después de cada filtrado
             updateChartData();
