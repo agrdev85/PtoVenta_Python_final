@@ -2,44 +2,89 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Orden #{{ order.id }}</title>
+    <title>Factura No: {{ order.id }}</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        h2 { color: #333; }
+        body { font-family: Arial, sans-serif; font-size: 14px; }
+        .center { text-align: center; }
+        .right { text-align: right; }
+        .bold { font-weight: bold; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #888; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
+        .divider { border-top: 1px solid #000; margin: 10px 0; }
+        .header-logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .header-logo img {
+            max-height: 80px;
+        }
     </style>
 </head>
 <body>
-    <h2>Orden #{{ order.id }}</h2>
-    <p><strong>Fecha:</strong> {{ order.date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-    <p><strong>Estatus:</strong> {{ order.status }}</p>
 
+    <!-- Encabezado con logo -->
+    <div class="header-logo">
+        <!-- <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Logo"> -->
+        <div>
+            <h2>{{ nombre_negocio }}</h2>
+            <p><strong>NIT:</strong> {{ nit }}</p>
+            <p><strong>Dirección:</strong> {{ direccion_negocio }}</p>
+            <p><strong>Tel:</strong> {{ telefono }} | <strong>Email:</strong> {{ email }}</p>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Datos del cliente y factura -->
+    <p><strong>Factura No:</strong> {{ "%06d"|format(order.id) }} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Fecha:</strong> {{ order.date.strftime('%Y-%m-%d') }}</p>
+    <p><strong>Cliente:</strong> {{ cliente }}</p>
+    <p><strong>CI:</strong> {{ ci }}</p>
+    <p><strong>Dirección del Cliente:</strong> {{ direccion_cliente }}</p>
+
+    <div class="divider"></div>
+
+    <!-- Detalles de los productos -->
     <table>
         <thead>
             <tr>
-                <th>Producto</th>
+                <th>Descripción</th>
+                <th>Cant.</th>
                 <th>Precio Unitario</th>
-                <th>Cantidad</th>
                 <th>Total</th>
             </tr>
         </thead>
         <tbody>
-            {% set total = 0 %}
+            {% set subtotales = [] %}
             {% for item in order.items %}
-                {% set subtotal = item.item.price * item.quantity %}
-                {% set total = total + subtotal %}
-                <tr>
-                    <td>{{ item.item.name }}</td>
-                    <td>{{ item.item.price }} CUP</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ subtotal }} CUP</td>
-                </tr>
+            {% set subtotal = item.item.price * item.quantity %}
+            {% do subtotales.append(subtotal) %}
+            <tr>
+                <td>{{ item.item.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ "%.2f"|format(item.item.price) }}</td>
+                <td>{{ "%.2f"|format(subtotal) }}</td>
+            </tr>
             {% endfor %}
+            {% set total = subtotales|sum %}
+
         </tbody>
     </table>
 
-    <h3>Total a Pagar: {{ total }} CUP</h3>
+    <!-- Totales -->
+    <p class="right"><strong>SUBTOTAL:</strong> {{ "%.2f"|format(total) }}</p>
+    <h3 class="right">TOTAL A PAGAR: {{ "%.2f"|format(total) }} CUP</h3>
+
+    <!-- Emisión -->
+    <p><strong>Emitido por:</strong> {{ emitido_por }}</p>
+    <p><strong>Firma:</strong> ___________________</p>
+
+    <div class="center">
+        <p>Gracias por confiar en nosotros.</p>
+    </div>
+
 </body>
 </html>

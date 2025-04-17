@@ -259,3 +259,6 @@ input[type="number"] {
 	color: #2ecc71;
 	/* Verde */
 }
+.alert {
+	transition: opacity 0.5s ease !important;
+}

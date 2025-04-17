@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 
 {% block title %}
-Admin items - TIENDA-shop
+Admin items - CuBaro
 {% endblock %}
 
 <script src="https://js.stripe.com/v3/"></script>
@@ -17,21 +17,25 @@ Admin items - TIENDA-shop
 	{% endfor %}
 	{% endwith %}
 
-	{% if session.alerts %}
-        <div class="alert-container">
-            {% for alert in session.alerts %}
-                {% if alert.created_by == current_user.id %}
-                    <div class="alert alert-warning">
-                        ALERTA: El ítem '{{ alert.item_name }}' tiene un stock de {{ alert.stock }}, que es menor o igual al stock mínimo de {{ alert.stock_min }}.
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="alert alert-info">
-            No hay alertas de stock en este momento.
-        </div>
-    {% endif %}
+	{% if alerts %}
+    <div class="alert-container">
+        {% for alert in alerts %}
+            <div class="alert alert-{{ alert.category }}" id="alert-{{ alert.id }}">
+                {{ alert.message }}
+                <small class="text-muted" style="font-size: 0.8em;">({{ alert.created_at.strftime('%Y-%m-%d %H:%M') }})</small>
+            </div>
+			<script>
+				setTimeout(function () {
+					closeAlertSmoothly({{ alert.id }});
+				}, 10000); // 10 segundos
+			</script>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        No hay alertas de stock en este momento.
+    </div>
+{% endif %}
 
 	{% if not items %}
 	<div class="flash-error">No hay Items.</div>
@@ -101,6 +105,16 @@ Admin items - TIENDA-shop
            ]
 				});
 			});
+
+		  function closeAlertSmoothly(id) {
+            const el = document.getElementById('alert-' + id);
+            if (el) {
+            el.style.transition = 'opacity 0.5s ease';
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 500); // Espera medio segundo y elimina
+             }
+          }
+
 		</script>
 		{% endif %}
 

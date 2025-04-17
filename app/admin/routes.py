@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, render_template, session, url_for, flash, request
 from flask_login import current_user, login_required
 from werkzeug.utils import redirect, secure_filename
-from ..db_models import Membership, Order, Ordered_item, Item, db, User
+from ..db_models import Alert, Membership, Order, Ordered_item, Item, db, User
 from ..admin.forms import AddItemForm, OrderEditForm
 from ..funcs import admin_only
 import logging
@@ -12,14 +12,32 @@ from datetime import datetime, timedelta, timezone
 
 admin = Blueprint("admin", __name__, url_prefix="/admin", static_folder="static", template_folder="templates")
 
+def eliminar_alerta_si_corresponde(item):
+    """
+    Elimina la alerta si el stock actual supera el stock mínimo.
+    """
+    mensaje_inicio = f"ALERTA: El producto '{item.name}'"
+    alerta = Alert.query.filter(
+        Alert.user_id == item.created_by,
+        Alert.message.like(f"{mensaje_inicio}%")
+    ).first()
+
+    if alerta:
+        # Si la alerta ya no es necesaria (el stock ha superado el mínimo), la eliminamos
+        if item.stock > item.stock_min:
+            db.session.delete(alerta)
+            db.session.commit()
+
 @admin.route('/')
 @admin_only
 def dashboard():
+    # Obtener las alertas de la sesión
+    alerts = Alert.query.filter_by(user_id=current_user.id).order_by(Alert.created_at.desc()).all()
     # Obtener las órdenes relacionadas con el administrador actual o sus empleados
     orders = Order.query.join(User, Order.uid == User.id).filter((User.id == current_user.id) | (User.created_by == current_user.id)
     ).all()
 
-    return render_template("admin/home.html", orders=orders)
+    return render_template("admin/home.html", orders=orders, alerts=alerts)
 
 @admin.route('/update_order_status/<int:id>', methods=['POST'])
 @admin_only
@@ -54,7 +72,7 @@ def create_user_folder(user_id):
 @admin_only
 def items():
     # Obtener las alertas de la sesión
-    alerts = session.pop('alerts', [])
+    alerts = Alert.query.filter_by(user_id=current_user.id).order_by(Alert.created_at.desc()).all()
     # Filtrar productos creados por el administrador actual o sus empleados
     items = Item.query.join(User, Item.created_by == User.id).filter(
         (User.id == current_user.id) | (User.created_by == current_user.id)
@@ -165,12 +183,21 @@ def edit(id):
             image_file = form.image.data
             filename = secure_filename(image_file.filename)
             user_folder = f'app/static/uploads/{current_user.id}'
-            os.makedirs(user_folder, exist_ok=True)  # Crear carpeta si no existe
+            os.makedirs(user_folder, exist_ok=True)
             file_path = os.path.join(user_folder, filename)
             image_file.save(file_path)
-
-            # Ajustar la ruta para que sea accesible en la web
             item.image = f'/static/uploads/{current_user.id}/{filename}'
+
+        # 🧠 Verifica si ya no se necesita una alerta
+        alerta = None  # Asegura que esté inicializada
+        if item.stock > item.stock_min:
+            message_start = f"ALERTA: El producto '{item.name}'"
+            alerta = Alert.query.filter(
+                Alert.user_id == item.created_by,
+                Alert.message.like(f"{message_start}%")
+            ).first()
+            if alerta:
+                db.session.delete(alerta)
 
         try:
             db.session.commit()
@@ -221,6 +248,8 @@ def delete_order(id):
             item = Item.query.get(ordered_item.itemid)
             if item:
                 item.stock += ordered_item.quantity
+                eliminar_alerta_si_corresponde(item)
+
 
         # Eliminar los ítems asociados a la orden
         Ordered_item.query.filter_by(oid=id).delete()
@@ -249,13 +278,13 @@ def update_order_status_to_free():
     if orders_to_update:
         for order in orders_to_update:
             order.status = 'Libre'
-            db.session.commit()
-
+        
+        db.session.commit()
         flash("El estado del pedido cambió exitosamente a Libre.", "success")
-        return redirect(url_for('admin.dashboard'))
     else:
         flash("No hay pedidos para actualizar", "info")
-        return redirect(url_for('admin.dashboard'))
+
+    return redirect(url_for('admin.dashboard'))
     
 
 @admin.route('/configuracion', methods=['GET'])

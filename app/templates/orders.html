@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Orders - TIENDA-shop
+    Orders - CuBaro
 {% endblock %}
 <script src="https://js.stripe.com/v3/"></script>
 {% block content %}
@@ -67,10 +67,12 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a href="{{ url_for('export_order', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary" title="Exportar PDF">
-                        <i class="fas fa-file-pdf"></i>
-                    </a>
+                    <!-- Icono para exportar PDF -->
+                    <a href="#" class="factura-link" data-order-id="{{ order.id }}">
+                        <i class="bi bi-file-earmark-pdf" style="color: #dc3545; font-size: 1.5em;"></i>Factura
+                    </a>                    
                 </td>
+                
                 
             </tr>
             {% endif %}
@@ -117,7 +119,74 @@
 
             // Mostrar el total reservado
             document.getElementById('total-reservado').textContent = `${totalReservado.toFixed(0)} CUP`;
+
+         
         });
+         
+        //Generar PDF
+        document.querySelectorAll('.factura-link').forEach(link => {
+                link.addEventListener('click', async function (e) {
+                    e.preventDefault();
+                    const orderId = this.getAttribute('data-order-id');
+
+                    const { value: formValues } = await Swal.fire({
+                        title: 'Datos de la Factura',
+                        html:
+                            `<input id="swal-cliente" class="swal2-input" placeholder="Nombre del Cliente">
+                 <input id="swal-ci" class="swal2-input" placeholder="CI">
+                 <input id="swal-direccion" class="swal2-input" placeholder="Dirección del Cliente">
+                 <input id="swal-emitido" class="swal2-input" placeholder="Emitido por">
+                 <input id="swal-nombre-negocio" class="swal2-input" placeholder="Nombre del Negocio (Ej: CuBaro)">
+                 <input id="swal-nit" class="swal2-input" placeholder="NIT (Ej: 12345678911)">
+                 <input id="swal-direccion-negocio" class="swal2-input" placeholder="Dirección del Negocio">
+                 <input id="swal-telefono" class="swal2-input" placeholder="Teléfono (Ej: +53 5 1234567)">
+                 <input id="swal-email" class="swal2-input" placeholder="Correo (Ej: info@mipyme.cu)">`,
+                        focusConfirm: false,
+                        showCancelButton: true,
+                        confirmButtonText: 'Generar PDF',
+                        preConfirm: () => {
+                            const cliente = document.getElementById('swal-cliente').value.trim();
+                            const ci = document.getElementById('swal-ci').value.trim();
+                            const direccion = document.getElementById('swal-direccion').value.trim();
+                            const emitido = document.getElementById('swal-emitido').value.trim();
+                            const nombreNegocio = document.getElementById('swal-nombre-negocio').value.trim();
+                            const nit = document.getElementById('swal-nit').value.trim();
+                            const direccionNegocio = document.getElementById('swal-direccion-negocio').value.trim();
+                            const telefono = document.getElementById('swal-telefono').value.trim();
+                            const email = document.getElementById('swal-email').value.trim();
+
+                            if (!cliente || !ci || !direccion || !emitido || !nombreNegocio || !nit || !direccionNegocio || !telefono || !email) {
+                                Swal.showValidationMessage('Por favor completa todos los campos');
+                                return false;
+                            }
+
+                            return {
+                                cliente, ci, direccion, emitido,
+                                nombreNegocio, nit, direccionNegocio, telefono, email
+                            };
+                        }
+                    });
+
+                    // Si el usuario no canceló y todos los campos son válidos
+                    if (formValues) {
+                        const params = new URLSearchParams({
+                            cliente: formValues.cliente,
+                            ci: formValues.ci,
+                            direccion_cliente: formValues.direccion,
+                            emitido_por: formValues.emitido,
+                            nombre_negocio: formValues.nombreNegocio,
+                            nit: formValues.nit,
+                            direccion_negocio: formValues.direccionNegocio,
+                            telefono: formValues.telefono,
+                            email: formValues.email
+                        }).toString();
+
+                        window.open(`/export_order/${orderId}?${params}`, '_blank');
+                    }
+                });
+            });
+
+   
     </script>
 
     {% endif %}

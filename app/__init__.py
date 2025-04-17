@@ -19,7 +19,7 @@ from weasyprint import HTML
 from io import BytesIO
 
 load_dotenv()
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 app.register_blueprint(admin)
 
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -67,25 +67,29 @@ def deactivate_expired_users():
     except Exception as e:
         app.logger.error(f"Error al desactivar usuarios con membresías vencidas: {e}")
 
-# Función para verificar el stock
+# Función para verificar el stock y actualizar alertas
 def check_stock():
     with app.app_context():
-        # Obtener todos los productos
         items = Item.query.all()
-        alert_messages = []
 
         for item in items:
-            if item.stock <= item.stock_min:
-                message = {
-                    'item_name': item.name,
-                    'stock': item.stock,
-                    'stock_min': item.stock_min,
-                    'created_by': item.created_by  # ID del usuario que creó el producto
-                }
-                alert_messages.append(message)
+            if item.stock_min is not None and item.stock <= item.stock_min:
+                # Eliminar cualquier alerta existente para este producto
+                Alert.query.filter(
+                    Alert.message.contains(f"'{item.name}'"),
+                    Alert.user_id == item.created_by
+                ).delete()
 
-        # Guardar los mensajes en la sesión para mostrarlos en la plantilla
-        session['alerts'] = alert_messages
+                # Crear una nueva alerta actualizada
+                message = f"ALERTA: El producto '{item.name}' tiene un stock de {item.stock}, que es menor o igual al stock mínimo de {item.stock_min}."
+                nueva_alerta = Alert(
+                    message=message,
+                    category='warning',
+                    user_id=item.created_by
+                )
+                db.session.add(nueva_alerta)
+
+        db.session.commit()
 
 def clean_old_alerts():
     with app.app_context():
@@ -152,11 +156,38 @@ def add_no_cache_headers(response):
 def export_order(order_id):
     order = Order.query.get_or_404(order_id)
 
-    html = render_template("order_pdf.html", order=order)
+    # Obtener datos enviados desde SweetAlert o un formulario
+    cliente = request.args.get("cliente", "Cliente Desconocido")
+    ci = request.args.get("ci", "N/A")
+    direccion_cliente = request.args.get("direccion_cliente", "No especificada")
+    emitido_por = request.args.get("emitido_por", "Sistema")
+    direccion_negocio = request.args.get("direccion_negocio", "No especificada")
+
+    # Nuevos datos dinámicos del negocio desde el formulario
+    nombre_negocio = request.args.get("nombre_negocio", "Mi Negocio")
+    nit = request.args.get("nit", "000000000")
+    telefono = request.args.get("telefono", "000-0000")
+    email = request.args.get("email", "sin-email@ejemplo.com")
+
+    # Renderizar HTML con los datos
+    html = render_template("order_pdf.html",
+                           order=order,
+                           cliente=cliente,
+                           ci=ci,
+                           direccion_cliente=direccion_cliente,
+                           emitido_por=emitido_por,
+                           direccion_negocio=direccion_negocio,
+                           nombre_negocio=nombre_negocio,
+                           nit=nit,
+                           telefono=telefono,
+                           email=email)
+
+    # Convertir HTML a PDF
     pdf_io = BytesIO()
     HTML(string=html).write_pdf(pdf_io)
     pdf_io.seek(0)
 
+    # Crear y devolver el PDF como respuesta
     response = make_response(pdf_io.read())
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'inline; filename=orden_{order.id}.pdf'

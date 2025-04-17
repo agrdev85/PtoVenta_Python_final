@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 
 {% block title %}
-Admin Dashboard - TIENDA-shop
+Admin Dashboard - CuBaro
 {% endblock %}
 
 <script src="https://js.stripe.com/v3/"></script>
@@ -18,6 +18,26 @@ Admin Dashboard - TIENDA-shop
         {{ msg }}</div><br>
     {% endfor %}
     {% endwith %}
+    
+    {% if alerts %}
+    <div class="alert-container">
+        {% for alert in alerts %}
+            <div class="alert alert-{{ alert.category }}" id="alert-{{ alert.id }}">
+                {{ alert.message }}
+                <small class="text-muted" style="font-size: 0.8em;">({{ alert.created_at.strftime('%Y-%m-%d %H:%M') }})</small>
+            </div>
+			<script>
+				setTimeout(function () {
+					closeAlertSmoothly({{ alert.id }});
+				}, 10000); // 10 segundos
+			</script>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        No hay alertas de stock en este momento.
+    </div>
+{% endif %}
 
     {% if not orders %}
     <div class="flash-error">No hay Ordenes.</div>
@@ -174,6 +194,17 @@ Admin Dashboard - TIENDA-shop
             // Llama a la función para verificar y actualizar las órdenes cada cierto tiempo
             setInterval(checkAndUpdateOrders, 60000); // Verifica cada minuto (60000 ms)
         });
+
+
+        function closeAlertSmoothly(id) {
+        const el = document.getElementById('alert-' + id);
+        if (el) {
+            el.style.transition = 'opacity 0.5s ease';
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 500); // Espera medio segundo y elimina
+        }
+    }
+
     </script>
 
     {% endif %}

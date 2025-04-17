@@ -6,7 +6,7 @@
   <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
+  <link rel="icon" href="{{ url_for('static', filename='img/logoo.png') }}">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
     integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <!-- Incluye DataTables CSS y JS -->
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <!-- Incluir jQuery 3.6.0 desde CDN -->
   <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
@@ -36,7 +37,7 @@
 
   <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
     <a class="navbar-brand" href="{{ url_for('home') }}" data-toggle="tooltip" title="Inicio">
-      <i class="bi bi-shop"></i> TIENDA-Shop
+      <img src="{{ url_for('static', filename='img/logoo.png') }}" height="50" width="50"> CuBaro
     </a>
 
     
@@ -105,7 +106,7 @@
   <footer class="bg-light text-center text-lg-start">
     <div class="text-center p-3">
       © {{ now.year }} Copyright:
-      TIENDA-Shop
+      CuBaro
     </div>
 
   </footer>
