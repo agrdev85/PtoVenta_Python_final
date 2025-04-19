@@ -92,23 +92,28 @@ def calcular_total_ventas(uid):
     ).scalar()
     return round(total or 0, 2)
 
+
 def calcular_total_reservado(uid):
     total = db.session.query(
         func.sum(Item.price * Ordered_item.quantity)
-    ).join(Ordered_item).join(Order).join(User).filter(
-        ((User.id == uid) | (User.created_by == uid)) & (Order.status == 'reservado')
+    ).select_from(Order).join(Ordered_item).join(Item).join(User).filter(
+        ((User.id == uid) | (User.created_by == uid)) & 
+        func.lower(func.trim(Order.status)).in_(['reservado'])
     ).scalar()
+
     return round(total or 0, 2)
+
 
 def calcular_total_por_cobrar(uid):
     total = db.session.query(
         func.sum(Item.price * Ordered_item.quantity)
-    ).join(Ordered_item).join(Order).join(User).filter(
-        ((User.id == uid) | (User.created_by == uid)) & (Order.status == 'pendiente')
+    ).select_from(Order).join(Ordered_item).join(Item).join(User).filter(
+        ((User.id == uid) | (User.created_by == uid)) & 
+        func.lower(func.trim(Order.status)).in_(['reservado'])
     ).scalar()
+
     return round(total or 0, 2)
 
-from sqlalchemy import func
 
 def calcular_ganancia_neta(uid):
     ganancia_total = db.session.query(
@@ -126,12 +131,16 @@ def calcular_ganancia_neta(uid):
 def obtener_productos_mas_vendidos(uid, limit=10):
     resultados = db.session.query(
         Item.name,
-        func.sum(Ordered_item.quantity).label('total_vendidos')
+        func.sum(Ordered_item.quantity).label('total_vendidos'),
+        func.sum(Ordered_item.quantity * Item.price).label('monto_total_vendido')
     ).join(Ordered_item).join(Order).join(User).filter(
         (User.id == uid) | (User.created_by == uid)
-    ).group_by(Item.id).order_by(func.sum(Ordered_item.quantity).desc()).all()
+    ).group_by(Item.id).order_by(func.sum(Ordered_item.quantity).desc()).limit(limit).all()
 
-    return [{"nombre": r[0], "vendidos": int(r[1])} for r in resultados]
+    return [
+        {"nombre": r[0], "vendidos": int(r[1]), "monto_total_vendido": round(r[2] or 0, 2)}
+        for r in resultados
+    ]
 
 def obtener_resumen_pedidos(uid):
     estados = db.session.query(
@@ -141,6 +150,13 @@ def obtener_resumen_pedidos(uid):
     ).group_by(Order.status).all()
 
     return {estado: cantidad for estado, cantidad in estados}
+
+# Función para obtener todos los productos del usuario
+def obtener_productos(uid):
+    items = db.session.query(Item).join(User, Item.created_by == User.id).filter(
+        (User.id == uid) | (User.created_by == uid)
+    ).all()
+    return items
 
 @admin.route('/statictics')
 @admin_only
@@ -167,6 +183,7 @@ def exportar_estadisticas_pdf():
     ganancia_neta = calcular_ganancia_neta(uid)
     productos_mas_vendidos = obtener_productos_mas_vendidos(uid)
     resumen_pedidos = obtener_resumen_pedidos(uid)
+    listado_productos = obtener_productos(uid)
 
     html = render_template('admin/statistics_pdf.html',
         total_ventas=total_ventas,
@@ -174,7 +191,8 @@ def exportar_estadisticas_pdf():
         total_por_cobrar=total_por_cobrar,
         ganancia_neta=ganancia_neta,
         productos_mas_vendidos=productos_mas_vendidos,
-        resumen_pedidos=resumen_pedidos
+        resumen_pedidos=resumen_pedidos,
+        listado_productos = listado_productos
     )
 
     pdf = HTML(string=html).write_pdf()
