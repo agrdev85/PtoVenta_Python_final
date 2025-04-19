@@ -33,13 +33,14 @@ Admin Dashboard - CuBaro
             </div>
             <div>
                 <span class="mr-1 mt-2">
-                    <button class="btn btn-outline-success btn-lg" onclick="exportTableToExcel('orders-table')">
+                    <!-- <button class="btn btn-outline-success btn-lg" onclick="exportTableToExcel('orders-table')">
                         <i class="bi bi-file-earmark-excel-fill" width="48" height="48"></i>
-                    </button>
+                    </button> -->
                     <!-- <button onclick="exportTableToPDF('orders-table')">Exportar a PDF</button> -->
-                    <button class="btn btn-outline-danger btn-lg" onclick="exportPageToPDF()">
-                        <i class="bi bi-filetype-pdf" width="48" height="48"></i>
-                    </button>
+                    <a type="button" href="{{ url_for('admin.exportar_estadisticas_pdf') }}" target="_blank" class="btn btn-outline-danger btn-lg">
+                        <i class="bi bi-file-earmark-pdf-fill" width="48" height="48"></i>
+                    </a>                    
+                      
                 </span>
 
                 <input data-size="sm" type="checkbox" id="filter-status" checked data-toggle="switchbutton"
@@ -160,6 +161,20 @@ Admin Dashboard - CuBaro
                 {% endfor %}
             </table>
         </div>
+
+        <!-- Tabla Invisible -->
+
+        <table id="top-products-data" style="display: none;">
+            <tbody>
+                {% for producto, cantidad in productos_mas_vendidos %}
+                <tr>
+                    <td>{{ producto }}</td>
+                    <td>{{ cantidad }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
     </div>
 
 
@@ -173,11 +188,11 @@ Admin Dashboard - CuBaro
                 "paging": true,
                 "info": true,
                 "columnDefs": [
-                  {
-                   "targets": 0, // Índice de la columna "Order ID"
-                   "visible": false, // Oculta la columna
-                   "searchable": false // También evita que sea buscable
-                  }
+                    {
+                        "targets": 0, // Índice de la columna "Order ID"
+                        "visible": false, // Oculta la columna
+                        "searchable": false // También evita que sea buscable
+                    }
                 ]
             });
 
@@ -420,80 +435,80 @@ Admin Dashboard - CuBaro
                     }
                 }
             });
-      
-    // Función para actualizar los gráficos de productos más vendidos y total de ventas
-    function updateSalesCharts() {
-    var productSales = {}; // Ventas totales por producto
-    var productQuantities = {}; // Cantidad de ventas por producto
-    var productCosts = {}; // Costos totales por producto
-    var totalSales = {
-        'Pagado': 0,
-        'Libre': 0,
-        'Reservado': 0
-    };
 
-    // Variables para calcular Por Cobrar y Ganancia Neta
-    let totalPorCobrar = 0; // Sumatoria de Total to Pay con estado Reservado
-    let gananciaBruta = 0;   // Sumatoria de Total to Pay con estados Pagado y Libre
-    let costosTotales = 0;   // Sumatoria de los costos de los productos vendidos
-    let gananciaNeta = 0;    // Ganancia Bruta - Costos Totales
+            // Función para actualizar los gráficos de productos más vendidos y total de ventas
+            function updateSalesCharts() {
+                var productSales = {}; // Ventas totales por producto
+                var productQuantities = {}; // Cantidad de ventas por producto
+                var productCosts = {}; // Costos totales por producto
+                var totalSales = {
+                    'Pagado': 0,
+                    'Libre': 0,
+                    'Reservado': 0
+                };
 
-    table.rows({ search: 'applied' }).nodes().each(function (row) {
-        const status = row.getAttribute('data-order-status');
-        $(row).find('.my').each(function () {
-            const [productName, quantityAndPrice] = $(this).text().split('x');
-            const productQuantity = parseInt(quantityAndPrice.split('-')[0]); // Cantidad vendida
-            const itemTotal = parseFloat($(this).attr('data-item-total'));
-            
-            // Obtener el costo del producto de la tabla de productos
-            const productRow = $('#products-table').find('td:contains("' + productName.trim() + '")').closest('tr');
-            const productCost = parseFloat(productRow.find('td:nth-child(3)').text()) || 0;
-            const itemCost = productCost * productQuantity;
+                // Variables para calcular Por Cobrar y Ganancia Neta
+                let totalPorCobrar = 0; // Sumatoria de Total to Pay con estado Reservado
+                let gananciaBruta = 0;   // Sumatoria de Total to Pay con estados Pagado y Libre
+                let costosTotales = 0;   // Sumatoria de los costos de los productos vendidos
+                let gananciaNeta = 0;    // Ganancia Bruta - Costos Totales
 
-            // Sumar las ventas, cantidades y costos de productos
-            if (productName.trim() in productSales) {
-                productSales[productName.trim()] += itemTotal;
-                productQuantities[productName.trim()] += productQuantity;
-                productCosts[productName.trim()] += itemCost;
-            } else {
-                productSales[productName.trim()] = itemTotal;
-                productQuantities[productName.trim()] = productQuantity;
-                productCosts[productName.trim()] = itemCost;
+                table.rows({ search: 'applied' }).nodes().each(function (row) {
+                    const status = row.getAttribute('data-order-status');
+                    $(row).find('.my').each(function () {
+                        const [productName, quantityAndPrice] = $(this).text().split('x');
+                        const productQuantity = parseInt(quantityAndPrice.split('-')[0]); // Cantidad vendida
+                        const itemTotal = parseFloat($(this).attr('data-item-total'));
+
+                        // Obtener el costo del producto de la tabla de productos
+                        const productRow = $('#products-table').find('td:contains("' + productName.trim() + '")').closest('tr');
+                        const productCost = parseFloat(productRow.find('td:nth-child(3)').text()) || 0;
+                        const itemCost = productCost * productQuantity;
+
+                        // Sumar las ventas, cantidades y costos de productos
+                        if (productName.trim() in productSales) {
+                            productSales[productName.trim()] += itemTotal;
+                            productQuantities[productName.trim()] += productQuantity;
+                            productCosts[productName.trim()] += itemCost;
+                        } else {
+                            productSales[productName.trim()] = itemTotal;
+                            productQuantities[productName.trim()] = productQuantity;
+                            productCosts[productName.trim()] = itemCost;
+                        }
+
+                        // Sumar al total según el estado de la orden
+                        if (status === 'Pagado' || status === 'Libre' || status === 'Reservado') {
+                            totalSales[status] += itemTotal;
+                        }
+
+                        // Calcular Por Cobrar y Ganancia Bruta según el estado
+                        if (status === 'Reservado') {
+                            totalPorCobrar += itemTotal;
+                        } else if (status === 'Pagado' || status === 'Libre') {
+                            gananciaBruta += itemTotal;
+                            costosTotales += itemCost;
+                        }
+                    });
+                });
+
+                // Calcular ganancia neta
+                gananciaNeta = gananciaBruta - costosTotales;
+
+                // Actualizar el gráfico de productos más vendidos
+                topProductsChart.data.labels = Object.keys(productSales);
+                topProductsChart.data.datasets[0].data = Object.values(productQuantities);
+                topProductsChart.data.datasets[0].totalAmounts = Object.values(productSales);
+                topProductsChart.update();
+
+                // Actualizar el gráfico de total de ventas por estado
+                totalSalesChart.data.labels = Object.keys(totalSales);
+                totalSalesChart.data.datasets[0].data = Object.values(totalSales);
+                totalSalesChart.update();
+
+                // Actualizar los montos mostrados en los spans correspondientes
+                document.getElementById('total-por-cobrar').textContent = `$${totalPorCobrar.toFixed(2)}`;
+                document.getElementById('ganancia-neta').textContent = `$${gananciaNeta.toFixed(2)}`;
             }
-
-            // Sumar al total según el estado de la orden
-            if (status === 'Pagado' || status === 'Libre' || status === 'Reservado') {
-                totalSales[status] += itemTotal;
-            }
-
-            // Calcular Por Cobrar y Ganancia Bruta según el estado
-            if (status === 'Reservado') {
-                totalPorCobrar += itemTotal;
-            } else if (status === 'Pagado' || status === 'Libre') {
-                gananciaBruta += itemTotal;
-                costosTotales += itemCost;
-            }
-        });
-    });
-
-    // Calcular ganancia neta
-    gananciaNeta = gananciaBruta - costosTotales;
-
-    // Actualizar el gráfico de productos más vendidos
-    topProductsChart.data.labels = Object.keys(productSales);
-    topProductsChart.data.datasets[0].data = Object.values(productQuantities);
-    topProductsChart.data.datasets[0].totalAmounts = Object.values(productSales);
-    topProductsChart.update();
-
-    // Actualizar el gráfico de total de ventas por estado
-    totalSalesChart.data.labels = Object.keys(totalSales);
-    totalSalesChart.data.datasets[0].data = Object.values(totalSales);
-    totalSalesChart.update();
-
-    // Actualizar los montos mostrados en los spans correspondientes
-    document.getElementById('total-por-cobrar').textContent = `$${totalPorCobrar.toFixed(2)}`;
-    document.getElementById('ganancia-neta').textContent = `$${gananciaNeta.toFixed(2)}`;
-}
 
             // Actualizar los gráficos al cargar la página y después de cada filtrado
             updateChartData();
@@ -515,53 +530,8 @@ Admin Dashboard - CuBaro
             XLSX.writeFile(wb, filename);
         }
 
-        // Funcion Para Exportar Tabla a PDF
-        function exportTableToPDF(tableID, filename = 'data.pdf') {
-            var { jsPDF } = window.jspdf;
-            var doc = new jsPDF();
-            doc.autoTable({ html: '#' + tableID });
-            doc.save(filename);
-        }
+        
 
-        // Funcion Para Exportar Pagina a PDF
-        function exportPageToPDF(filename = 'pagina.pdf') {
-            const { jsPDF } = window.jspdf;
-
-            // Selecciona el cuerpo del documento o un contenedor específico si lo deseas
-            const element = document.body;
-
-            // Utiliza html2canvas para capturar el contenido de la página
-            html2canvas(element, { scale: 2 }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-
-                // Ajusta las dimensiones para que la imagen se ajuste a la página A4
-                const imgWidth = 210;
-                const pageHeight = 297;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                let heightLeft = imgHeight;
-                let position = 0;
-
-                // Agrega la imagen al PDF
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-
-                // Si el contenido es mayor a una página, divide en páginas adicionales
-                while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                }
-
-                // Guarda el PDF
-                pdf.save(filename);
-            });
-        }
 
     </script>
 

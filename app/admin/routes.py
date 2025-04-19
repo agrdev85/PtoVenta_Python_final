@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify, render_template, session, url_for, flash, request
+from flask import Blueprint, jsonify, json, render_template, session, url_for, flash, request, make_response
 from flask_login import current_user, login_required
+from sqlalchemy import func
 from werkzeug.utils import redirect, secure_filename
 from ..db_models import Alert, Membership, Order, Ordered_item, Item, db, User
 from ..admin.forms import AddItemForm, OrderEditForm
@@ -9,6 +10,9 @@ from sqlalchemy.orm import aliased, joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime, timedelta, timezone
+from weasyprint import HTML
+from collections import Counter
+
 
 admin = Blueprint("admin", __name__, url_prefix="/admin", static_folder="static", template_folder="templates")
 
@@ -79,6 +83,65 @@ def items():
     ).all()
     return render_template("admin/items.html", items=items, alerts=alerts)
 
+
+def calcular_total_ventas(uid):
+    total = db.session.query(
+        func.sum(Item.price * Ordered_item.quantity)
+    ).join(Ordered_item).join(Order).join(User).filter(
+        (User.id == uid) | (User.created_by == uid)
+    ).scalar()
+    return round(total or 0, 2)
+
+def calcular_total_reservado(uid):
+    total = db.session.query(
+        func.sum(Item.price * Ordered_item.quantity)
+    ).join(Ordered_item).join(Order).join(User).filter(
+        ((User.id == uid) | (User.created_by == uid)) & (Order.status == 'reservado')
+    ).scalar()
+    return round(total or 0, 2)
+
+def calcular_total_por_cobrar(uid):
+    total = db.session.query(
+        func.sum(Item.price * Ordered_item.quantity)
+    ).join(Ordered_item).join(Order).join(User).filter(
+        ((User.id == uid) | (User.created_by == uid)) & (Order.status == 'pendiente')
+    ).scalar()
+    return round(total or 0, 2)
+
+from sqlalchemy import func
+
+def calcular_ganancia_neta(uid):
+    ganancia_total = db.session.query(
+        func.sum((Item.price - Item.costo) * Ordered_item.quantity)
+    ).select_from(Order) \
+     .join(Ordered_item, Ordered_item.oid == Order.id) \
+     .join(Item, Ordered_item.itemid == Item.id) \
+     .join(User, Order.uid == User.id) \
+     .filter((User.id == uid) | (User.created_by == uid)) \
+     .filter(func.lower(func.trim(Order.status)).in_(['libre', 'pagado'])) \
+     .scalar()
+
+    return round(ganancia_total or 0, 2)
+
+def obtener_productos_mas_vendidos(uid, limit=10):
+    resultados = db.session.query(
+        Item.name,
+        func.sum(Ordered_item.quantity).label('total_vendidos')
+    ).join(Ordered_item).join(Order).join(User).filter(
+        (User.id == uid) | (User.created_by == uid)
+    ).group_by(Item.id).order_by(func.sum(Ordered_item.quantity).desc()).all()
+
+    return [{"nombre": r[0], "vendidos": int(r[1])} for r in resultados]
+
+def obtener_resumen_pedidos(uid):
+    estados = db.session.query(
+        Order.status, func.count(Order.id)
+    ).join(User).filter(
+        (User.id == uid) | (User.created_by == uid)
+    ).group_by(Order.status).all()
+
+    return {estado: cantidad for estado, cantidad in estados}
+
 @admin.route('/statictics')
 @admin_only
 def statictics():
@@ -90,6 +153,35 @@ def statictics():
         (User.id == current_user.id) | (User.created_by == current_user.id)
     ).all()
     return render_template("admin/statictics.html", orders=orders, items=items)
+
+
+# PDF exportado directamente desde los mismos cálculos
+@admin.route('/exportar-estadisticas-pdf')
+@admin_only
+def exportar_estadisticas_pdf():
+    uid = current_user.id
+    
+    total_ventas = calcular_total_ventas(uid)
+    total_reservado = calcular_total_reservado(uid)
+    total_por_cobrar = calcular_total_por_cobrar(uid)
+    ganancia_neta = calcular_ganancia_neta(uid)
+    productos_mas_vendidos = obtener_productos_mas_vendidos(uid)
+    resumen_pedidos = obtener_resumen_pedidos(uid)
+
+    html = render_template('admin/statistics_pdf.html',
+        total_ventas=total_ventas,
+        total_reservado=total_reservado,
+        total_por_cobrar=total_por_cobrar,
+        ganancia_neta=ganancia_neta,
+        productos_mas_vendidos=productos_mas_vendidos,
+        resumen_pedidos=resumen_pedidos
+    )
+
+    pdf = HTML(string=html).write_pdf()
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=estadisticas.pdf'
+    return response
 
 def create_user_folder(user_id):
     """

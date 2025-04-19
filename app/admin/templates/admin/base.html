@@ -37,7 +37,7 @@
 <!-- Navbar -->
 <nav class="navbar navbar-dark bg-dark fixed-top">
   <a class="navbar-brand" href="{{ url_for('home') }}" data-toggle="tooltip" title="Inicio">
-    <img src="{{ url_for('static', filename='img/logoo.png') }}" height="50" width="50"> CuBaro
+    <img src="{{ url_for('static', filename='img/logoo.png') }}" height="30" width="60"> CuBaro
     </a>
   <ul class="navbar-nav d-flex flex-row">
     {% if not current_user.is_authenticated %}
