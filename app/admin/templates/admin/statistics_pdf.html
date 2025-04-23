@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,24 +10,35 @@
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-        h1, h2, h3 {
+
+        h1,
+        h2,
+        h3 {
             text-align: center;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-        table, th, td {
+
+        table,
+        th,
+        td {
             border: 1px solid black;
         }
-        th, td {
+
+        th,
+        td {
             padding: 8px;
             text-align: left;
         }
+
         th {
             background-color: #f2f2f2;
         }
+
         .resumen {
             background-color: #f8f9fa;
             padding: 20px;
@@ -34,84 +46,93 @@
         }
     </style>
 </head>
+
 <body>
 
+
+    <!-- Rango de fechas -->
+    <div style="position: absolute; top: 50px; right: 20px;">
+        <strong>Rango de Fechas:</strong> {{ fecha_inicio.strftime('%d/%m/%Y') }} - {{ fecha_fin.strftime('%d/%m/%Y') }}
+    </div>    
+
     <h1>Resumen de Estadísticas</h1>
+
 
     <div class="resumen">
         <h2>Totales</h2>
         <ul class="list-group">
             <li class="list-group-item">Total de Ventas: <strong>${{ total_ventas }}</strong></li>
-           <!--  <li class="list-group-item">Total Reservado: <strong>${{ total_reservado }}</strong></li> -->
+            <!--  <li class="list-group-item">Total Reservado: <strong>${{ total_reservado }}</strong></li> -->
             <li class="list-group-item">Total por Cobrar: <strong>${{ total_por_cobrar }}</strong></li>
             <li class="list-group-item">Ganancia Neta: <strong>${{ ganancia_neta }}</strong></li>
         </ul>
     </div>
 
-<div class="productos">
-    <h2>Productos Más Vendidos</h2>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Cantidad Vendida</th>
-                <th>Monto Vendido</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for producto in productos_mas_vendidos %}
-            <tr>
-                <td>{{ producto.nombre }}</td>
-                <td>{{ producto.vendidos }}</td>
-                <td>{{ producto.monto_total_vendido }}</td>
-            </tr>
-            {% endfor %}
-    </tbody>
-</table>
+    <div class="productos">
+        <h2>Productos Más Vendidos</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad Vendida</th>
+                    <th>Monto Vendido</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos_mas_vendidos %}
+                <tr>
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.vendidos }}</td>
+                    <td>${{ producto.monto_total_vendido }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-<div class="productos">
-    <h2>Resumen de Pedidos</h2>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Estado</th>
-                <th>Cantidad</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for estado, cantidad in resumen_pedidos.items() %}
-            <tr>
-                <td>{{ estado }}</td>
-                <td>{{ cantidad }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+        <div class="productos">
+            <h2>Resumen de Pedidos</h2>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Estado</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for estado, cantidad in resumen_pedidos.items() %}
+                    <tr>
+                        <td>{{ estado }}</td>
+                        <td>{{ cantidad }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-<h2>Listado de Productos</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Producto</th>
-            <th>Categoría</th>
-            <th>Costo</th>
-            <th>Precio</th>
-            <th>Stock</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for producto in listado_productos %}
-        <tr>
-            <td>{{ producto.name }}</td>
-            <td>{{ producto.category }}</td>
-            <td>{{ producto.costo }}</td>
-            <td>${{ producto.price }}</td>
-            <td>{{ producto.stock }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        <h2>Listado de Productos</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Costo</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in listado_productos %}
+                <tr>
+                    <td>{{ producto.name }}</td>
+                    <td>{{ producto.category }}</td>
+                    <td>${{ producto.costo }}</td>
+                    <td>${{ producto.price }}</td>
+                    <td>{{ producto.stock }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
 </body>
+
 </html>

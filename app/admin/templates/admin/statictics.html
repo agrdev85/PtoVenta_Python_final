@@ -28,15 +28,17 @@ Admin Dashboard - CuBaro
       <input type="date" id="start-date">
       <label for="end-date">Fecha de Fin:</label>
       <input type="date" id="end-date">
-      <button id="filter-date-range" class="btn btn-primary ml-2">Filtrar</button>
+      <button id="filter-date-range" data-toggle="tooltip" title="Filtrar & Exportar Estadísticas"
+      class="btn btn-outline-danger btn-lg">
+      <i class="bi bi-file-earmark-pdf-fill" width="48" height="48"></i>Filtrar</button>
     </div>
     <div>
-      <span class="mr-1 mt-2">
-        <a type="button" href="{{ url_for('admin.exportar_estadisticas_pdf') }}" target="_blank" data-toggle="tooltip" title="Exportar Estadísticas"
+     <!--  <span class="mr-1 mt-2">
+        <a id="exportar_estadisticas_pdf" type="button" href="{{ url_for('admin.exportar_estadisticas_pdf') }}" target="_blank" data-toggle="tooltip" title="Exportar Estadísticas"
            class="btn btn-outline-danger btn-lg">
           <i class="bi bi-file-earmark-pdf-fill" width="48" height="48"></i>
         </a>
-      </span>
+      </span> -->
        
       
     </div>
@@ -441,6 +443,19 @@ function exportTableToExcel(tableID, filename = 'data.xlsx') {
   var wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
   XLSX.writeFile(wb, filename);
 }
+
+// Enviar las fechas filtradas al backend para generar el PDF
+document.getElementById('filter-date-range').addEventListener('click', function () {
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+
+    const url = "{{ url_for('admin.exportar_estadisticas_pdf') }}?start_date=" + startDate + "&end_date=" + endDate;
+
+    // Abrir en nueva pestaña
+    window.open(url, '_blank');
+});
+
+  
 </script>
 
 {% endif %}

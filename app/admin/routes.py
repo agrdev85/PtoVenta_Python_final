@@ -84,79 +84,103 @@ def items():
     return render_template("admin/items.html", items=items, alerts=alerts)
 
 
-def calcular_total_ventas(uid):
-    total = db.session.query(
+def calcular_total_ventas(uid=None, start_date=None, end_date=None):
+    query = db.session.query(
         func.sum(Item.price * Ordered_item.quantity)
     ).join(Ordered_item).join(Order).join(User).filter(
         (User.id == uid) | (User.created_by == uid)
-    ).scalar()
+    )
+    if start_date and end_date:
+        query = query.filter(Order.date.between(start_date, end_date))
+    total = query.scalar()
     return round(total or 0, 2)
 
 
-def calcular_total_reservado(uid):
-    total = db.session.query(
+def calcular_total_reservado(uid=None, start_date=None, end_date=None):
+    query = db.session.query(
         func.sum(Item.price * Ordered_item.quantity)
     ).select_from(Order).join(Ordered_item).join(Item).join(User).filter(
         ((User.id == uid) | (User.created_by == uid)) & 
         func.lower(func.trim(Order.status)).in_(['reservado'])
-    ).scalar()
+    )
+    if start_date and end_date:
+        query = query.filter(Order.date.between(start_date, end_date))
+    return round(query.scalar() or 0, 2)
 
-    return round(total or 0, 2)
 
-
-def calcular_total_por_cobrar(uid):
-    total = db.session.query(
+def calcular_total_por_cobrar(uid=None, start_date=None, end_date=None):
+    query = db.session.query(
         func.sum(Item.price * Ordered_item.quantity)
     ).select_from(Order).join(Ordered_item).join(Item).join(User).filter(
         ((User.id == uid) | (User.created_by == uid)) & 
         func.lower(func.trim(Order.status)).in_(['reservado'])
-    ).scalar()
+    )
+    if start_date and end_date:
+        query = query.filter(Order.date.between(start_date, end_date))
+    return round(query.scalar() or 0, 2)
 
-    return round(total or 0, 2)
 
-
-def calcular_ganancia_neta(uid):
-    ganancia_total = db.session.query(
+def calcular_ganancia_neta(uid=None, start_date=None, end_date=None):
+    query = db.session.query(
         func.sum((Item.price - Item.costo) * Ordered_item.quantity)
     ).select_from(Order) \
      .join(Ordered_item, Ordered_item.oid == Order.id) \
      .join(Item, Ordered_item.itemid == Item.id) \
      .join(User, Order.uid == User.id) \
      .filter((User.id == uid) | (User.created_by == uid)) \
-     .filter(func.lower(func.trim(Order.status)).in_(['libre', 'pagado'])) \
-     .scalar()
+     .filter(func.lower(func.trim(Order.status)).in_(['libre', 'pagado']))
+    if start_date and end_date:
+        query = query.filter(Order.date.between(start_date, end_date))
+    return round(query.scalar() or 0, 2)
 
-    return round(ganancia_total or 0, 2)
 
-def obtener_productos_mas_vendidos(uid, limit=10):
-    resultados = db.session.query(
+def obtener_productos_mas_vendidos(uid=None, start_date=None, end_date=None, limit=10):
+    query = db.session.query(
         Item.name,
         func.sum(Ordered_item.quantity).label('total_vendidos'),
         func.sum(Ordered_item.quantity * Item.price).label('monto_total_vendido')
     ).join(Ordered_item).join(Order).join(User).filter(
         (User.id == uid) | (User.created_by == uid)
-    ).group_by(Item.id).order_by(func.sum(Ordered_item.quantity).desc()).limit(limit).all()
+    )
+    if start_date and end_date:
+        query = query.filter(Order.date.between(start_date, end_date))
+    
+    resultados = query.group_by(Item.id).order_by(func.sum(Ordered_item.quantity).desc()).limit(limit).all()
 
     return [
         {"nombre": r[0], "vendidos": int(r[1]), "monto_total_vendido": round(r[2] or 0, 2)}
         for r in resultados
     ]
 
-def obtener_resumen_pedidos(uid):
-    estados = db.session.query(
+
+def obtener_resumen_pedidos(uid=None, start_date=None, end_date=None):
+    query = db.session.query(
         Order.status, func.count(Order.id)
     ).join(User).filter(
         (User.id == uid) | (User.created_by == uid)
-    ).group_by(Order.status).all()
+    )
+    if start_date and end_date:
+        query = query.filter(Order.date.between(start_date, end_date))
 
+    estados = query.group_by(Order.status).all()
     return {estado: cantidad for estado, cantidad in estados}
 
-# Función para obtener todos los productos del usuario
-def obtener_productos(uid):
-    items = db.session.query(Item).join(User, Item.created_by == User.id).filter(
+
+def obtener_productos(uid=None, start_date=None, end_date=None):
+    query = db.session.query(Item).join(User, Item.created_by == User.id).filter(
         (User.id == uid) | (User.created_by == uid)
-    ).all()
-    return items
+    )
+    # Si Item tiene campo de fecha
+    if start_date and end_date and hasattr(Item, 'created_at'):
+        query = query.filter(Item.created_at.between(start_date, end_date))
+    return query.all()
+
+def obtener_rango_fechas():
+    # Obtener la primera fecha y la última fecha de todas las órdenes
+    primera_fecha = db.session.query(func.min(Order.date)).scalar()
+    ultima_fecha = db.session.query(func.max(Order.date)).scalar()
+
+    return primera_fecha, ultima_fecha
 
 @admin.route('/statictics')
 @admin_only
@@ -176,14 +200,24 @@ def statictics():
 @admin_only
 def exportar_estadisticas_pdf():
     uid = current_user.id
-    
-    total_ventas = calcular_total_ventas(uid)
-    total_reservado = calcular_total_reservado(uid)
-    total_por_cobrar = calcular_total_por_cobrar(uid)
-    ganancia_neta = calcular_ganancia_neta(uid)
-    productos_mas_vendidos = obtener_productos_mas_vendidos(uid)
-    resumen_pedidos = obtener_resumen_pedidos(uid)
-    listado_productos = obtener_productos(uid)
+
+    # Obtener las fechas del filtro, si se pasan como parámetros
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    if start_date and end_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date, '%Y-%m-%d')
+    else:
+        start_date, end_date = obtener_rango_fechas()
+
+    total_ventas = calcular_total_ventas(uid, start_date, end_date)
+    total_reservado = calcular_total_reservado(uid, start_date, end_date)
+    total_por_cobrar = calcular_total_por_cobrar(uid, start_date, end_date)
+    ganancia_neta = calcular_ganancia_neta(uid, start_date, end_date)
+    productos_mas_vendidos = obtener_productos_mas_vendidos(uid, start_date, end_date)
+    resumen_pedidos = obtener_resumen_pedidos(uid, start_date, end_date)
+    listado_productos = obtener_productos(uid, start_date, end_date)
 
     html = render_template('admin/statistics_pdf.html',
         total_ventas=total_ventas,
@@ -192,7 +226,10 @@ def exportar_estadisticas_pdf():
         ganancia_neta=ganancia_neta,
         productos_mas_vendidos=productos_mas_vendidos,
         resumen_pedidos=resumen_pedidos,
-        listado_productos = listado_productos
+        listado_productos=listado_productos,
+        date=datetime.now(),
+        fecha_inicio=start_date,
+        fecha_fin=end_date
     )
 
     pdf = HTML(string=html).write_pdf()
