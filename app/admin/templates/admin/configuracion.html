@@ -118,9 +118,12 @@ Admin Dashboard - CuBaro
                         <label for="userPhone">Teléfono</label>
                         <input type="text" class="form-control" id="userPhone" name="phone" maxlength="8" pattern="\d{8}" title="El teléfono debe tener exactamente 8 dígitos." required>
                     </div>
-                    <div class="form-group">
-                        <label for="userPassword">Nueva Contraseña</label>
-                        <input type="password" class="form-control" id="userPassword" name="password" pattern="^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$" title="La contraseña debe tener entre 8 y 30 caracteres y puede contener letras, números y símbolos.">
+                    <div class="form-group position-relative">
+                        <label for="password">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="password" name="password" pattern="^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$" title="La contraseña debe tener entre 8 y 30 caracteres y puede contener letras, números y símbolos.">
+                        <span onclick="togglePassword('password', 'toggleIcon')" class="position-absolute" style="top: 38px; right: 15px; cursor: pointer; color:rgb(14, 66, 238);">
+                            <i class="fa fa-eye toggle-icon" id="toggleIcon" title="Mostrar contraseña"></i>
+                        </span>
                     </div>
                     {% if current_user.id == 1 %}
                     <div class="form-group">
@@ -224,7 +227,7 @@ Admin Dashboard - CuBaro
             userName: $('#userName').val(),
             userEmail: $('#userEmail').val(),
             userPhone: $('#userPhone').val(),
-            userPassword: $('#userPassword').val(),
+            password: $('#password').val(),
         };
 
         $.ajax({

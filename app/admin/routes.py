@@ -509,7 +509,7 @@ def update_user(user_id):
         user_name = request.form.get('userName')
         user_email = request.form.get('userEmail')
         user_phone = request.form.get('userPhone')
-        password = request.form.get('userPassword')  # Nueva contraseña (opcional)
+        password = request.form.get('password')  # Nueva contraseña (opcional)
 
         # Buscar al usuario en la base de datos
         user = User.query.get(user_id)

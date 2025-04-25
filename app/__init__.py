@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
 from .db_models import Membership, db, User, Item, Alert, Order, Ordered_item
 from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Mail, Message
 from .funcs import mail, send_confirmation_email, fulfill_order
 from dotenv import load_dotenv
 from .admin.routes import admin
@@ -34,11 +35,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///local_db.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_USERNAME'] = os.environ.get("EMAIL", "agr@gmail.com")
 app.config['MAIL_PASSWORD'] = os.environ.get("PASSWORD", "root")
-app.config['MAIL_SERVER'] = "smtp.googlemail.com"
+app.config['MAIL_SERVER'] = "smtp.gmail.com"
 app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_PORT'] = 587
 app.config['WTF_CSRF_ENABLED'] = True  # Asegúrate de que esté habilitado
 stripe.api_key = os.environ.get("STRIPE_PRIVATE", "123456")
+mail = Mail(app)
+serializer = URLSafeTimedSerializer(app.secret_key)
 
 # Configuración de la clase para APScheduler
 class Config:
@@ -151,6 +155,66 @@ def add_no_cache_headers(response):
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "-1"
     return response
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            # Verificar si es administrador
+            if user.admin != 1:
+                flash("Solo los administradores pueden restablecer su contraseña.", "error")
+                return redirect(url_for('login'))
+
+            # Si es admin, generar el token y mostrar el enlace
+            token = serializer.dumps(email, salt='recover-password')
+            link = url_for('reset_password', token=token, _external=True)
+
+            # ⚠️ Mostrar enlace directamente (ya que no se envía por correo)
+            flash(f"{link}", "info")
+        else:
+            flash("Correo no encontrado.", "error")
+
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    try:
+        email = serializer.loads(token, salt='recover-password', max_age=3600)
+    except:
+        flash("El enlace ha expirado o es inválido.", "error")
+        return redirect(url_for('forgot_password'))
+
+    # Buscar usuario antes de procesar formulario
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        flash("Usuario no encontrado.", "error")
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        password = request.form['password']
+        if len(password) < 8:
+            flash("La contraseña debe tener al menos 8 caracteres.", "error")
+            return render_template('reset_password.html', token=token)
+
+        user.password = generate_password_hash(password)
+        db.session.commit()
+        flash("Contraseña actualizada correctamente.", "success")
+        return redirect(url_for('confirm_password_reset', token=token))
+
+    return render_template('reset_password.html', token=token)
+
+@app.route('/confirm_password_reset/<token>')
+def confirm_password_reset(token):
+    try:
+        email = serializer.loads(token, salt='recover-password', max_age=3600)
+    except:
+        flash("El enlace ha expirado.", "error")
+        return redirect(url_for('login'))
+
+    return render_template('confirm_password_reset.html')
 
 @app.route("/export_order/<int:order_id>")
 def export_order(order_id):
