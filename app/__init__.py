@@ -11,6 +11,7 @@ from .db_models import Membership, db, User, Item, Alert, Order, Ordered_item
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
 from .funcs import mail, send_confirmation_email, fulfill_order
+from supabase import create_client, Client
 from dotenv import load_dotenv
 from .admin.routes import admin
 from flask_apscheduler import APScheduler 
@@ -22,6 +23,9 @@ from io import BytesIO
 load_dotenv()
 app = Flask(__name__, static_folder='static')
 app.register_blueprint(admin)
+""" supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(supabase_url, supabase_key) """
 
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_size': 10,  # Número máximo de conexiones en el pool
@@ -304,7 +308,7 @@ def login():
         
         # Verificar estado de membresía
         if not user.check_membership_status():
-            flash('Su membresía ha vencido. Contacte al Soporte para renovarla.', 'error')
+            flash('Su membresía ha vencido. Contacte a Soporte para renovarla.', 'error')
             return redirect(url_for('login'))
 
         # Verificar si el correo electrónico está confirmado

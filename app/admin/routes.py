@@ -10,7 +10,6 @@ from sqlalchemy.orm import aliased, joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime, timedelta, timezone
-from weasyprint import HTML
 from collections import Counter
 
 
