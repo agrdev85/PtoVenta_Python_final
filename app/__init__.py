@@ -1,12 +1,12 @@
 import os, stripe, json
 from datetime import datetime, timedelta, timezone
 from flask_wtf import FlaskForm
-from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, session, render_template, redirect, url_for, flash, request, abort, Response, make_response
 from flask_bootstrap import Bootstrap
 from .forms import LoginForm, RegisterForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
+from .extensions import db
 from .db_models import Membership, db, User, Item, Alert, Order, Ordered_item
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
@@ -35,7 +35,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "123456")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///local_db.sqlite3'
-#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "postgresql://ludoc:cEJ8lAsHr0hqizybyin6cfjkmDeEN4wm@dpg-crklc1btq21c73dbt9h0-a.oregon-postgres.render.com/ludoc_shop")
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///local_db.sqlite3")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_USERNAME'] = os.environ.get("EMAIL", "agr@gmail.com")
 app.config['MAIL_PASSWORD'] = os.environ.get("PASSWORD", "root")

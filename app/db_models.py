@@ -1,9 +1,6 @@
 from datetime import datetime, timezone
 from flask_login import UserMixin
-from flask_sqlalchemy import SQLAlchemy
-
-
-db = SQLAlchemy()
+from .extensions import db
 
 class Alert(db.Model):
     __tablename__ = 'alert'
