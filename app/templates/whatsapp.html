@@ -8,7 +8,8 @@
 
 <div class="row justify-content-center mt-0">
     <img id="logoAnimated" src="{{ url_for('static', filename='img/logoo.png') }}" height="100" width="150">
-  </div>
+</div>
+
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -17,17 +18,9 @@
                     <h3>Registrarse en CuBaro</h3>
                 </div>
 
-                {% with msgs = get_flashed_messages(with_categories=True) %}
-                {% if msgs %}
-                <div class="alert alert-{{ msgs[0][0] }}">
-                    {{ msgs[0][1] }}
-                </div>
-                {% endif %}
-                {% endwith %}
-
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('register_admin') }}">
-                        {{ form.hidden_tag() }}  <!-- Incluye el campo oculto CSRF token -->
+                        {{ form.hidden_tag() }}
 
                         <div class="form-group">
                             {{ form.name.label }}
@@ -35,7 +28,7 @@
                             {% if form.name.errors %}
                             <div class="text-danger">
                                 {% for error in form.name.errors %}
-                                <p>{{ error }}</p>
+                                    <p>{{ error }}</p>
                                 {% endfor %}
                             </div>
                             {% endif %}
@@ -43,19 +36,13 @@
 
                         <div class="form-group">
                             {{ form.phone.label }}
-                            {{ form.phone(
-                                class="form-control",
-                                maxlength="8",
-                                pattern="\\d{8}",
-                                inputmode="numeric",
-                                title="El teléfono debe tener exactamente 8 dígitos."
-                            ) }}
+                            {{ form.phone(class="form-control", maxlength="8", pattern="\\d{8}", inputmode="numeric", title="El teléfono debe tener exactamente 8 dígitos.") }}
                             {% if form.phone.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.phone.errors %}
-                                        <p>{{ error }}</p>
-                                    {% endfor %}
-                                </div>
+                            <div class="text-danger">
+                                {% for error in form.phone.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
                             {% endif %}
                         </div>
 
@@ -65,7 +52,7 @@
                             {% if form.membership.errors %}
                             <div class="text-danger">
                                 {% for error in form.membership.errors %}
-                                <p>{{ error }}</p>
+                                    <p>{{ error }}</p>
                                 {% endfor %}
                             </div>
                             {% endif %}
@@ -77,7 +64,7 @@
                             {% if form.email.errors %}
                             <div class="text-danger">
                                 {% for error in form.email.errors %}
-                                <p>{{ error }}</p>
+                                    <p>{{ error }}</p>
                                 {% endfor %}
                             </div>
                             {% endif %}
@@ -92,7 +79,7 @@
                             {% if form.password.errors %}
                             <div class="text-danger">
                                 {% for error in form.password.errors %}
-                                <p>{{ error }}</p>
+                                    <p>{{ error }}</p>
                                 {% endfor %}
                             </div>
                             {% endif %}
@@ -107,7 +94,7 @@
                             {% if form.confirm.errors %}
                             <div class="text-danger">
                                 {% for error in form.confirm.errors %}
-                                <p>{{ error }}</p>
+                                    <p>{{ error }}</p>
                                 {% endfor %}
                             </div>
                             {% endif %}
@@ -122,4 +109,44 @@
         </div>
     </div>
 </div>
+
+{% if master_key %}
+<script>
+Swal.fire({
+    title: '¡Registro Exitoso!',
+    html: `
+        <p>Tu <strong>llave maestra</strong> es:</p>
+        <div id="keyBox" style="font-size: 1.6em; font-weight: bold; color: #0056b3; background: #f0f8ff; padding: 10px; border-radius: 10px; display: inline-block;">
+            {{ master_key }}
+        </div>
+        <br><br>
+        <button onclick="copyKey()" class="btn btn-outline-primary btn-sm">Copiar clave</button>
+        <br><br>
+        <strong>¡Guárdala en un lugar seguro!</strong><br>
+        La necesitarás para recuperar tu cuenta.`,
+    icon: 'success',
+    allowOutsideClick: false,
+    showConfirmButton: false, // Oculta el botón "Aceptar"
+    allowEscapeKey: false
+}).then(() => {
+    window.location.href = "{{ url_for('login') }}";
+});
+
+function copyKey() {
+    const keyText = document.getElementById("keyBox").innerText;
+    navigator.clipboard.writeText(keyText).then(() => {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Clave copiada al portapapeles',
+            showConfirmButton: false,
+            timer: 2000
+        });
+    });
+}
+</script>
+{% endif %}
+
 {% endblock %}
+

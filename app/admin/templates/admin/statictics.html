@@ -10,453 +10,454 @@ Admin Dashboard - CuBaro
 {% for c, msg in msgs %}
 {% if c == 'error' %}
 <div class="flash-error">
-{% else %}
-<div class="success">
-{% endif %}
-{{ msg }}</div><br>
-{% endfor %}
-{% endwith %}
+  {% else %}
+  <div class="success">
+    {% endif %}
+    {{ msg }}</div><br>
+  {% endfor %}
+  {% endwith %}
 
-{% if not orders %}
-<div class="flash-error">No hay Ordenes.</div>
-{% else %}
+  {% if not orders %}
+  <div class="flash-error">No hay Ordenes.</div>
+  {% else %}
 
-<div class="filters-container mb-4">
-  <div class="d-flex justify-content-between">
-    <div>
-      <label for="start-date">Fecha de Inicio:</label>
-      <input type="date" id="start-date">
-      <label for="end-date">Fecha de Fin:</label>
-      <input type="date" id="end-date">
-      <button id="filter-date-range" data-toggle="tooltip" title="Filtrar & Exportar Estadísticas"
-      class="btn btn-outline-danger btn-lg">
-      <i class="bi bi-file-earmark-pdf-fill" width="48" height="48"></i>Filtrar</button>
-    </div>
-    <div>
-     <!--  <span class="mr-1 mt-2">
+  <div class="filters-container mb-4">
+    <div class="d-flex justify-content-between">
+      <div>
+        <label for="start-date">Fecha de Inicio:</label>
+        <input type="date" id="start-date">
+        <label for="end-date">Fecha de Fin:</label>
+        <input type="date" id="end-date">
+        <button id="filter-date-range" data-toggle="tooltip" title="Filtrar & Exportar Estadísticas"
+          class="btn btn-outline-danger btn-lg">
+          <i class="bi bi-file-earmark-pdf-fill" width="48" height="48"></i>Filtrar</button>
+      </div>
+      <div>
+        <!--  <span class="mr-1 mt-2">
         <a id="exportar_estadisticas_pdf" type="button" href="{{ url_for('admin.exportar_estadisticas_pdf') }}" target="_blank" data-toggle="tooltip" title="Exportar Estadísticas"
            class="btn btn-outline-danger btn-lg">
           <i class="bi bi-file-earmark-pdf-fill" width="48" height="48"></i>
         </a>
       </span> -->
-       
-      
+
+
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Resto de la tabla y gráficos -->
-<div class="table-responsive">
-     <!-- Contenedor para los switches -->
-     <div class="d-flex justify-content-center mt-3">
-        <div class="custom-switch mx-2">
-          <span class="switch-label">Estatus</span>
-          <input data-size="sm" type="checkbox" id="filter-status" checked>
-          <label for="filter-status"></label>
-        </div>
-        <div class="custom-switch mx-2">
-          <span class="switch-label">Fecha</span>
-          <input data-size="sm" type="checkbox" id="filter-date" checked>
-          <label for="filter-date"></label>
-        </div>
-        <div class="custom-switch mx-2">
-          <span class="switch-label">Usuario</span>
-          <input data-size="sm" type="checkbox" id="filter-username" checked>
-          <label for="filter-username"></label>
-        </div>
-      </div>
-  <table id="statictics-table" class="table table-striped table-hover">
-    <thead class="thead-dark">
-      <tr>
-        <th>Order id</th>
-        <th>Order date</th>
-        <th>Username</th>
-        <th>Ordered items</th>
-        <th>Order status</th>
-        <th>Total to Pay</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for order in orders %}
-      <tr data-order-id="{{ order.id }}" data-order-status="{{ order.status }}" data-order-total="0"
-          data-username="{{ order.customer.name }}" data-order-date="{{ order.date.strftime('%Y-%m-%d') }}">
-        <td>{{ order.id }}</td>
-        <td>{{ order.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-        <td>{{ order.customer.name }}</td>
-        <td>
-          {% for i in order.items %}
-          {% set item_price = i.item.price %}
-          {% set item_total = item_price * i.quantity %}
-          <div class="my" data-item-price="{{ item_price }}" data-item-quantity="{{ i.quantity }}"
-               data-item-total="{{ item_total }}">
-            {{ i.item.name }}<span class="success">x{{ i.quantity }}</span>-<span style="color: red;">${{ item_total }}</span><br>
-          </div>
-          {% endfor %}
-        </td>
-        <td class="order-status">
-          {% if order.status == 'Reservado' %}
-          <span style="color: green;">{{ order.status }}</span>
-          {% elif order.status == 'Pagado' %}
-          <span style="color: red;">{{ order.status }}</span>
-          {% else %}
-          {{ order.status }}
-          {% endif %}
-        </td>
-        <td class="order-total">$0</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-<div style="display: flex; gap: 20px;">
-  <div>
-    <h3>Total Filtrado: <span id="total-reservado" style="color: red;">$0.00</span></h3>
-  </div>
-  <div>
-    <h3>Por Cobrar: <span id="total-por-cobrar" style="color: green;">$0.00</span></h3>
-  </div>
-  <div>
-    <h3>Ganancia Neta: <span id="ganancia-neta" style="color: purple;">$0.00</span></h3>
-  </div>
-</div>
-<div class="row mt-5">
-  <div style="width: 60%; margin: auto;">
-    <h3>Productos más vendidos</h3>
-    <canvas id="top-products-chart"></canvas>
-  </div>
-  <div style="width: 30%; margin: auto;">
-    <h3>Total de Ventas</h3>
-    <canvas id="total-sales-chart"></canvas>
-  </div>
-</div>
-<div style="width: 45%; margin: auto;">
-  <h3>Resumen de Pedidos</h3>
-  <div style="position: relative; width:250; height:250">
-    <canvas id="orderStatusChart"></canvas>
-  </div>
-</div>
-<div class="container mt-5" style="width: auto; margin: auto;">
-  <h3>Listado de Productos</h3>
+  <!-- Resto de la tabla y gráficos -->
   <div class="table-responsive">
-    <table id="products-table" class="table table-striped table-hover">
+    <!-- Contenedor para los switches -->
+    <div class="d-flex justify-content-center mt-3">
+      <div class="custom-switch mx-2">
+        <span class="switch-label">Estatus</span>
+        <input data-size="sm" type="checkbox" id="filter-status" checked>
+        <label for="filter-status"></label>
+      </div>
+      <div class="custom-switch mx-2">
+        <span class="switch-label">Fecha</span>
+        <input data-size="sm" type="checkbox" id="filter-date" checked>
+        <label for="filter-date"></label>
+      </div>
+      <div class="custom-switch mx-2">
+        <span class="switch-label">Usuario</span>
+        <input data-size="sm" type="checkbox" id="filter-username" checked>
+        <label for="filter-username"></label>
+      </div>
+    </div>
+    <table id="statictics-table" class="table table-striped table-hover">
       <thead class="thead-dark">
         <tr>
-          <th>Products</th>
-          <th>Category</th>
-          <th>Costo</th>
-          <th>Price</th>
-          <th>Stock</th>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Usuario</th>
+          <th>Productos</th>
+          <th>Estatus</th>
+          <th>Total a Pagar</th>
         </tr>
       </thead>
-      {% for item in items %}
-      <tr>
-        <td>{{ item.name }}</td>
-        <td>{{ item.category }}</td>
-        <td>{{ item.costo }}</td>
-        <td>${{ item.price }}</td>
-        <td>{{ item.stock }}</td>
-      </tr>
-      {% endfor %}
+      <tbody>
+        {% for order in orders %}
+        <tr data-order-id="{{ order.id }}" data-order-status="{{ order.status }}" data-order-total="0"
+          data-username="{{ order.customer.name }}" data-order-date="{{ order.date.strftime('%Y-%m-%d') }}">
+          <td>{{ loop.index }}</td>
+          <td>{{ order.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          <td>{{ order.customer.name }}</td>
+          <td>
+            {% for i in order.items %}
+            {% set item_price = i.item.price %}
+            {% set item_total = item_price * i.quantity %}
+            <div class="my" data-item-price="{{ item_price }}" data-item-quantity="{{ i.quantity }}"
+              data-item-total="{{ item_total }}">
+              {{ i.item.name }}<span class="success">x{{ i.quantity }}</span>-<span style="color: red;">${{ item_total
+                }}</span><br>
+            </div>
+            {% endfor %}
+          </td>
+          <td class="order-status">
+            {% if order.status == 'Reservado' %}
+            <span style="color: green;">{{ order.status }}</span>
+            {% elif order.status == 'Pagado' %}
+            <span style="color: red;">{{ order.status }}</span>
+            {% else %}
+            {{ order.status }}
+            {% endif %}
+          </td>
+          <td class="order-total">$0</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
   </div>
-  <table id="top-products-data" style="display: none;">
-    <tbody>
-      {% for producto, cantidad in productos_mas_vendidos %}
-      <tr>
-        <td>{{ producto }}</td>
-        <td>{{ cantidad }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  <div style="display: flex; gap: 20px;">
+    <div>
+      <h3>Total Filtrado: <span id="total-reservado" style="color: red;">$0.00</span></h3>
+    </div>
+    <div>
+      <h3>Por Cobrar: <span id="total-por-cobrar" style="color: green;">$0.00</span></h3>
+    </div>
+    <div>
+      <h3>Ganancia Neta: <span id="ganancia-neta" style="color: purple;">$0.00</span></h3>
+    </div>
+  </div>
+  <div class="row mt-5">
+    <div style="width: 60%; margin: auto;">
+      <h3>Productos más vendidos</h3>
+      <canvas id="top-products-chart"></canvas>
+    </div>
+    <div style="width: 30%; margin: auto;">
+      <h3>Total de Ventas</h3>
+      <canvas id="total-sales-chart"></canvas>
+    </div>
+  </div>
+  <div style="width: 45%; margin: auto;">
+    <h3>Resumen de Pedidos</h3>
+    <div style="position: relative; width:250; height:250">
+      <canvas id="orderStatusChart"></canvas>
+    </div>
+  </div>
+  <div class="container mt-5" style="width: auto; margin: auto;">
+    <h3>Listado de Productos</h3>
+    <div class="table-responsive">
+      <table id="products-table" class="table table-striped table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th>Productos</th>
+            <th>Categoria</th>
+            <th>Costo</th>
+            <th>Precio</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.category }}</td>
+          <td>{{ item.costo }}</td>
+          <td>${{ item.price }}</td>
+          <td>{{ item.stock }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+    <table id="top-products-data" style="display: none;">
+      <tbody>
+        {% for producto, cantidad in productos_mas_vendidos %}
+        <tr>
+          <td>{{ producto }}</td>
+          <td>{{ cantidad }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
 
-<script>
-// JavaScript existente para DataTables y filtros
-document.addEventListener("DOMContentLoaded", function () {
-  var table = $('#statictics-table').DataTable({
-    "lengthMenu": [5, 10, 25, 50],
-    "ordering": true,
-    "searching": true,
-    "paging": true,
-    "info": true,
-    "columnDefs": [
-      {
-        "targets": 0,
-        "visible": false,
-        "searchable": false
-      }
-    ]
-  });
-
-  const statusFilter = document.getElementById("filter-status");
-  const dateFilter = document.getElementById("filter-date");
-  const usernameFilter = document.getElementById("filter-username");
-  const startDateInput = document.getElementById("start-date");
-  const endDateInput = document.getElementById("end-date");
-  const filterButton = document.getElementById("filter-date-range");
-
-  table.columns(4).visible(statusFilter.checked);
-  table.columns(1).visible(dateFilter.checked);
-  table.columns(2).visible(usernameFilter.checked);
-
-  statusFilter.addEventListener("change", function () {
-    table.columns(4).visible(this.checked);
-  });
-
-  dateFilter.addEventListener("change", function () {
-    table.columns(1).visible(this.checked);
-  });
-
-  usernameFilter.addEventListener("change", function () {
-    table.columns(2).visible(this.checked);
-  });
-
-  filterButton.addEventListener("click", function () {
-    const startDate = startDateInput.value;
-    const endDate = endDateInput.value;
-
-    $.fn.dataTable.ext.search.push(
-      function (settings, data, dataIndex) {
-        const orderDate = data[1].substring(0, 10);
-        if (
-          (startDate === '' || orderDate >= startDate) &&
-          (endDate === '' || orderDate <= endDate)
-        ) {
-          return true;
-        }
-        return false;
-      }
-    );
-    table.draw();
-    calculateTotalReservado();
-    updateChartData();
-  });
-
-  function calculateTotalReservado() {
-    let totalReservado = 0;
-    table.rows({ search: 'applied' }).nodes().each(function (row) {
-      const status = row.getAttribute('data-order-status');
-      let orderTotal = 0;
-      $(row).find('.my').each(function () {
-        const itemTotal = parseFloat($(this).attr('data-item-total'));
-        orderTotal += itemTotal;
+  <script>
+    // JavaScript existente para DataTables y filtros
+    document.addEventListener("DOMContentLoaded", function () {
+      var table = $('#statictics-table').DataTable({
+        "lengthMenu": [5, 10, 25, 50],
+        "ordering": true,
+        "searching": true,
+        "paging": true,
+        "info": true,
+        "columnDefs": [
+          {
+            "targets": 0,
+            "visible": false,
+            "searchable": false
+          }
+        ]
       });
-      totalReservado += orderTotal;
-      $(row).find('.order-total').text(`$${orderTotal.toFixed(2)}`);
-      if (status === 'Pagado') {
-        $(row).css({
-          'border': '2px solid red',
-          'background-color': '#ffdddd',
-          'color': 'red'
+
+      const statusFilter = document.getElementById("filter-status");
+      const dateFilter = document.getElementById("filter-date");
+      const usernameFilter = document.getElementById("filter-username");
+      const startDateInput = document.getElementById("start-date");
+      const endDateInput = document.getElementById("end-date");
+      const filterButton = document.getElementById("filter-date-range");
+
+      table.columns(4).visible(statusFilter.checked);
+      table.columns(1).visible(dateFilter.checked);
+      table.columns(2).visible(usernameFilter.checked);
+
+      statusFilter.addEventListener("change", function () {
+        table.columns(4).visible(this.checked);
+      });
+
+      dateFilter.addEventListener("change", function () {
+        table.columns(1).visible(this.checked);
+      });
+
+      usernameFilter.addEventListener("change", function () {
+        table.columns(2).visible(this.checked);
+      });
+
+      filterButton.addEventListener("click", function () {
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+
+        $.fn.dataTable.ext.search.push(
+          function (settings, data, dataIndex) {
+            const orderDate = data[1].substring(0, 10);
+            if (
+              (startDate === '' || orderDate >= startDate) &&
+              (endDate === '' || orderDate <= endDate)
+            ) {
+              return true;
+            }
+            return false;
+          }
+        );
+        table.draw();
+        calculateTotalReservado();
+        updateChartData();
+      });
+
+      function calculateTotalReservado() {
+        let totalReservado = 0;
+        table.rows({ search: 'applied' }).nodes().each(function (row) {
+          const status = row.getAttribute('data-order-status');
+          let orderTotal = 0;
+          $(row).find('.my').each(function () {
+            const itemTotal = parseFloat($(this).attr('data-item-total'));
+            orderTotal += itemTotal;
+          });
+          totalReservado += orderTotal;
+          $(row).find('.order-total').text(`$${orderTotal.toFixed(2)}`);
+          if (status === 'Pagado') {
+            $(row).css({
+              'border': '2px solid red',
+              'background-color': '#ffdddd',
+              'color': 'red'
+            });
+          } else if (status === 'Libre') {
+            $(row).css({
+              'border': '2px solid purple',
+              'background-color': '#f3e5f5',
+              'color': 'purple'
+            });
+          }
         });
-      } else if (status === 'Libre') {
-        $(row).css({
-          'border': '2px solid purple',
-          'background-color': '#f3e5f5',
-          'color': 'purple'
-        });
+        $('#total-reservado').text(`$${totalReservado.toFixed(2)}`);
       }
-    });
-    $('#total-reservado').text(`$${totalReservado.toFixed(2)}`);
-  }
 
-  calculateTotalReservado();
-  table.on('search.dt', function () {
-    calculateTotalReservado();
-  });
+      calculateTotalReservado();
+      table.on('search.dt', function () {
+        calculateTotalReservado();
+      });
 
-  var ctx = document.getElementById('orderStatusChart').getContext('2d');
-  var orderStatusChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Pagado', 'Libre', 'Reservado'],
-      datasets: [{
-        label: 'Número de Órdenes',
-        data: [0, 0, 0],
-        backgroundColor: ['#e33a3a', '#b867c4', '#198639'],
-        borderColor: ['2px solid red', '2px solid purple', '2px solid green'],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            stepSize: 1
+      var ctx = document.getElementById('orderStatusChart').getContext('2d');
+      var orderStatusChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Pagado', 'Libre', 'Reservado'],
+          datasets: [{
+            label: 'Número de Órdenes',
+            data: [0, 0, 0],
+            backgroundColor: ['#e33a3a', '#b867c4', '#198639'],
+            borderColor: ['2px solid red', '2px solid purple', '2px solid green'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Estado de Órdenes' }
           }
         }
-      },
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' },
-        title: { display: true, text: 'Estado de Órdenes' }
+      });
+
+      function updateChartData() {
+        var pagado = 0, libre = 0, reservado = 0;
+        table.rows({ search: 'applied' }).nodes().each(function (row) {
+          const status = row.getAttribute('data-order-status');
+          if (status === 'Pagado') pagado++;
+          else if (status === 'Libre') libre++;
+          else if (status === 'Reservado') reservado++;
+        });
+        orderStatusChart.data.datasets[0].data = [pagado, libre, reservado];
+        orderStatusChart.update();
       }
-    }
-  });
 
-  function updateChartData() {
-    var pagado = 0, libre = 0, reservado = 0;
-    table.rows({ search: 'applied' }).nodes().each(function (row) {
-      const status = row.getAttribute('data-order-status');
-      if (status === 'Pagado') pagado++;
-      else if (status === 'Libre') libre++;
-      else if (status === 'Reservado') reservado++;
-    });
-    orderStatusChart.data.datasets[0].data = [pagado, libre, reservado];
-    orderStatusChart.update();
-  }
-
-  var topProductsChartCtx = document.getElementById('top-products-chart').getContext('2d');
-  var totalSalesChartCtx = document.getElementById('total-sales-chart').getContext('2d');
-  var topProductsChart = new Chart(topProductsChartCtx, {
-    type: 'bar',
-    data: {
-      labels: [],
-      datasets: [{
-        label: 'Cantidad Vendida',
-        data: [],
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { callback: function(value) { return value; } }
-        }
-      },
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' },
-        title: { display: true, text: 'Productos más Vendidos' },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.dataset.label || '';
-              const product = context.label;
-              const salesData = context.raw;
-              const totalAmount = context.dataset.totalAmounts[context.dataIndex];
-              return `${product} || Cantidad Vendida: ${salesData} || $${totalAmount.toFixed(2)}`;
+      var topProductsChartCtx = document.getElementById('top-products-chart').getContext('2d');
+      var totalSalesChartCtx = document.getElementById('total-sales-chart').getContext('2d');
+      var topProductsChart = new Chart(topProductsChartCtx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Cantidad Vendida',
+            data: [],
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: function (value) { return value; } }
+            }
+          },
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Productos más Vendidos' },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const label = context.dataset.label || '';
+                  const product = context.label;
+                  const salesData = context.raw;
+                  const totalAmount = context.dataset.totalAmounts[context.dataIndex];
+                  return `${product} || Cantidad Vendida: ${salesData} || $${totalAmount.toFixed(2)}`;
+                }
+              }
             }
           }
         }
-      }
-    }
-  });
+      });
 
-  var totalSalesChart = new Chart(totalSalesChartCtx, {
-    type: 'pie',
-    data: {
-      labels: [],
-      datasets: [{
-        label: 'Total de Ventas',
-        data: [],
-        backgroundColor: ['#e33a3a', '#b867c4', '#198639'],
-        borderColor: ['2px solid red', '2px solid purple', '2px solid green'],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' },
-        title: { display: true, text: 'Total de Ventas por Estado' },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.raw;
-              return `${label}: $${value.toFixed(2)}`;
+      var totalSalesChart = new Chart(totalSalesChartCtx, {
+        type: 'pie',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Total de Ventas',
+            data: [],
+            backgroundColor: ['#e33a3a', '#b867c4', '#198639'],
+            borderColor: ['2px solid red', '2px solid purple', '2px solid green'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Total de Ventas por Estado' },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const label = context.label || '';
+                  const value = context.raw;
+                  return `${label}: $${value.toFixed(2)}`;
+                }
+              }
             }
           }
         }
+      });
+
+      function updateSalesCharts() {
+        var productSales = {};
+        var productQuantities = {};
+        var productCosts = {};
+        var totalSales = { 'Pagado': 0, 'Libre': 0, 'Reservado': 0 };
+        let totalPorCobrar = 0, gananciaBruta = 0, costosTotales = 0, gananciaNeta = 0;
+
+        table.rows({ search: 'applied' }).nodes().each(function (row) {
+          const status = row.getAttribute('data-order-status');
+          $(row).find('.my').each(function () {
+            const [productName, quantityAndPrice] = $(this).text().split('x');
+            const productQuantity = parseInt(quantityAndPrice.split('-')[0]);
+            const itemTotal = parseFloat($(this).attr('data-item-total'));
+            const productRow = $('#products-table').find('td:contains("' + productName.trim() + '")').closest('tr');
+            const productCost = parseFloat(productRow.find('td:nth-child(3)').text()) || 0;
+            const itemCost = productCost * productQuantity;
+
+            if (productName.trim() in productSales) {
+              productSales[productName.trim()] += itemTotal;
+              productQuantities[productName.trim()] += productQuantity;
+              productCosts[productName.trim()] += itemCost;
+            } else {
+              productSales[productName.trim()] = itemTotal;
+              productQuantities[productName.trim()] = productQuantity;
+              productCosts[productName.trim()] = itemCost;
+            }
+
+            if (status === 'Pagado' || status === 'Libre' || status === 'Reservado') {
+              totalSales[status] += itemTotal;
+            }
+            if (status === 'Reservado') {
+              totalPorCobrar += itemTotal;
+            } else if (status === 'Pagado' || status === 'Libre') {
+              gananciaBruta += itemTotal;
+              costosTotales += itemCost;
+            }
+          });
+        });
+
+        gananciaNeta = gananciaBruta - costosTotales;
+        topProductsChart.data.labels = Object.keys(productSales);
+        topProductsChart.data.datasets[0].data = Object.values(productQuantities);
+        topProductsChart.data.datasets[0].totalAmounts = Object.values(productSales);
+        topProductsChart.update();
+        totalSalesChart.data.labels = Object.keys(totalSales);
+        totalSalesChart.data.datasets[0].data = Object.values(totalSales);
+        totalSalesChart.update();
+        document.getElementById('total-por-cobrar').textContent = `$${totalPorCobrar.toFixed(2)}`;
+        document.getElementById('ganancia-neta').textContent = `$${gananciaNeta.toFixed(2)}`;
       }
-    }
-  });
 
-  function updateSalesCharts() {
-    var productSales = {};
-    var productQuantities = {};
-    var productCosts = {};
-    var totalSales = { 'Pagado': 0, 'Libre': 0, 'Reservado': 0 };
-    let totalPorCobrar = 0, gananciaBruta = 0, costosTotales = 0, gananciaNeta = 0;
-
-    table.rows({ search: 'applied' }).nodes().each(function(row) {
-      const status = row.getAttribute('data-order-status');
-      $(row).find('.my').each(function() {
-        const [productName, quantityAndPrice] = $(this).text().split('x');
-        const productQuantity = parseInt(quantityAndPrice.split('-')[0]);
-        const itemTotal = parseFloat($(this).attr('data-item-total'));
-        const productRow = $('#products-table').find('td:contains("' + productName.trim() + '")').closest('tr');
-        const productCost = parseFloat(productRow.find('td:nth-child(3)').text()) || 0;
-        const itemCost = productCost * productQuantity;
-
-        if (productName.trim() in productSales) {
-          productSales[productName.trim()] += itemTotal;
-          productQuantities[productName.trim()] += productQuantity;
-          productCosts[productName.trim()] += itemCost;
-        } else {
-          productSales[productName.trim()] = itemTotal;
-          productQuantities[productName.trim()] = productQuantity;
-          productCosts[productName.trim()] = itemCost;
-        }
-
-        if (status === 'Pagado' || status === 'Libre' || status === 'Reservado') {
-          totalSales[status] += itemTotal;
-        }
-        if (status === 'Reservado') {
-          totalPorCobrar += itemTotal;
-        } else if (status === 'Pagado' || status === 'Libre') {
-          gananciaBruta += itemTotal;
-          costosTotales += itemCost;
-        }
+      updateChartData();
+      updateSalesCharts();
+      table.on('search.dt', function () {
+        updateChartData();
+        updateSalesCharts();
       });
     });
 
-    gananciaNeta = gananciaBruta - costosTotales;
-    topProductsChart.data.labels = Object.keys(productSales);
-    topProductsChart.data.datasets[0].data = Object.values(productQuantities);
-    topProductsChart.data.datasets[0].totalAmounts = Object.values(productSales);
-    topProductsChart.update();
-    totalSalesChart.data.labels = Object.keys(totalSales);
-    totalSalesChart.data.datasets[0].data = Object.values(totalSales);
-    totalSalesChart.update();
-    document.getElementById('total-por-cobrar').textContent = `$${totalPorCobrar.toFixed(2)}`;
-    document.getElementById('ganancia-neta').textContent = `$${gananciaNeta.toFixed(2)}`;
-  }
+    function exportTableToExcel(tableID, filename = 'data.xlsx') {
+      var table = document.getElementById(tableID);
+      var wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
+      XLSX.writeFile(wb, filename);
+    }
 
-  updateChartData();
-  updateSalesCharts();
-  table.on('search.dt', function() {
-    updateChartData();
-    updateSalesCharts();
-  });
-});
+    // Enviar las fechas filtradas al backend para generar el PDF
+    document.getElementById('filter-date-range').addEventListener('click', function () {
+      const startDate = document.getElementById('start-date').value;
+      const endDate = document.getElementById('end-date').value;
 
-function exportTableToExcel(tableID, filename = 'data.xlsx') {
-  var table = document.getElementById(tableID);
-  var wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
-  XLSX.writeFile(wb, filename);
-}
+      const url = "{{ url_for('admin.exportar_estadisticas_pdf') }}?start_date=" + startDate + "&end_date=" + endDate;
 
-// Enviar las fechas filtradas al backend para generar el PDF
-document.getElementById('filter-date-range').addEventListener('click', function () {
-    const startDate = document.getElementById('start-date').value;
-    const endDate = document.getElementById('end-date').value;
+      // Abrir en nueva pestaña
+      window.open(url, '_blank');
+    });
 
-    const url = "{{ url_for('admin.exportar_estadisticas_pdf') }}?start_date=" + startDate + "&end_date=" + endDate;
 
-    // Abrir en nueva pestaña
-    window.open(url, '_blank');
-});
+  </script>
 
-  
-</script>
-
-{% endif %}
-{% endblock %}
+  {% endif %}
+  {% endblock %}

@@ -5,6 +5,7 @@ from flask import Flask, session, render_template, redirect, url_for, flash, req
 from flask_bootstrap import Bootstrap
 from .forms import LoginForm, RegisterForm
 from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
 from .extensions import db
 from .db_models import Membership, db, User, Item, Alert, Order, Ordered_item
@@ -19,6 +20,7 @@ from markupsafe import Markup
 from flask import current_app, json
 from weasyprint import HTML
 from io import BytesIO
+import uuid
 
 load_dotenv()
 app = Flask(__name__, static_folder='static')
@@ -160,64 +162,59 @@ def add_no_cache_headers(response):
     response.headers["Expires"] = "-1"
     return response
 
+
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
-        email = request.form['email']
-        user = User.query.filter_by(email=email).first()
+        email = request.form.get('email')
+        master_key = request.form.get('master_key')
 
-        if user:
-            # Verificar si es administrador
-            if user.admin != 1:
-                flash("Solo los administradores pueden restablecer su contraseña.", "error")
-                return redirect(url_for('login'))
+        user = User.query.filter_by(email=email, master_key=master_key).first()
 
-            # Si es admin, generar el token y mostrar el enlace
-            token = serializer.dumps(email, salt='recover-password')
-            link = url_for('reset_password', token=token, _external=True)
+        if not user:
+            flash('Correo o llave maestra incorrectos.', 'error')
+            return redirect(url_for('forgot_password'))
 
-            # ⚠️ Mostrar enlace directamente (ya que no se envía por correo)
-            flash(f"{link}", "info")
-        else:
-            flash("Correo no encontrado.", "error")
+        # Crear un token firmado que contiene el email
+        token = serializer.dumps(email, salt='recover-password')
+
+        # Generar URL con el token
+        reset_url = url_for('reset_password', token=token, _external=True)
+        flash(f'{reset_url}', 'success')
+        return redirect(url_for('forgot_password'))
 
     return render_template('forgot_password.html')
 
-@app.route('/reset_password/<token>', methods=['GET', 'POST'])
-def reset_password(token):
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    token = request.args.get('token') or request.form.get('token')
+
+    if not token:
+        flash("Token inválido o faltante.", "error")
+        return redirect(url_for('forgot_password'))
+
     try:
         email = serializer.loads(token, salt='recover-password', max_age=3600)
     except:
-        flash("El enlace ha expirado o es inválido.", "error")
+        flash("El enlace ha expirado o no es válido.", "error")
         return redirect(url_for('forgot_password'))
 
-    # Buscar usuario antes de procesar formulario
     user = User.query.filter_by(email=email).first()
+
     if not user:
         flash("Usuario no encontrado.", "error")
         return redirect(url_for('forgot_password'))
 
     if request.method == 'POST':
-        password = request.form['password']
-        if len(password) < 8:
-            flash("La contraseña debe tener al menos 8 caracteres.", "error")
-            return render_template('reset_password.html', token=token)
-
-        user.password = generate_password_hash(password)
+        new_password = request.form.get('password')
+        user.password = generate_password_hash(new_password)
         db.session.commit()
-        flash("Contraseña actualizada correctamente.", "success")
-        return redirect(url_for('confirm_password_reset', token=token))
+        return redirect(url_for('confirm_password_reset'))
 
     return render_template('reset_password.html', token=token)
 
-@app.route('/confirm_password_reset/<token>')
-def confirm_password_reset(token):
-    try:
-        email = serializer.loads(token, salt='recover-password', max_age=3600)
-    except:
-        flash("El enlace ha expirado.", "error")
-        return redirect(url_for('login'))
-
+@app.route('/confirm_password_reset')
+def confirm_password_reset():
     return render_template('confirm_password_reset.html')
 
 @app.route("/export_order/<int:order_id>")
@@ -332,44 +329,49 @@ def register_admin():
     
     # Llenar las opciones del campo membership con (id, nombre)
     memberships = Membership.query.all()
-    form.membership.choices = [(m.id, m.name) for m in memberships]  # (id, nombre)
+    form.membership.choices = [(m.id, m.name) for m in memberships]
     
     if form.validate_on_submit():
         # Verificar si el correo ya existe
         user = User.query.filter_by(email=form.email.data).first()
         if user:
-            flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
-            return redirect(url_for('register_admin'))
+            link = url_for("login")
+            flash(f'El usuario con correo {user.email} ya existe. <a href="{link}">Inicie sesión.</a>', "error")
+            return redirect(url_for('login'))
         
         # Determinar el valor de email_confirmed basado en la membresía seleccionada
-        if form.membership.data == 1:  # Si la membresía seleccionada es "Prueba"
+        if form.membership.data == 1:
             email_confirmed = 1
-            membership_expiration=datetime.now(timezone.utc) + timedelta(days=7)  # 7 días de prueba
-        else:  # Para otras membresías, email_confirmed será 0
+            membership_expiration = datetime.now(timezone.utc) + timedelta(days=7)
+        else:
             email_confirmed = 0
-            membership_expiration = datetime.now(timezone.utc)  # No tiene expiración para otras membresías (o poner None si no aplica)
+            membership_expiration = datetime.now(timezone.utc)
         
         # Crear el nuevo usuario
         new_user = User(
             name=form.name.data,
             email=form.email.data,
             password=generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8),
-            admin=1,  # Marca como administrador
-            email_confirmed=email_confirmed,  # Establecer según la membresía
+            admin=1,
+            email_confirmed=email_confirmed,
             phone=form.phone.data,
-            membership_id=form.membership.data,  # Guardar el ID de la membresía seleccionada
-            membership_expiration=membership_expiration  # Asignar la fecha de expiración (si aplica)
+            membership_id=form.membership.data,
+            membership_expiration=membership_expiration,
+            master_key=secrets.token_hex(8)
         )
         
-        # Guardar el nuevo usuario en la base de datos
         db.session.add(new_user)
         db.session.commit()
-        
-        flash('¡Registro exitoso! Puede iniciar sesión ahora.', 'success')
-        return redirect(url_for('login'))
-    
-    return render_template("whatsapp.html", form=form)
 
+        # Guardar la clave maestra en sesión
+        session['master_key'] = new_user.master_key
+        master_key = session.pop('master_key', None)
+        flash('¡Registro exitoso! Puede iniciar sesión ahora.', 'success')
+        return render_template("whatsapp.html", form=form, master_key=master_key)
+
+    # Mostrar la clave maestra si está en sesión
+    master_key = session.pop('master_key', None)
+    return render_template("whatsapp.html", form=form, master_key=master_key)
 
 @app.route("/register", methods=['POST', 'GET'])  # Registrar Empleados
 def register():

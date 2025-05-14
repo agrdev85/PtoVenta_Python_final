@@ -38,6 +38,7 @@ class User(UserMixin, db.Model):
     employees = db.relationship('User', backref='creator', remote_side=[id], lazy='select')  # Relación empleados
     cart = db.relationship('Cart', backref='buyer')
     orders = db.relationship("Order", backref='customer', foreign_keys="[Order.uid]")  # Relación con clave foránea especificada
+    master_key = db.Column(db.String(100), unique=True)
 
     def check_membership_status(self):
       if self.membership_expiration:
