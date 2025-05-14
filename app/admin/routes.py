@@ -11,6 +11,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime, timedelta, timezone
 from collections import Counter
+from weasyprint import HTML
 
 
 admin = Blueprint("admin", __name__, url_prefix="/admin", static_folder="static", template_folder="templates")
