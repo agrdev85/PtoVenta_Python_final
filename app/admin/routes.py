@@ -485,6 +485,12 @@ def configuracion():
     # Renderizar plantilla
     return render_template('admin/configuracion.html', users=user_data, memberships=memberships, user=current_user)
 
+@admin.route('/pomodoro', methods=['GET'])
+def pomodoro():
+    
+    # Renderizar plantilla
+    return render_template('admin/pomodoro.html')
+
 
 @admin.route('/update_user/<int:user_id>', methods=['POST'])
 def update_user(user_id):

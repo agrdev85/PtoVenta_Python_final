@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro CuBaro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- Swiper.js CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient-start: #6a11cb;
+            --bg-gradient-end: #2575fc;
+            --short-break-bg-start: #00c4b4;
+            --short-break-bg-end: #26a69a;
+            --long-break-bg-start: #ff6f61;
+            --long-break-bg-end: #d81b60;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #ffffff;
+            --text-secondary: #e0e0e0;
+            --accent-color: #9b59b6;
+            --button-shadow-light: 0 4px 10px rgba(0,0,0,0.15);
+            --button-shadow-strong: 0 6px 18px rgba(0,0,0,0.25);
+            --btn-start-bg: linear-gradient(145deg, #28a745, #218838);
+            --btn-start-hover-bg: linear-gradient(145deg, #2ebf4e, #24973d);
+            --btn-pause-bg: linear-gradient(145deg, #ffc107, #e0a800);
+            --btn-pause-hover-bg: linear-gradient(145deg, #ffca2c, #d39e00);
+            --btn-reset-bg: linear-gradient(145deg, #dc3545, #c82333);
+            --btn-reset-hover-bg: linear-gradient(145deg, #e24756, #bd2130);
+            /* Light mode variables */
+            --bg-gradient-start-light: #a1c4fd;
+            --bg-gradient-end-light: #c2e9fb;
+            --short-break-bg-start-light: #b2f5ea;
+            --short-break-bg-end-light: #81e6d9;
+            --long-break-bg-start-light: #fed7d7;
+            --long-break-bg-end-light: #feb2b2;
+            --glass-bg-light: rgba(255, 255, 255, 0.6);
+            --glass-border-light: rgba(0, 0, 0, 0.1);
+            --text-primary-light: #333333;
+            --text-secondary-light: #666666;
+            --accent-color-light: #4a90e2;
+        }
+
+        body {
+            font-family: 'Inter', 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: background 0.5s ease, color 0.3s ease;
+        }
+
+        body.light {
+            --bg-gradient-start: var(--bg-gradient-start-light);
+            --bg-gradient-end: var(--bg-gradient-end-light);
+            --short-break-bg-start: var(--short-break-bg-start-light);
+            --short-break-bg-end: var(--short-break-bg-end-light);
+            --long-break-bg-start: var(--long-break-bg-start-light);
+            --long-break-bg-end: var(--long-break-bg-end-light);
+            --glass-bg: var(--glass-bg-light);
+            --glass-border: var(--glass-border-light);
+            --text-primary: var(--text-primary-light);
+            --text-secondary: var(--text-secondary-light);
+            --accent-color: var(--accent-color-light);
+        }
+
+        .pomodoro-container {
+            background: var(--glass-bg);
+            padding: 30px 40px;
+            border-radius: 35px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.35);
+            backdrop-filter: blur(18px) saturate(150%);
+            -webkit-backdrop-filter: blur(18px) saturate(150%);
+            border: 1px solid var(--glass-border);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 2.5em;
+            color: var(--text-primary);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .status {
+            font-size: 1.25em;
+            margin-bottom: 20px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            min-height: 1.5em;
+        }
+
+        .timer-display {
+            font-size: 5.8em;
+            margin: 15px 0 25px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-shadow: var(--button-shadow-strong);
+            line-height: 1;
+        }
+
+        .buttons button {
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 10px 6px;
+            border-radius: 18px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.25s ease-out;
+            min-width: 140px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--button-shadow-light);
+        }
+        .buttons button .icon {
+            width: 1.2em;
+            height: 1.2em;
+            fill: currentColor;
+        }
+
+        .buttons button:hover:not(:disabled) {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: var(--button-shadow-strong);
+        }
+        .buttons button:active:not(:disabled) {
+            transform: translateY(-1px) scale(0.98);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        .buttons button#start { background: var(--btn-start-bg); }
+        .buttons button#start:hover:not(:disabled) { background: var(--btn-start-hover-bg); }
+
+        .buttons button#pause { background: var(--btn-pause-bg); color: #333; }
+        .buttons button#pause:hover:not(:disabled) { background: var(--btn-pause-hover-bg); }
+
+        .buttons button#reset { background: var(--btn-reset-bg); }
+        .buttons button#reset:hover:not(:disabled) { background: var(--btn-reset-hover-bg); }
+
+        .buttons button:disabled {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .buttons button:disabled .icon {
+            fill: rgba(255, 255, 255, 0.3);
+        }
+
+        .break-type-selector {
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 15px;
+        }
+        .break-type-selector h3 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1em;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .break-type-selector label {
+            margin: 0 10px;
+            font-size: 0.9em;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+        }
+        .break-type-selector input[type="radio"] {
+            accent-color: var(--accent-color);
+            margin-right: 4px;
+        }
+        .break-type-selector input[type="radio"]:disabled + span {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .break-type-selector label:hover {
+            background-color: rgba(255,255,255,0.05);
+        }
+
+        .settings {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+        .settings div { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .settings label { margin-right: 10px; text-align: left; flex-basis: 70%; font-weight: 300; }
+        .settings input[type="number"] {
+            width: 55px; padding: 10px 8px; border-radius: 10px;
+            border: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.15);
+            color: var(--text-primary); font-size: 1em; text-align: center;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+        .settings input[type="number"]:focus { outline: none; border-color: var(--accent-color); background: rgba(0, 0, 0, 0.25); }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        /* Top-right buttons */
+        .top-right-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .top-right-buttons button {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease-out;
+            box-shadow: var(--button-shadow-light);
+            color: var(--text-primary);
+        }
+
+        .top-right-buttons button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--button-shadow-strong);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .top-right-buttons button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        .top-right-buttons button svg {
+            width: 1.2em;
+            height: 1.2em;
+            fill: currentColor;
+        }
+
+        /* Swiper carousel styles */
+        .swiper {
+            width: 100%;
+            height: 320px; /* Increased height for better content fit */
+            margin: 20px 0;
+            padding: 0 40px; /* Space for navigation buttons */
+            box-sizing: border-box;
+        }
+
+        .swiper-slide {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Align text to the left */
+            justify-content: center;
+            padding: 20px 30px; /* Increased padding for content */
+            text-align: left; /* Left-aligned text for readability */
+            font-size: 0.95em; /* Slightly smaller font for better fit */
+            color: var(--text-primary-light);
+            background: var(--glass-bg); /* Match app's glassmorphism */
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            max-width: 450px; /* Limit content width */
+            margin: 0 auto; /* Center the slide */
+            overflow: hidden; /* Prevent text overflow */
+        }
+
+        .swiper-slide h3 {
+            margin: 0 0 15px;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--accent-color); /* Use accent color for headings */
+            text-align: center; /* Center headings */
+            width: 100%;
+        }
+
+        .swiper-slide p {
+            margin: 0;
+            line-height: 1.6;
+            font-weight: 400;
+            max-height: 200px; /* Prevent text from overflowing slide */
+            overflow-y: auto; /* Scroll if text is too long */
+        }
+
+        .swiper-button-prev,
+        .swiper-button-next {
+            color: var(--accent-color);
+            width: 40px;
+            height: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10; /* Ensure buttons are above content */
+        }
+
+        .swiper-button-prev {
+            left: 0; /* Position outside the slide content */
+        }
+
+        .swiper-button-next {
+            right: 0; /* Position outside the slide content */
+        }
+
+        .swiper-button-prev:after,
+        .swiper-button-next:after {
+            font-size: 20px; /* Smaller arrows for better fit */
+        }
+
+        .swiper-pagination {
+            bottom: 10px;
+        }
+
+        .swiper-pagination-bullet-active {
+            background: var(--accent-color);
+        }
+
+        /* Ensure SweetAlert2 modal content is styled */
+        .swal2-html-container {
+            padding: 0 !important;
+            overflow: hidden !important;
+            background: transparent !important;
+        }
+
+        .swal2-popup {
+            background: rgba(255, 255, 255, 0.95) !important; /* Light background for modal */
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border-radius: 20px !important;
+        }
+
+        .swal2-title {
+            color: var(--text-primary-light) !important;
+            font-weight: 600 !important;
+        }
+
+        .swal2-confirm {
+            background: var(--accent-color) !important;
+            color: #fff !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important;
+        }
+    </style>
+</head>
+<body>
+<div class="pomodoro-container">
+    <h1>Pomodoro CuBaro</h1>
+    <div class="top-right-buttons">
+        <button id="help-button" title="Tutorial">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+        </button>
+        <button id="theme-toggle" title="Cambiar tema">
+            <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+        </button>
+    </div>
+    <div class="status" id="status">Define tus tiempos y ¡a producir!</div>
+    <div class="timer-display" id="timer-display">25:00</div>
+
+    <div class="buttons">
+        <button id="start">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <span class="btn-text">Empezar</span>
+        </button>
+        <button id="pause">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <span class="btn-text">Pausar</span>
+        </button>
+        <button id="reset">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+            <span class="btn-text">Reiniciar</span>
+        </button>
+    </div>
+
+    <div class="break-type-selector" id="break-type-selector">
+        <h3>Próximo Descanso:</h3>
+        <label><input type="radio" name="nextBreakType" value="auto" checked> <span>Automático</span></label>
+        <label><input type="radio" name="nextBreakType" value="short"> <span>Forzar Corto</span></label>
+        <label><input type="radio" name="nextBreakType" value="long"> <span>Forzar Largo</span></label>
+    </div>
+
+    <div class="settings">
+        <div><label for="work-duration">Minutos de Enfoque:</label><input type="number" id="work-duration" value="25" min="1"></div>
+        <div><label for="short-break-duration">Descanso Corto (min):</label><input type="number" id="short-break-duration" value="5" min="1"></div>
+        <div><label for="long-break-duration">Descanso Largo (min):</label><input type="number" id="long-break-duration" value="15" min="1"></div>
+        <div><label for="pomodoros-until-long-break">Pomodoros para Descanso Largo:</label><input type="number" id="pomodoros-until-long-break" value="4" min="1"></div>
+    </div>
+</div>
+
+<audio id="work-sound" src="{{ url_for('static', filename='pomodoro/sonido_correcto.wav') }}" preload="auto"></audio>
+<audio id="break-sound" src="{{ url_for('static', filename='pomodoro/sonido_incorrecto.wav') }}" preload="auto"></audio>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Swiper.js JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+    const timerDisplay = document.getElementById('timer-display');
+    const statusDisplay = document.getElementById('status');
+    const startButton = document.getElementById('start');
+    const startButtonText = startButton.querySelector('.btn-text');
+    const startButtonIcon = startButton.querySelector('.icon');
+    const pauseButton = document.getElementById('pause');
+    const resetButton = document.getElementById('reset');
+    const workDurationInput = document.getElementById('work-duration');
+    const shortBreakDurationInput = document.getElementById('short-break-duration');
+    const longBreakDurationInput = document.getElementById('long-break-duration');
+    const pomodorosUntilLongBreakInput = document.getElementById('pomodoros-until-long-break');
+    const breakTypeRadios = document.querySelectorAll('input[name="nextBreakType"]');
+    const workSound = document.getElementById('work-sound');
+    const breakSound = document.getElementById('break-sound');
+    const helpButton = document.getElementById('help-button');
+    const themeToggle = document.getElementById('theme-toggle');
+
+    const playIconPath = "M8 5v14l11-7z";
+
+    let timer;
+    let timeLeft;
+    let isPaused = true;
+    let isWorkSession = true;
+    let pomodoroCount = 0;
+    let currentSessionType = "work";
+
+    // Theme toggle functionality
+    function toggleTheme() {
+        document.body.classList.toggle('light');
+        const isLight = document.body.classList.contains('light');
+        themeToggle.querySelector('svg').innerHTML = isLight ?
+            '<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.57a1 1 0 00-1.41 0L3.17 6c-.39.39-.39 1.02 0 1.41s1.02.39 1.41 0l1.41-1.41a1 1 0 000-1.41zm14.24 14.24a1 1 0 000-1.41l-1.41-1.41a1 1 0 00-1.41 0c-.39.39-.39 1.02 0 1.41l1.41 1.41a1 1 0 001.41 0zM4.57 19.43l1.41-1.41a1 1 0 000-1.41 1 1 0 00-1.41 0l-1.41 1.41a1 1 0 000 1.41 1 1 0 001.41 0zm14.24-14.24l1.41 1.41a1 1 0 001.41 0 1 1 0 000-1.41l-1.41-1.41a1 1 0 00-1.41 0 1 1 0 000 1.41z"/>' :
+            '<path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        updateBackground();
+    }
+
+    // Load saved theme
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light');
+        themeToggle.querySelector('svg').innerHTML = '<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.Resolving: 45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.57a1 1 0 00-1.41 0L3.17 6c-.39.39-.39 1.02 0 1.41s1.02.39 1.41 0l1.41-1.41a1 1 0 000-1.41zm14.24 14.24a1 1 0 000-1.41l-1.41-1.41a1 1 0 00-1.41 0c-.39.39-.39 1.02 0 1.41l1.41 1.41a1 1 0 001.41 0zM4.57 19.43l1.41-1.41a1 1 0 000-1.41 1意义: 1 1 0 00-1.41 0l-1.41 1.41a1 1 0 001.41 0 1 1 0 000-1.41z"/>';
+    }
+
+    // Help button functionality
+    helpButton.addEventListener('click', () => {
+        Swal.fire({
+            title: 'Cómo Usar Pomodoro CuBaro',
+            html: `
+                <div class="swiper">
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide">
+                            <h3>¿Qué es Pomodoro?</h3>
+                            <p>La técnica Pomodoro es un método de gestión del tiempo que divide el trabajo en intervalos de 25 minutos (pomodoros) separados por descansos cortos de 5 minutos. Cada 4 pomodoros, tomas un descanso largo de 15-30 minutos.</p>
+                        </div>
+                        <div class="swiper-slide">
+                            <h3>Configura tus Tiempos</h3>
+                            <p>En la sección "Ajustes", define la duración de los pomodoros, descansos cortos y largos. Por ejemplo, establece 25 minutos para trabajo, 5 para descanso corto y 15 para descanso largo.</p>
+                        </div>
+                        <div class="swiper-slide">
+                            <h3>Controla el Temporizador</h3>
+                            <p>Usa los botones:<br>- <strong>Empezar</strong>: Inicia o reanuda el temporizador.<br>- <strong>Pausar</strong>: Detiene el temporizador.<br>- <strong>Reiniciar</strong>: Restablece todo.</p>
+                        </div>
+                        <div class="swiper-slide">
+                            <h3>Elige el Tipo de Descanso</h3>
+                            <p>En "Próximo Descanso", selecciona:<br>- <strong>Automático</strong>: Sigue el ciclo estándar.<br>- <strong>Forzar Corto</strong>: Próximo descanso será corto.<br>- <strong>Forzar Largo</strong>: Próximo descanso será largo.</p>
+                        </div>
+                        <div class="swiper-slide">
+                            <h3>Personaliza Descansos Largos</h3>
+                            <p>Ajusta "Pomodoros para Descanso Largo" para decidir cuántos pomodoros trabajar antes de un descanso largo. Por defecto, es 4.</p>
+                        </div>
+                    </div>
+                    <div class="swiper-button-prev"></div>
+                    <div class="swiper-button-next"></div>
+                    <div class="swiper-pagination"></div>
+                </div>
+            `,
+            width: '600px',
+            showConfirmButton: true,
+            confirmButtonText: 'Cerrar',
+            confirmButtonColor: '#9b59b6',
+            didOpen: () => {
+                new Swiper('.swiper', {
+                    loop: true,
+                    pagination: {
+                        el: '.swiper-pagination',
+                        clickable: true,
+                    },
+                    navigation: {
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
+                    },
+                    spaceBetween: 20,
+                    slidesPerView: 1,
+                });
+            }
+        });
+    });
+
+    themeToggle.addEventListener('click', toggleTheme);
+
+    function updateBackground() {
+        const body = document.body;
+        if (currentSessionType === "shortBreak") {
+            body.style.background = `linear-gradient(135deg, var(--short-break-bg-start) 0%, var(--short-break-bg-end) 100%)`;
+        } else if (currentSessionType === "longBreak") {
+            body.style.background = `linear-gradient(135deg, var(--long-break-bg-start) 0%, var(--long-break-bg-end) 100%)`;
+        } else {
+            body.style.background = `linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)`;
+        }
+    }
+
+    function getSelectedBreakType() {
+        for (const radio of breakTypeRadios) {
+            if (radio.checked) return radio.value;
+        }
+        return "auto";
+    }
+
+    function getDurations() {
+        return {
+            work: parseInt(workDurationInput.value) * 60,
+            shortBreak: parseInt(shortBreakDurationInput.value) * 60,
+            longBreak: parseInt(longBreakDurationInput.value) * 60,
+            pomodorosForLongBreak: parseInt(pomodorosUntilLongBreakInput.value)
+        };
+    }
+
+    function initializeTimer() {
+        const durations = getDurations();
+        timeLeft = isWorkSession ? durations.work : (currentSessionType === "shortBreak" ? durations.shortBreak : durations.longBreak);
+        updateDisplay();
+        updateStatusText();
+        updateBackground();
+        pauseButton.disabled = true;
+        startButton.disabled = false;
+        startButtonText.textContent = "Empezar";
+        startButtonIcon.querySelector('path').setAttribute('d', playIconPath);
+        toggleInputs(false);
+        toggleBreakTypeSelector(false);
+
+        if (isPaused && (!timer || timeLeft <= 0)) {
+            statusDisplay.textContent = "Define tus tiempos y ¡a producir!";
+            document.title = "Pomodoro CuBaro";
+        }
+        document.querySelector('input[name="nextBreakType"][value="auto"]').checked = true;
+    }
+
+    function startTimer(duration, sessionType) {
+        if (timer) clearInterval(timer);
+        timeLeft = duration;
+        isPaused = false;
+        currentSessionType = sessionType;
+        isWorkSession = (sessionType === "work");
+
+        updateStatusText();
+        updateDisplay();
+        updateBackground();
+
+        startButtonText.textContent = "Empezar";
+        startButtonIcon.querySelector('path').setAttribute('d', playIconPath);
+        startButton.disabled = true;
+        pauseButton.disabled = false;
+        toggleInputs(true);
+        toggleBreakTypeSelector(true);
+
+        timer = setInterval(() => {
+            if (!isPaused) {
+                timeLeft--;
+                updateDisplay();
+                if (timeLeft < 0) {
+                    clearInterval(timer);
+                    sessionEnd();
+                }
+            }
+        }, 1000);
+    }
+
+    function sessionEnd() {
+        const durations = getDurations();
+        let nextBreakForcedType = getSelectedBreakType();
+
+        if (isWorkSession) {
+            playSound(workSound);
+            pomodoroCount++;
+            isWorkSession = false;
+
+            if (nextBreakForcedType === "long") {
+                startTimer(durations.longBreak, "longBreak");
+            } else if (nextBreakForcedType === "short") {
+                startTimer(durations.shortBreak, "shortBreak");
+            } else {
+                if (pomodoroCount > 0 && durations.pomodorosForLongBreak > 0 && pomodoroCount % durations.pomodorosForLongBreak === 0) {
+                    startTimer(durations.longBreak, "longBreak");
+                } else {
+                    startTimer(durations.shortBreak, "shortBreak");
+                }
+            }
+            if (nextBreakForcedType !== "auto") {
+                document.querySelector('input[name="nextBreakType"][value="auto"]').checked = true;
+            }
+        } else {
+            playSound(breakSound);
+            isWorkSession = true;
+            startTimer(durations.work, "work");
+        }
+        toggleBreakTypeSelector(false);
+    }
+
+    function updateDisplay() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerDisplay.textContent = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        document.title = `${timerDisplay.textContent} - ${statusDisplay.textContent}`;
+    }
+
+    function updateStatusText() {
+        if (isWorkSession) {
+            statusDisplay.textContent = "☕ Enfócate...";
+        } else {
+            statusDisplay.textContent = currentSessionType === "longBreak" ? "🧘 Descanso Largo Profundo" : "🏖️ Descanso Corto Rápido";
+        }
+    }
+
+    function toggleInputs(disabled) {
+        workDurationInput.disabled = disabled;
+        shortBreakDurationInput.disabled = disabled;
+        longBreakDurationInput.disabled = disabled;
+        pomodorosUntilLongBreakInput.disabled = disabled;
+    }
+
+    function toggleBreakTypeSelector(disabled) {
+        breakTypeRadios.forEach(radio => radio.disabled = disabled);
+    }
+
+    function playSound(soundElement) {
+        if (soundElement) {
+            soundElement.currentTime = 0;
+            soundElement.play().catch(error => {
+                console.warn("Error al reproducir sonido. Se requiere interacción del usuario.", error);
+            });
+        }
+    }
+
+    startButton.addEventListener('click', () => {
+        const durations = getDurations();
+        if (isPaused) {
+            isPaused = false;
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            toggleInputs(true);
+            toggleBreakTypeSelector(true);
+
+            if (!timer || timeLeft < 0) {
+                isWorkSession = true;
+                currentSessionType = "work";
+                startTimer(durations.work, "work");
+            } else {
+                startButtonText.textContent = "Empezar";
+                startButtonIcon.querySelector('path').setAttribute('d', playIconPath);
+                updateStatusText();
+            }
+        }
+    });
+
+    pauseButton.addEventListener('click', () => {
+        isPaused = true;
+        startButton.disabled = false;
+        startButtonText.textContent = "Reanudar";
+        pauseButton.disabled = true;
+        toggleBreakTypeSelector(false);
+    });
+
+    resetButton.addEventListener('click', () => {
+        clearInterval(timer);
+        timer = null;
+        isWorkSession = true;
+        pomodoroCount = 0;
+        isPaused = true;
+        currentSessionType = "work";
+        initializeTimer();
+    });
+
+    [workDurationInput, shortBreakDurationInput, longBreakDurationInput, pomodorosUntilLongBreakInput].forEach(input => {
+        input.addEventListener('change', () => {
+            if (isPaused && (!timer || timeLeft < 0 )) {
+                initializeTimer();
+            }
+        });
+    });
+
+    initializeTimer();
+</script>
+</body>
+</html>
