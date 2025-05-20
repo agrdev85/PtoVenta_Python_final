@@ -211,7 +211,7 @@
                             </div>
                             <div class="tutorial-text-container">
                                 <h5>Paso <i class="bi bi-2-circle-fill"></i> Navegar por la Interfaz Principal</h5>
-                                <p>Una vez iniciada la sesión, verá el panel principal con opciones como "Productos", "Ordenes", "Panel", "Estadísticas", "Configuración" y "Herramientas". Estas pestañas o botones le permiten acceder a las funciones clave del sistema. Haga clic en cada una para gestionar productos, procesar ordenes o generar reportes.</p>
+                                <p>Una vez iniciada la sesión, verá el panel principal con opciones como "Ordenes" <i class="bi bi-bell"></i>, "Panel" <i class="bi bi-speedometer2"></i>, "Productos" <i class="bi bi-bag-fill"></i>, "Estadísticas" <i class="bi bi-graph-up-arrow"></i>, "Configuración" <i class="bi bi-sliders"></i> y "Herramientas" <i class="bi bi-tools"></i>. Estas pestañas o botones le permiten acceder a las funciones claves del sistema. Haga clic en cada una para gestionar productos, procesar ordenes o generar reportes. En el panel puedes "Eliminar" <i class="bi bi-trash3 text-danger"></i> y atualizar el estado de las "Ordenes" que emitió cada uno de sus empleados cuando los mismos coticen, ten en cuenta que al cambiar el estado este será ireversible</p>
                             </div>
                         </div>
                         <!-- Step 3: Add Product -->
@@ -224,7 +224,7 @@
                             </div>
                             <div class="tutorial-text-container">
                                 <h5>Paso <i class="bi bi-3-circle-fill"></i> Añadir un Nuevo Producto</h5>
-                                <p>Vaya a la sección "Productos" y haga clic en "Añadir Producto". Complete el formulario con detalles como nombre del producto, categoria, imagen, costo, precio, stock y stock_min. Presione "Guardar" para registrar el producto en la base de datos.</p>
+                                <p>Vaya a la sección "Productos" y haga clic en "Añadir Producto" <i class="bi bi-database-fill-add"></i>. Complete el formulario con detalles como nombre del producto, categoria, imagen, costo, precio, stock y stock_min. Presione "Guardar" para registrar el producto en la base de datos.</p>
                             </div>
                         </div>
                         <!-- Step 4: Edit/Delete Product -->
@@ -237,52 +237,52 @@
                             </div>
                             <div class="tutorial-text-container">
                                 <h5>Paso <i class="bi bi-4-circle-fill"></i> Editar o Eliminar Productos</h5>
-                                <p>En "Productos", seleccione un producto de la lista. Haga clic en "Editar" para actualizar detalles como precio o stock, luego guarde los cambios. Para eliminar, seleccione "Eliminar" y confirme la acción. Esto actualiza la base de datos, asegurando que la información sea precisa.</p>
+                                <p>En "Productos", seleccione un producto de la lista. Haga clic en "Editar" <i class="bi bi-pencil-square text-success"></i> para actualizar detalles como precio o stock, luego guarde los cambios. Para eliminar, seleccione "Eliminar" <i class="bi bi-trash3 text-danger"></i> y confirme la acción. Esto actualiza la base de datos, asegurando que la información sea precisa.</p>
                             </div>
                         </div>
                         <!-- Step 5: Process Sale -->
                         <div class="tutorial-card" data-index="4">
                             <div class="tutorial-image-container">
-                                <img src="{{ url_for('static', filename='img/.png') }}" alt="Paso 5">
+                                <img src="{{ url_for('static', filename='img/factura.png') }}" alt="Paso 5">
                                 <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
                                     <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm0-2a2.5 2.5 0 002.5-2.5c0-.28-.05-.54-.14-.79L12.29 10H11.5v-.5h.79l-.43-1.29c-.25-.09-.51-.14-.79-.14A2.5 2.5 0 009 10.5c0 .28.05.54.14.79l.43 1.29h-.79v.5h-.79l.43 1.29c.25.09.51.14.79.14z"/></svg>
                                 </button>
                             </div>
                             <div class="tutorial-text-container">
                                 <h5>Paso <i class="bi bi-5-circle-fill"></i> Procesar una Orden</h5>
-                                <p>Diríjase a "Inicio". Seleccione un producto, ingrese la cantidad a vender y haga clic en "Agregar al Carrito". Repita para más productos si es necesario. Revise el total de la venta y haga clic en "Reservar" y confirmar para registrar la transacción y reducir el inventario automáticamente.</p>
+                                <p>Diríjase a "Inicio". Seleccione un producto, ingrese la cantidad a vender y haga clic en "Agregar al Carrito". Repita para más productos si es necesario. Revise el total de la venta y haga clic en "Reservar" y confirmar para registrar la transacción y reducir el inventario automáticamente. Una vez generada la "Orden" se puede emitir una factura en caso de que el cliente la requiera <i class="bi bi-file-earmark-pdf" style="color: #dc3545; font-size: 1.5em;"></i>Factura</p>
                             </div>
                         </div>
                         <!-- Step 6: Generate Report -->
                         <div class="tutorial-card" data-index="5">
                             <div class="tutorial-image-container">
-                                <img src="{{ url_for('static', filename='img/.png') }}" alt="Paso 6">
+                                <img src="{{ url_for('static', filename='img/estadisticas.png') }}" alt="Paso 6">
                                 <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
                                     <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm0-2a2.5 2.5 0 002.5-2.5c0-.28-.05-.54-.14-.79L12.29 10H11.5v-.5h.79l-.43-1.29c-.25-.09-.51-.14-.79-.14A2.5 2.5 0 009 10.5c0 .28.05.54.14.79l.43 1.29h-.79v.5h-.79l.43 1.29c.25.09.51.14.79.14z"/></svg>
                                 </button>
                             </div>
                             <div class="tutorial-text-container">
                                 <h5>Paso <i class="bi bi-6-circle-fill"></i> Generar un Reporte de Estadística</h5>
-                                <p>En la sección "Estadística", seleccione un rango de fechas o una venta específica. Haga clic en "Generar Reporte" para crear un archivo PDF con detalles de las ventas, como productos vendidos y totales, además del estado del inventario.</p>
+                                <p>En la sección "Estadística", seleccione un rango de fechas o una venta específica. Haga clic en "<i class="bi bi-file-earmark-pdf-fill" width="48" height="48"></i>Filtrar" para crear un archivo PDF con detalles de las ventas, como productos más o menos vendidos y totales, además del estado del inventario.</p>
                             </div>
                         </div>
                         <!-- Step 7: Manage Inventory -->
                         <div class="tutorial-card" data-index="6">
                             <div class="tutorial-image-container">
-                                <img src="{{ url_for('static', filename='img/.png') }}" alt="Paso 7">
+                                <img src="{{ url_for('static', filename='img/ConfgGestionEmpleados.png') }}" alt="Paso 7">
                                 <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
                                     <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm0-2a2.5 2.5 0 002.5-2.5c0-.28-.05-.54-.14-.79L12.29 10H11.5v-.5h.79l-.43-1.29c-.25-.09-.51-.14-.79-.14A2.5 2.5 0 009 10.5c0 .28.05.54.14.79l.43 1.29h-.79v.5h-.79l.43 1.29c.25.09.51.14.79.14z"/></svg>
                                 </button>
                             </div>
                             <div class="tutorial-text-container">
-                                <h5>Paso <i class="bi bi-7-circle-fill"></i> Gestionar Productos</h5>
-                                <p>Acceda a "Productos" para ver los niveles de stock actuales de cada producto. Para ajustar, seleccione un producto y actualice la cantidad manualmente o use la opción "Reabastecer" para agregar stock. Guarde los cambios para actualizar la base de datos.</p>
+                                <h5>Paso <i class="bi bi-7-circle-fill"></i> Gestionar Empleados</h5>
+                                <p>Acceda al panel de "Configuración" para ver todos los empleados. Para "Añadir" seleccione <i class="bi bi-person-plus"></i> para "Editar" <i class="bi bi-pencil-square text-success"></i>, luego guarde los cambios. Para eliminar, seleccione "Eliminar" <i class="bi bi-trash3 text-danger"></i> y confirme la acción.</p>
                             </div>
                         </div>
                         <!-- Step 8: Log Out -->
                         <div class="tutorial-card" data-index="7">
                             <div class="tutorial-image-container">
-                                <img src="{{ url_for('static', filename='img/.png') }}" alt="Paso 8">
+                                <img src="{{ url_for('static', filename='img/cerrarSesion.png') }}" alt="Paso 8">
                                 <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
                                     <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm0-2a2.5 2.5 0 002.5-2.5c0-.28-.05-.54-.14-.79L12.29 10H11.5v-.5h.79l-.43-1.29c-.25-.09-.51-.14-.79-.14A2.5 2.5 0 009 10.5c0 .28.05.54.14.79l.43 1.29h-.79v.5h-.79l.43 1.29c.25.09.51.14.79.14z"/></svg>
                                 </button>
