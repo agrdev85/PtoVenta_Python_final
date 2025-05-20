@@ -20,7 +20,9 @@ const animations = [
     // Remove animation classes after it ends
     logo.addEventListener('animationend', () => {
       logo.classList.remove('animate__animated', randomAnim);
-    }, { once: true });
+    }, 
+  
+    { once: true });
   }
   
   // Animate every 5 seconds
