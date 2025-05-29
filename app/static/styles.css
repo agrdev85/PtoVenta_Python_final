@@ -1138,3 +1138,14 @@ fijate en el este apartado para que despues arreglemos algo
 		height: 14px;
 	}
 }
+
+.tutorial-span {
+	background: linear-gradient(45deg, #fae8ed, #ffffff);
+}
+
+.tutorial-fill {
+	background: linear-gradient(45deg, #faf7e4ea, #c0ffff);
+	border-radius: 50px;
+	color: var(--white);
+	font-size: 28px;
+}

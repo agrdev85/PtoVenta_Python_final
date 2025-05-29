@@ -373,21 +373,20 @@ def delete(id):
         flash("No se pudo eliminar el artículo porque está relacionado con órdenes.", "error")
     return redirect(url_for('admin.items'))
 
-@admin.route('/delete_order/<int:id>')
-@admin_only
-def delete_order(id):
-    # Validar que la orden pertenece a un empleado del administrador actual
-    #order = Order.query.join(User, Order.uid == User.id).filter(Order.id == id, User.created_by == current_user.id).first_or_404()
 
+@admin.route('/delete_order/<int:id>')
+@login_required
+def delete_order(id):
     # Validar que la orden pertenece al administrador actual o a un empleado del administrador actual
     order = Order.query.join(User, Order.uid == User.id).filter(
         Order.id == id,
-        (User.created_by == current_user.id) | (User.id == current_user.id)  # Verificar si es del admin o de un empleado del admin
+        (User.created_by == current_user.id) | (User.id == current_user.id)
     ).first_or_404()
 
     if not order:
         flash("No se encontró la orden.", "error")
-        return redirect(url_for('admin.dashboard'))
+        # Redirigir según el rol del usuario
+        return redirect(url_for('admin.dashboard' if current_user.admin == 1 else 'orders'))
 
     if order.status == 'Reservado':
         # Restablecer el stock de los ítems en la orden
@@ -396,7 +395,6 @@ def delete_order(id):
             if item:
                 item.stock += ordered_item.quantity
                 eliminar_alerta_si_corresponde(item)
-
 
         # Eliminar los ítems asociados a la orden
         Ordered_item.query.filter_by(oid=id).delete()
@@ -409,7 +407,8 @@ def delete_order(id):
     else:
         flash("No se puede eliminar la orden porque no está en estado 'Reservado'.", "error")
 
-    return redirect(url_for('admin.dashboard'))
+    # Redirigir según el rol del usuario
+    return redirect(url_for('admin.dashboard' if current_user.admin == 1 else 'orders'))
 
 # Esta función se ejecutará cada X tiempo para revisar las órdenes pendientes
 @admin.route('/update_order_status_to_free', methods=['POST'])

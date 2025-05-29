@@ -2,6 +2,13 @@ from datetime import datetime, timezone
 from flask_login import UserMixin
 from .extensions import db
 
+
+class PasswordResetLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    success = db.Column(db.Boolean, default=False)
+
 class Alert(db.Model):
     __tablename__ = 'alert'
     id = db.Column(db.Integer, primary_key=True)

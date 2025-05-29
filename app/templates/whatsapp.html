@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Register - CuBaro
+Registro de Administrador - CuBaro
 {% endblock %}
 
 {% block content %}
-
 <div class="row justify-content-center mt-0">
     <img id="logoAnimated" src="{{ url_for('static', filename='img/logoo.png') }}" height="100" width="150">
 </div>
@@ -15,9 +14,8 @@
         <div class="col-md-6">
             <div class="card mt-2">
                 <div class="card-header bg-primary text-white text-center">
-                    <h3>Registrarse en CuBaro</h3>
+                    <h3>Registrarse como Administrador</h3>
                 </div>
-
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('register_admin') }}">
                         {{ form.hidden_tag() }}
@@ -87,9 +85,9 @@
 
                         <div class="form-group position-relative">
                             {{ form.confirm.label }}
-                            {{ form.confirm(class="form-control", id="regConfirm") }}
-                            <span onclick="togglePassword('regConfirm', 'iconRegConfirm')" style="cursor:pointer; position:absolute; top:38px; right:15px; color:rgb(14, 66, 238);">
-                                <i class="fa fa-eye toggle-icon" id="iconRegConfirm" title="Mostrar contraseña"></i>
+                            {{ form.confirm(class="form-control", id="regPasswordConfirm") }}
+                            <span onclick="togglePassword('regPasswordConfirm', 'iconRegPassConfirm')" style="cursor:pointer; position:absolute; top:38px; right:15px; color:rgb(14, 66, 238);">
+                                <i class="fa fa-eye toggle-icon" id="iconRegPassConfirm" title="Mostrar contraseña"></i>
                             </span>                        
                             {% if form.confirm.errors %}
                             <div class="text-danger">
@@ -112,41 +110,100 @@
 
 {% if master_key %}
 <script>
-Swal.fire({
-    title: '¡Registro Exitoso!',
-    html: `
-        <p>Tu <strong>llave maestra</strong> es:</p>
-        <div id="keyBox" style="font-size: 1.6em; font-weight: bold; color: #0056b3; background: #f0f8ff; padding: 10px; border-radius: 10px; display: inline-block;">
-            {{ master_key }}
-        </div>
-        <br><br>
-        <button onclick="copyKey()" class="btn btn-outline-primary btn-sm">Copiar clave</button>
-        <br><br>
-        <strong>¡Guárdala en un lugar seguro!</strong><br>
-        La necesitarás para recuperar tu cuenta.`,
-    icon: 'success',
-    allowOutsideClick: false,
-    showConfirmButton: false, // Oculta el botón "Aceptar"
-    allowEscapeKey: false
-}).then(() => {
-    window.location.href = "{{ url_for('login') }}";
-});
-
-function copyKey() {
-    const keyText = document.getElementById("keyBox").innerText;
-    navigator.clipboard.writeText(keyText).then(() => {
+    document.addEventListener("DOMContentLoaded", function () {
         Swal.fire({
-            toast: true,
-            position: 'top-end',
+            title: '<i class="bi bi-check-circle" style="color: #28a745;"></i> ¡Registro Exitoso!',
+            html: `
+                <p><i class="bi bi-key" style="color: #007bff;"></i> Tu <strong>llave maestra</strong> es:</p>
+                <div id="keyBox" style="font-size: 1.6em; font-weight: bold; color: #0056b3; background: #f0f8ff; padding: 10px; border-radius: 10px; display: inline-block;">
+                    {{ master_key }}
+                </div>
+                <br><br>
+                <button onclick="copyKey('{{ master_key }}')" class="btn btn-outline-primary btn-sm"><i class="bi bi-copy"></i> Copiar clave</button>
+                <br><br>
+                <p><i class="bi bi-shield-alt" style="color: #17a2b8;"></i> <strong>¡Guárdala en un lugar seguro!</strong></p>
+                <p>La necesitarás para recuperar tu cuenta.</p>
+            `,
             icon: 'success',
-            title: 'Clave copiada al portapapeles',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
             showConfirmButton: false,
-            timer: 2000
+            showCloseButton: false,
+            didOpen: () => {
+                console.log("SweetAlert abierto con llave:", "{{ master_key }}");
+            }
         });
     });
-}
+
+    function copyKey(masterKey) {
+        navigator.clipboard.writeText(masterKey).then(() => {
+            Swal.close(); // Cierra el primer SweetAlert
+            Swal.fire({
+                title: '<i class="bi bi-check-circle" style="color: #28a745;"></i> ¡Llave Copiada!',
+                html: `
+                    <p>Llave maestra copiada al portapapeles.</p>
+                    <br>
+                    <a href="{{ url_for('login') }}" class="btn btn-primary">Ir a Login</a>
+                `,
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 5000, // 5 segundos antes de cerrarse automáticamente
+                timerProgressBar: true,
+                didClose: () => {
+                    // Redirección adicional por si el usuario no hace clic
+                    window.location.href = '{{ url_for("login") }}';
+                }
+            });
+        }).catch(err => {
+            Swal.fire({
+                title: '<i class="bi bi-times-circle" style="color: #dc3545;"></i> Error',
+                html: '<p>Error al copiar la llave.</p>',
+                icon: 'error',
+                showConfirmButton: true,
+                confirmButtonText: 'OK',
+                confirmButtonClass: 'btn btn-primary',
+                buttonsStyling: false
+            });
+        });
+    }
+
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
 </script>
 {% endif %}
 
+{% with mensajes = get_flashed_messages(with_categories=true) %}
+{% if mensajes %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for categoria, mensaje in mensajes %}
+        console.log("Categoría: {{ categoria }}");
+        console.log("Mensaje: {{ mensaje }}");
+        if (categoria != "info" || !mensaje.startswith("Administrador creado")) {
+            Swal.fire({
+                title: '{{ "¡Éxito!" if categoria == "success" else "Información" if categoria == "info" else "Error" }}',
+                html: `<p>${mensaje | safe}</p>`,
+                icon: '{{ "success" if categoria == "success" else "info" if categoria == "info" else "error" }}',
+                showConfirmButton: true,
+                confirmButtonText: 'OK',
+                confirmButtonClass: 'btn btn-primary',
+                buttonsStyling: false
+            });
+        }
+        {% endfor %}
+    });
+</script>
+{% endif %}
+{% endwith %}
 {% endblock %}
-

@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block title %}
-	Register - CuBaro
+Register - CuBaro
 {% endblock %}
 
 {% block content %}
 <div class="row justify-content-center mt-0">
     <img id="logoAnimated" src="{{ url_for('static', filename='img/logoo.png') }}" height="100" width="150">
-  </div>
+</div>
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -15,17 +15,10 @@
                 <div class="card-header bg-primary text-white text-center">
                     <h3>Registrar Empleado</h3>
                 </div>
-                {% with msgs = get_flashed_messages(with_categories=True) %}
-                {% for c, msg in msgs %}
-                <div class="alert alert-{{ 'danger' if c == 'error' else 'success' }}">
-                    {{ msg | safe }}
-                </div>
-                {% endfor %}
-                {% endwith %}
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('register') }}">
-                        {{ form.hidden_tag() }}  <!-- Esto incluye el campo oculto CSRF token -->
-                    
+                        {{ form.hidden_tag() }}
+
                         <div class="form-group">
                             {{ form.name.label }}
                             {{ form.name(class="form-control") }}
@@ -40,29 +33,29 @@
 
                         <div class="form-group">
                             {{ form.phone.label }}
-                            {{ form.phone(
-                                class="form-control",
-                                maxlength="8",
-                                pattern="\\d{8}",
-                                inputmode="numeric",
-                                title="El teléfono debe tener exactamente 8 dígitos."
-                            ) }}
+                            {{ form.phone(class="form-control", maxlength="8", pattern="\\d{8}", inputmode="numeric", title="El teléfono debe tener exactamente 8 dígitos.") }}
                             {% if form.phone.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.phone.errors %}
-                                        <p>{{ error }}</p>
-                                    {% endfor %}
-                                </div>
+                            <div class="text-danger">
+                                {% for error in form.phone.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
                             {% endif %}
                         </div>
-                    
+
                         <div class="form-group">
                             {{ form.membership.label }}
-                            {{ form.membership(class="form-control", disabled=True) }}  <!-- Campo deshabilitado -->
+                            {{ form.membership(class="form-control", disabled=True) }}
+                            <input type="hidden" name="membership_hidden" value="{{ form.membership.data }}">
+                            {% if form.membership.errors %}
+                            <div class="text-danger">
+                                {% for error in form.membership.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
-                    
-                        <input type="hidden" name="membership_hidden" value="{{ form.membership.data }}">
-                    
+
                         <div class="form-group">
                             {{ form.email.label }}
                             {{ form.email(class="form-control") }}
@@ -75,43 +68,110 @@
                             {% endif %}
                         </div>
 
-                        <div class="form-group position-relative">
-                            {{ form.password.label }}
-                            {{ form.password(class="form-control", id="regPassword") }}
-                            <span onclick="togglePassword('regPassword', 'iconRegPass')" style="cursor:pointer; position:absolute; top:38px; right:15px; color:rgb(14, 66, 238);">
-                                <i class="fa fa-eye toggle-icon" id="iconRegPass" title="Mostrar contraseña"></i>
-                            </span>      
-                            {% if form.password.errors %}
-                            <div class="text-danger">
-                                {% for error in form.password.errors %}
-                                <p>{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="form-group position-relative">
-                            {{ form.confirm.label }}
-                            {{ form.confirm(class="form-control", id="regConfirm") }}
-                            <span onclick="togglePassword('regConfirm', 'iconRegConfirm')" style="cursor:pointer; position:absolute; top:38px; right:15px; color:rgb(14, 66, 238);">
-                                <i class="fa fa-eye toggle-icon" id="iconRegConfirm" title="Mostrar contraseña"></i>
-                            </span> 
-                            {% if form.confirm.errors %}
-                            <div class="text-danger">
-                                {% for error in form.confirm.errors %}
-                                <p>{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                    
                         <div class="form-group text-center">
                             {{ form.submit(class="btn btn-primary") }}
                         </div>
-                    </form>                    
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{% if temp_password %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        Swal.fire({
+            title: '<i class="bi bi-check-circle" style="color: #28a745;"></i> ¡Empleado Creado!',
+            html: `
+                <p><i class="bi bi-key" style="color: #007bff;"></i> La <strong>contraseña temporal</strong> es:</p>
+                <div id="keyBox" style="font-size: 1.6em; font-weight: bold; color: #0056b3; background: #f0f8ff; padding: 10px; border-radius: 10px; display: inline-block;">
+                    {{ temp_password }}
+                </div>
+                <br><br>
+                <button onclick="copyKey('{{ temp_password }}')" class="btn btn-outline-primary btn-sm"><i class="bi bi-copy"></i> Copiar clave</button>
+                <br><br>
+                <p><i class="bi bi-shield-alt" style="color: #17a2b8;"></i> <strong>¡Proporciónala al empleado!</strong></p>
+                <p>Debe cambiarla en su primer inicio de sesión.</p>
+            `,
+            icon: 'success',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            showCloseButton: false,
+            didOpen: () => {
+                console.log("SweetAlert abierto con contraseña temporal:", "{{ temp_password }}");
+            }
+        });
+    });
+
+    function copyKey(tempPassword) {
+        navigator.clipboard.writeText(tempPassword).then(() => {
+            Swal.close(); // Cierra el primer SweetAlert
+            Swal.fire({
+                title: '<i class="bi bi-check-circle" style="color: #28a745;"></i> ¡Llave Copiada!',
+                html: `
+                    <p>Contraseña temporal copiada al portapapeles.</p>
+                    <br>
+                    <a href="{{ url_for('admin.configuracion') }}" class="btn btn-primary">Ir a Configuración</a>
+                `,
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 5000, // 5 segundos antes de cerrarse automáticamente
+                timerProgressBar: true,
+                didClose: () => {
+                    // Redirección adicional por si el usuario no hace clic
+                    window.location.href = '{{ url_for("admin.configuracion") }}';
+                }
+            });
+        }).catch(err => {
+            Swal.fire({
+                title: '<i class="bi bi-times-circle" style="color: #dc3545;"></i> Error',
+                html: '<p>Error al copiar la contraseña.</p>',
+                icon: 'error',
+                showConfirmButton: true,
+                confirmButtonText: 'OK',
+                confirmButtonClass: 'btn btn-primary',
+                buttonsStyling: false
+            });
+        });
+    }
+
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+</script>
+{% endif %}
+
+{% with mensajes = get_flashed_messages(with_categories=true) %}
+{% if mensajes %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for categoria, mensaje in mensajes %}
+        if not (categoria == "info" and "Empleado creado" in mensaje):
+            Swal.fire({
+                title: '{{ "¡Éxito!" if categoria == "success" else "Información" if categoria == "info" else "Error" }}',
+                html: `<p>${mensaje | safe}</p>`,
+                icon: '{{ "success" if categoria == "success" else "info" if categoria == "info" else "error" }}',
+                showConfirmButton: true,
+                confirmButtonText: 'OK',
+                confirmButtonClass: 'btn btn-primary',
+                buttonsStyling: false,
+                allowOutsideClick: false
+            });
+        {% endfor %}
+    });
+</script>
+{% endif %}
+{% endwith %}
 {% endblock %}

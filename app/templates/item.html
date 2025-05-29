@@ -5,95 +5,122 @@
 {% endblock %}
 
 {% block content %}
-    {% with msgs = get_flashed_messages(with_categories=True) %}
-    {% for c, msg in msgs %}
-        {% if c == 'error' %}
-            <div class="flash-error">
-        {% else %}
-            <div class="success">
-        {% endif %}
-            {{ msg | safe }}
-        </div><br>
-    {% endfor %}
-    {% endwith %}
 
-    <div class="item-display">
-        <div class="img-wrapper">
-            {% if item.stock > 0 %}
-                <img src="{{ item.image }}" class="pic">
-            {% else %}
-                <img src="{{ url_for('static', filename='uploads/agotados.png') }}" class="pic">
-            {% endif %}
-        </div>
-        <b>{{ item.name }}</b>
-        <span class="right-item">{{ item.price }} CUP</span><br>
-        <i class="fa fa-star checked"></i>
-        <i class="fa fa-star checked"></i>
-        <i class="fa fa-star checked"></i>
-        <i class="fa fa-star checked"></i>
-        <i class="fa fa-star checked"></i>
-        <span class="text-muted">Quedan ({{ item.stock }})</span>
-        <div class="details">{{ item.details | safe }}</div>
 
-        {% if item.stock > 0 %}
-        <form action="{{ url_for('add_to_cart', id=item.id) }}" method="POST">
-            <div class="quantity-container">
-                Cantidad:
-                <!-- Botón de restar (rojo) -->
-                <button type="button" id="decrease" class="btn btn-danger">-</button>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card mt-2">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3>{{ item.name }}</h3>
+                </div>
+                <div class="card-body">
+                    {% with mensajes = get_flashed_messages(with_categories=true) %}
+                    {% if mensajes %}
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function () {
+                            {% for categoria, mensaje in mensajes %}
+                            Swal.fire({
+                                title: '{{ "¡Éxito!" if categoria == "success" else "Error" }}',
+                                html: '{{ mensaje | safe }}',
+                                icon: '{{ "success" if categoria == "success" else "error" }}',
+                                confirmButtonText: 'OK',
+                                customClass: {
+                                    confirmButton: 'btn btn-primary'
+                                },
+                                buttonsStyling: false
+                            });
+                            {% endfor %}
+                        });
+                    </script>
+                    {% endif %}
+                    {% endwith %}
 
-                <!-- Input de cantidad -->
-                <input type="number" value="1" name="quantity" id="quantity" min="1" max="{{ item.stock }}"
-                oninput="if(this.value > {{ item.stock }}) this.value = {{ item.stock }};" required>
+                    <div class="item-display text-center">
+                        <div class="img-wrapper">
+                            {% if item.stock > 0 %}
+                                <img src="{{ item.image }}" class="pic img-fluid" style="max-height: 300px;">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='Uploads/agotados.png') }}" class="pic img-fluid" style="max-height: 300px;">
+                            {% endif %}
+                        </div>
+                        <h4>{{ item.name }}</h4>
+                        <p class="right-item"><strong>{{ item.price }} CUP</strong></p>
+                        <div>
+                            <i class="fa fa-star checked"></i>
+                            <i class="fa fa-star checked"></i>
+                            <i class="fa fa-star checked"></i>
+                            <i class="fa fa-star checked"></i>
+                            <i class="fa fa-star checked"></i>
+                            <span class="text-muted">Quedan ({{ item.stock }})</span>
+                        </div>
+                        <div class="details">{{ item.details | safe }}</div>
 
-                <!-- Botón de sumar (verde) -->
-                <button type="button" id="increase" class="btn btn-success">+</button>
-
+                        {% if item.stock > 0 %}
+                        <form action="{{ url_for('add_to_cart', id=item.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="quantity-container mt-3">
+                                <label>Cantidad:</label>
+                                <div class="input-group w-50 mx-auto">
+                                    <button type="button" id="decrease" class="btn btn-danger">-</button>
+                                    <input type="number" value="1" name="quantity" id="quantity" min="1" max="{{ item.stock }}"
+                                        class="form-control text-center"
+                                        oninput="if(this.value > {{ item.stock }}) this.value = {{ item.stock }};" required>
+                                    <button type="button" id="increase" class="btn btn-success">+</button>
+                                </div>
+                            </div>
+                            <p class="mt-2"><strong style="color: red;"><span id="subtotal">Subtotal: {{ item.price }} CUP</span></strong></p>
+                            <input type="submit" class="btn btn-primary mt-2" value="Añadir al Carro" name="add">
+                        </form>
+                        <a href="{{ url_for('home') }}" class="btn btn-outline-info mt-2">Regresar a la Página de Artículos</a>
+                        {% else %}
+                        <p class="text-muted mt-3">Este producto está agotado</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            <strong style="color: red;"><span class="sub-total ml-4" id="subtotal">Subtotal: {{ item.price }} CUP</span></strong>
-            <br>
-            <input type="submit" class="add-to-cart" value="Añadir al Carro" name="add">
-        </form>
-        <a type="button" class="mt-2 btn btn-outline-info" href="{{ url_for('home') }}">Regresar a la Página de Artículos</a>
-        {% else %}
-        <p class="text-muted">Este producto está agotado</p>
-        {% endif %}
+        </div>
     </div>
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const quantityInput = document.getElementById('quantity');
-            const subtotalSpan = document.getElementById('subtotal');
-            let price = parseFloat({{ item.price }}); // Asegura que price es un número
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantityInput = document.getElementById('quantity');
+        const subtotalSpan = document.getElementById('subtotal');
+        const price = parseFloat({{ item.price }});
 
-            const increaseButton = document.getElementById('increase');
-            const decreaseButton = document.getElementById('decrease');
+        const increaseButton = document.getElementById('increase');
+        const decreaseButton = document.getElementById('decrease');
 
-            // Asegúrate de que la cantidad no exceda el stock disponible
-            increaseButton.addEventListener('click', function() {
-                let currentQuantity = parseInt(quantityInput.value);
-                if (currentQuantity < {{ item.stock }}) {
-                    quantityInput.value = currentQuantity + 1;
-                    let subtotal = quantityInput.value * price;
-                    subtotalSpan.textContent = `Subtotal: ${subtotal} CUP`;
-                }
-            });
+        function updateSubtotal() {
+            const quantity = parseInt(quantityInput.value) || 1;
+            const subtotal = quantity * price;
+            subtotalSpan.textContent = `Subtotal: ${subtotal.toFixed(2)} CUP`;
+        }
 
-            decreaseButton.addEventListener('click', function() {
-                let currentQuantity = parseInt(quantityInput.value);
-                if (currentQuantity > 1) {
-                    quantityInput.value = currentQuantity - 1;
-                    let subtotal = quantityInput.value * price;
-                    subtotalSpan.textContent = `Subtotal: ${subtotal} CUP`;
-                }
-            });
-
-            // Actualizar el subtotal cuando se cambie la cantidad manualmente
-            quantityInput.addEventListener('input', function() {
-                let quantity = parseInt(quantityInput.value); // Siempre usa un número
-                let subtotal = quantity * price;
-                subtotalSpan.textContent = `Subtotal: ${subtotal} CUP`; // Muestra el subtotal
-            });
+        increaseButton.addEventListener('click', function() {
+            let currentQuantity = parseInt(quantityInput.value);
+            if (currentQuantity < {{ item.stock }}) {
+                quantityInput.value = currentQuantity + 1;
+                updateSubtotal();
+            }
         });
-    </script>
+
+        decreaseButton.addEventListener('click', function() {
+            let currentQuantity = parseInt(quantityInput.value);
+            if (currentQuantity > 1) {
+                quantityInput.value = currentQuantity - 1;
+                updateSubtotal();
+            }
+        });
+
+        quantityInput.addEventListener('input', function() {
+            if (quantityInput.value < 1) quantityInput.value = 1;
+            if (quantityInput.value > {{ item.stock }}) quantityInput.value = {{ item.stock }};
+            updateSubtotal();
+        });
+
+        updateSubtotal(); // Inicializa el subtotal
+    });
+</script>
 {% endblock %}

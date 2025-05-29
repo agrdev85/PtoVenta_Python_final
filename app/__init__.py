@@ -1,18 +1,18 @@
 import os, stripe, json
+from flask_bcrypt import Bcrypt  # Ensure Flask-Bcrypt is imported
 from datetime import datetime, timedelta, timezone
 from flask_wtf import FlaskForm
 from flask import Flask, session, render_template, redirect, url_for, flash, request, abort, Response, make_response
 from flask_bootstrap import Bootstrap
-from .forms import LoginForm, RegisterForm
-from werkzeug.security import generate_password_hash, check_password_hash
+from wtforms import SelectField
+from .forms import ForgotPasswordForm, LoginForm, RegisterForm, EmployeeRegisterForm, ResetPasswordForm, GenerateResetCodeForm
 import secrets
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
 from .extensions import db
-from .db_models import Membership, db, User, Item, Alert, Order, Ordered_item
+from .db_models import Membership, PasswordResetLog, db, User, Item, Alert, Order, Ordered_item
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
 from .funcs import mail, send_confirmation_email, fulfill_order
-from supabase import create_client, Client
 from dotenv import load_dotenv
 from .admin.routes import admin
 from flask_apscheduler import APScheduler 
@@ -21,13 +21,22 @@ from flask import current_app, json
 from weasyprint import HTML
 from io import BytesIO
 import uuid
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from itsdangerous import URLSafeTimedSerializer
+
+
 
 load_dotenv()
 app = Flask(__name__, static_folder='static')
+bcrypt = Bcrypt(app)  # Initialize Flask-Bcrypt
 app.register_blueprint(admin)
 """ supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(supabase_url, supabase_key) """
+
+limiter = Limiter(key_func=get_remote_address, app=app)
 
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_size': 10,  # Número máximo de conexiones en el pool
@@ -36,6 +45,8 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "123456")
+csrf = CSRFProtect(app)
+serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///local_db.sqlite3'
 #app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///local_db.sqlite3")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -163,55 +174,154 @@ def add_no_cache_headers(response):
     return response
 
 
-@app.route('/forgot_password', methods=['GET', 'POST'])
-def forgot_password():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        master_key = request.form.get('master_key')
+def fix_null_master():
+    users = User.query.filter_by(master_key=None).all()
+    for user in users:
+        if user.admin:
+            master_key = secrets.token_urlsafe(16)
+            user.master_key = bcrypt.generate_password_hash(master_key).decode('utf-8')
+            print(f'Generada master_key para {user.email}: {master_key}')
+        else:
+            user.master_key = bcrypt.generate_password_hash('TEMP_EMPLOYEE').decode('utf-8')
+            print(f'Asignado TEMP_EMPLOYEE para {user.email}')
+    db.session.commit()
 
-        user = User.query.filter_by(email=email, master_key=master_key).first()
+
+@app.route('/change_password/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def change_password(user_id):
+    if current_user.id != user_id:
+        flash('No tienes permiso para cambiar la contraseña de este usuario.', 'error')
+        return redirect(url_for('orders'))
+
+    if current_user.admin:
+        flash('Los administradores no necesitan cambiar la contraseña inicial.', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        current_user.password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        current_user.master_key = bcrypt.generate_password_hash('EMPLOYEE_CHANGED').decode('utf-8')
+        db.session.commit()
+        flash('Contraseña cambiada exitosamente.', 'success')
+        return redirect(url_for('orders'))
+
+    return render_template('change_password.html', form=form)
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+@limiter.limit("10 per hour")
+def forgot_password():
+    form = ForgotPasswordForm()
+    user = None
+    if request.method == 'POST':
+        email = form.email.data
+        user = User.query.filter_by(email=email).first()
 
         if not user:
-            flash('Correo o llave maestra incorrectos.', 'error')
+            flash('No existe una cuenta con ese correo.', 'error')
             return redirect(url_for('forgot_password'))
 
-        # Crear un token firmado que contiene el email
-        token = serializer.dumps(email, salt='recover-password')
+    if form.validate_on_submit():
+        log = PasswordResetLog(user_id=user.id, success=False)
+        db.session.add(log)
 
-        # Generar URL con el token
-        reset_url = url_for('reset_password', token=token, _external=True)
-        flash(f'{reset_url}', 'success')
-        return redirect(url_for('forgot_password'))
+        if user.admin:
+            master_key = form.master_key.data
+            if not master_key or not bcrypt.check_password_hash(user.master_key, master_key):
+                flash('Llave maestra incorrecta.', 'error')
+                db.session.commit()
+                return redirect(url_for('forgot_password'))
+        else:
+            reset_code = form.reset_code.data
+            if not reset_code:
+                flash('Código de recuperación requerido.', 'error')
+                db.session.commit()
+                return redirect(url_for('forgot_password'))
 
-    return render_template('forgot_password.html')
+            master_key_parts = user.master_key.split('_') if user.master_key else []
+            if len(master_key_parts) != 3 or not bcrypt.check_password_hash(user.master_key, f'RESET_{reset_code}_{master_key_parts[-1]}'):
+                flash('Código de recuperación inválido.', 'error')
+                db.session.commit()
+                return redirect(url_for('forgot_password'))
+
+            try:
+                timestamp = int(master_key_parts[-1])
+                expiry = datetime.fromtimestamp(timestamp, tz=timezone.utc) + timedelta(hours=1)
+                if datetime.now(timezone.utc) > expiry:
+                    flash('Código de recuperación expirado.', 'error')
+                    db.session.commit()
+                    return redirect(url_for('forgot_password'))
+            except ValueError:
+                flash('Código de recuperación inválido.', 'error')
+                db.session.commit()
+                return redirect(url_for('forgot_password'))
+
+        token = serializer.dumps(user.email, salt='recover-password')
+        log.success = True
+        db.session.commit()
+
+        return redirect(url_for('reset_password', token=token))
+
+    return render_template('forgot_password.html', form=form, user=user)
 
 @app.route('/reset_password', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def reset_password():
     token = request.args.get('token') or request.form.get('token')
-
     if not token:
-        flash("Token inválido o faltante.", "error")
+        flash('Token inválido o faltante.', 'error')
         return redirect(url_for('forgot_password'))
 
     try:
         email = serializer.loads(token, salt='recover-password', max_age=3600)
     except:
-        flash("El enlace ha expirado o no es válido.", "error")
+        flash('El enlace ha expirado o no es válido.', 'error')
         return redirect(url_for('forgot_password'))
 
     user = User.query.filter_by(email=email).first()
-
     if not user:
-        flash("Usuario no encontrado.", "error")
+        flash('Usuario no encontrado.', 'error')
         return redirect(url_for('forgot_password'))
 
-    if request.method == 'POST':
-        new_password = request.form.get('password')
-        user.password = generate_password_hash(new_password)
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        if not user.admin:
+            user.master_key = bcrypt.generate_password_hash('EMPLOYEE_CHANGED').decode('utf-8')
         db.session.commit()
-        return redirect(url_for('confirm_password_reset'))
+        flash('Contraseña cambiada exitosamente.', 'success')
+        return redirect(url_for('login_form'))
 
-    return render_template('reset_password.html', token=token)
+    return render_template('reset_password.html', form=form, token=token)
+
+@app.route('/generate_reset_code', methods=['GET', 'POST'])
+@login_required
+def generate_reset_code():
+    if not current_user.admin:
+        flash('Solo los administradores pueden generar códigos de recuperación.', 'error')
+        return redirect(url_for('orders'))
+
+    form = GenerateResetCodeForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        user = User.query.filter_by(email=email).first()
+
+        if not user:
+            flash('No existe una cuenta con ese correo.', 'error')
+            return redirect(url_for('generate_reset_code'))
+
+        if user.admin:
+            flash('Los administradores deben usar su llave maestra.', 'error')
+            return redirect(url_for('generate_reset_code'))
+
+        reset_code = secrets.token_urlsafe(8)
+        user.master_key = bcrypt.generate_password_hash(f'RESET_{reset_code}_{int(datetime.now(timezone.utc).timestamp())}').decode('utf-8')
+        db.session.commit()
+
+        flash(f'Código de recuperación para {email}: {reset_code}', 'success')
+        return redirect(url_for('generate_reset_code'))
+
+    return render_template('generate_reset_code.html', form=form)
 
 @app.route('/confirm_password_reset')
 def confirm_password_reset():
@@ -282,46 +392,46 @@ def membership_plans():
     return render_template("membership_plans.html")
 
 
-@app.route("/login", methods=['POST', 'GET'])
+@app.route('/login', methods=['POST', 'GET'])   
+@limiter.limit("15 per hour")
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('home'))
-    
-    deactivate_expired_users()  # Verificar membresías expiradas
+        return redirect(url_for('admin.dashboard' if current_user.admin else 'orders'))
+
+    deactivate_expired_users()
 
     form = LoginForm()
     if form.validate_on_submit():
         email = form.email.data
         user = User.query.filter_by(email=email).first()
 
-        if user is None:
-            flash(f'El usuario con correo electrónico {email} no existe. <a href={url_for("register_admin")}>Regístrese aquí.</a>', 'error')
+        if not user:
+            flash(f'El usuario con correo {email} no existe. <a href="{url_for("register_admin")}">Regístrate aquí.</a>', 'error')
             return redirect(url_for('login'))
 
-        # Verificar si el administrador está activo (para empleados)
         if not user.admin and user.creator and not user.creator.email_confirmed:
-            flash('Su administrador está inactivo. No puede iniciar sesión.', 'error')
+            flash('Tu administrador está inactivo. No puedes iniciar sesión.', 'error')
             return redirect(url_for('login'))
-        
-        # Verificar estado de membresía
+
         if not user.check_membership_status():
-            flash('Su membresía ha vencido. Contacte a Soporte para renovarla.', 'error')
+            flash('Tu membresía ha vencido. Contacta a Soporte para renovarla.', 'error')
             return redirect(url_for('login'))
 
-        # Verificar si el correo electrónico está confirmado
         if not user.email_confirmed:
-            flash('Debe confirmar su correo electrónico antes de iniciar sesión. Contacte a Soporte', 'error')
+            flash('Debes confirmar tu correo electrónico antes de iniciar sesión. Contacta a Soporte.', 'error')
             return redirect(url_for('login'))
 
-
-        # Verificar la contraseña
-        if check_password_hash(user.password, form.password.data):
+        if bcrypt.check_password_hash(user.password, form.password.data):
             session['client_reference_id'] = user.id
             login_user(user)
-            return redirect(url_for('home'))
+            if not user.admin and (user.master_key is None or bcrypt.check_password_hash(user.master_key, 'TEMP_EMPLOYEE')):
+                return redirect(url_for('change_password', user_id=user.id))
+            return redirect(url_for('admin.dashboard' if user.admin else 'orders'))
 
-        flash("Correo electrónico o contraseña incorrectos.", "error")
-    return render_template("login.html", form=form)
+        flash('Correo electrónico o contraseña incorrectos.', 'error')
+
+    return render_template('login.html', form=form)
+
 
 @app.route('/whatsapp', methods=['GET', 'POST'])
 def register_admin():
@@ -347,119 +457,99 @@ def register_admin():
             email_confirmed = 0
             membership_expiration = datetime.now(timezone.utc)
         
+        # Generar una master_key más segura
+        master_key = secrets.token_hex(16)  # 16 bytes (32 caracteres)
+        
         # Crear el nuevo usuario
         new_user = User(
-            name=form.name.data,
-            email=form.email.data,
-            password=generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8),
+            name=form.name.data.strip(),
+            email=form.email.data.lower().strip(),
+            password=bcrypt.generate_password_hash(form.password.data).decode('utf-8'),  # Use Flask-Bcrypt
             admin=1,
             email_confirmed=email_confirmed,
-            phone=form.phone.data,
-            membership_id=form.membership.data,
+            phone=form.phone.data.strip(),
+            membership_id=int(form.membership.data),
             membership_expiration=membership_expiration,
-            master_key=secrets.token_hex(8)
+            master_key=bcrypt.generate_password_hash(master_key).decode('utf-8')  # Hash the master_key
         )
         
-        db.session.add(new_user)
-        db.session.commit()
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            # Pasar la master_key directamente al template
+            return render_template("whatsapp.html", form=form, master_key=master_key)
+        except Exception as e:
+            db.session.rollback()
+            flash('Error al crear el administrador.', 'error')
+            print(f"Error al registrar administrador: {str(e)}")
+            return redirect(url_for('register_admin'))
+    
+    # Si el formulario no se valida, renderizamos sin master_key
+    return render_template("whatsapp.html", form=form, master_key=None)
 
-        # Guardar la clave maestra en sesión
-        session['master_key'] = new_user.master_key
-        master_key = session.pop('master_key', None)
-        flash('¡Registro exitoso! Puede iniciar sesión ahora.', 'success')
-        return render_template("whatsapp.html", form=form, master_key=master_key)
 
-    # Mostrar la clave maestra si está en sesión
-    master_key = session.pop('master_key', None)
-    return render_template("whatsapp.html", form=form, master_key=master_key)
-
-@app.route("/register", methods=['POST', 'GET'])  # Registrar Empleados
+@app.route('/register', methods=['GET', 'POST'])
+@login_required
 def register():
-    # Verifica si el usuario está autenticado antes de acceder al atributo 'admin'
     if current_user.admin != 1:
         flash('No tienes permisos para crear empleados.', 'error')
-        return redirect(url_for('admin.dashboard'))
+        return redirect(url_for('admin.configuracion'))
 
-    # Obtén el tipo de membresía del administrador (creador)
     membership = current_user.membership
-    numEmpleados = User.query.filter_by(created_by=current_user.id).count()
+    num_empleados = User.query.filter_by(created_by=current_user.id).count()
+    if num_empleados >= membership.max_employees:
+        flash(f'Solo puedes tener {membership.max_employees} empleados.', 'error')
+        return redirect(url_for('admin.configuracion'))
 
-    if numEmpleados >= membership.max_employees:
-        flash(f"Solo puedes tener {membership.max_employees} empleados.", 'error')
-        return redirect(url_for('admin.dashboard'))
+    form = EmployeeRegisterForm()  # Usa el nuevo formulario
+    memberships = Membership.query.all()
+    if not memberships:
+        flash('No hay membresías disponibles. Contacte al soporte.', 'error')
+        return redirect(url_for('admin.configuracion'))
 
-    form = RegisterForm()
-
-    # Verificar las opciones de membresía
-    print("Opciones de membresía disponibles:")
-    for m in Membership.query.all():
-        print(f"ID: {m.id}, Name: {m.name}")
-
-    # Asignar el valor de la membresía al formulario
-    form.membership.choices = [(m.id, m.name) for m in Membership.query.all()]
-    # Depuración
-    print(f"Opciones disponibles en form.membership.choices: {form.membership.choices}")
-
-    # Establecer el valor predeterminado de la membresía
-    form.membership.data = int(membership.id)  # Asegurarte de que es un valor entero
-    print(f"Valor de form.membership.data antes de la validación: {form.membership.data}")
-
-    if form.membership.data not in [x[0] for x in form.membership.choices]:
-       print(f"Error: El valor {form.membership.data} no está en las opciones")
-
-    form.membership_hidden.data = form.membership.data 
-    # Verificar si el valor asignado a 'membership.data' existe en las opciones
-    print(f"ID asignado a membership.data: {form.membership.data}")
-    # Depuración para ver qué valor se está recibiendo en la solicitud POST
-    print(f"Valor de membership en el formulario: {form.membership.data}")
-    print(f"Valor de membership_hidden en el formulario: {form.membership_hidden.data}")
-    print(f"Tipo de form.membership.data: {type(form.membership.data)}")
-
-
-    print("Formulario recibido, validando...")
-    print(f"Errores del formulario: {form.errors}")
-    print(f"Tipo de solicitud: {request.method}")
+    form.membership.choices = [(m.id, m.name) for m in memberships]
+    form.membership.data = membership.id  # Membresía del administrador
+    form.membership_hidden.data = str(membership.id)
 
     if form.validate_on_submit():
-        # Depuración
-        print(f"Valor de membership_hidden recibido: {form.membership_hidden.data}")
-        print(f"Formulario validado correctamente")
-        print(f"Nombre: {form.name.data}")
-        print(f"Correo: {form.email.data}")
-        print(f"Membresía seleccionada: {form.membership.data}")
-        print(f"Errores del formulario: {form.errors}")
-
-        # Verificar si el correo ya existe
+        print(f"Validación exitosa. Datos: {form.data}")  # Depuración
         user = User.query.filter_by(email=form.email.data).first()
         if user:
-            flash(f"El usuario con correo {user.email} ya existe. <a href={url_for('login')}>Inicie sesión.</a>", "error")
+            flash(f'El usuario con correo {form.email.data} ya existe. <a href="{url_for("login")}">Inicie sesión.</a>', 'error')
             return redirect(url_for('register'))
-        
-        # Depuración
-        print("Formulario validado correctamente")
 
-        # Crear el nuevo usuario con la membresía del administrador (usando el 'id' de la membresía)
+        temp_password = secrets.token_urlsafe(12)  # Contraseña temporal más segura (12 caracteres)
         new_user = User(
-            name=form.name.data,
-            email=form.email.data,
-            password=generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8),
-            admin=0,  # Usuario normal
-            email_confirmed=1,  # Activo automáticamente
+            name=form.name.data.strip(),
+            email=form.email.data.lower().strip(),
+            password=bcrypt.generate_password_hash(temp_password).decode('utf-8'),
+            admin=0,
+            email_confirmed=1,
             created_by=current_user.id,
-            phone=form.phone.data,
-            membership_id=form.membership_hidden.data,  # Guardamos el 'id' de la membresía
-            membership_expiration=current_user.membership_expiration  # Vence con el administrador
+            phone=form.phone.data.strip(),
+            membership_id=int(form.membership_hidden.data),
+            membership_expiration=current_user.membership_expiration,
+            master_key=bcrypt.generate_password_hash('TEMP_EMPLOYEE').decode('utf-8')  # Hash fijo para empleados
         )
 
-        # Guardar el nuevo usuario en la base de datos
-        db.session.add(new_user)
-        db.session.commit()
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            print(f"Empleado registrado con éxito. Email: {form.email.data}, Temp Password: {temp_password}")  # Depuración
+            return render_template('register.html', form=form, temp_password=temp_password)
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear el empleado: {str(e)}', 'error')
+            print(f"Error al registrar empleado: {str(e)}")  # Depuración
+            return redirect(url_for('register'))
+    else:
+        if form.errors:
+            print(f"Validación fallida. Errores: {form.errors}")  # Depuración
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f"Error en {field}: {error}", 'error')
 
-        flash('Empleado creado exitosamente.', 'success')
-        return redirect(url_for('admin.dashboard'))
-
-    return render_template("register.html", form=form)
-
+    return render_template('register.html', form=form)
 
 @app.route('/confirm/<token>')
 def confirm_email(token):
@@ -493,18 +583,29 @@ def resend():
 	flash('Correo electrónico de confirmación enviado exitosamente.', 'success')
 	return redirect(url_for('login'))
 
-@app.route("/add/<id>", methods=['POST'])
+@app.route('/add/<int:id>', methods=['GET', 'POST'])
+@login_required
 def add_to_cart(id):
-	if not current_user.is_authenticated:
-		flash(f'¡Primero debes iniciar sesión!<br> <a href={url_for("login")}>¡Inicia sesión ahora!</a>', 'error')
-		return redirect(url_for('login'))
+    if not current_user.is_authenticated:
+        flash(f'¡Primero debes iniciar sesión!<br><a href="{url_for("login")}">¡Inicia sesión ahora!</a>', 'error')
+        return redirect(url_for('login'))
 
-	item = Item.query.get(id)
-	if request.method == "POST":
-		quantity = request.form["quantity"]
-		current_user.add_to_cart(id, quantity)
-		flash(f'''{item.name} agregado exitosamente al <a href=cart>carrito</a>.<br> <a href={url_for("cart")}>ver carrito!</a>''','success')
-		return redirect(url_for('home'))
+    item = Item.query.get_or_404(id)
+    if request.method == "POST":
+        try:
+            quantity = int(request.form.get("quantity", 1))
+            if quantity < 1 or quantity > item.stock:
+                flash(f'Cantidad inválida. Selecciona entre 1 y {item.stock}.', 'error')
+                return redirect(url_for('item', id=item.id))
+            current_user.add_to_cart(id, quantity)
+            flash(f'{item.name} agregado exitosamente al <a href="{url_for("cart")}">carrito</a>.<br><a href="{url_for("cart")}">Ver carrito!</a>', 'success')
+            return redirect(url_for('home'))
+        except ValueError:
+            flash('Cantidad inválida. Por favor, ingresa un número.', 'error')
+            return redirect(url_for('item', id=item.id))
+    
+    # Renderizar la página del artículo para GET
+    return render_template('item.html', item=item)
 
 @app.route("/cart")
 @login_required
@@ -528,8 +629,12 @@ def cart():
 def orders():
 	return render_template('orders.html', orders=current_user.orders)
 
-@app.route("/fulfill_order", methods=['POST'])
+@app.route('/fulfill_order', methods=['POST'])
+@login_required
 def fulfill_order_view():
+    if not request.form.get('csrf_token'):
+        flash('Token CSRF faltante.', 'error')
+        return redirect(url_for('cart'))
     return fulfill_order()
 
 @app.route("/remove/<id>/<quantity>")

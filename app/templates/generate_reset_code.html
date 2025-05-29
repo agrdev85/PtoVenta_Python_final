@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}
+Generate Reset Code - CuBaro
+{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center mt-0">
+    <img id="logoAnimated" src="{{ url_for('static', filename='img/logoo.png') }}" height="100" width="150">
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card mt-2">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3>Generar Código de Recuperación</h3>
+                </div>
+
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('generate_reset_code') }}">
+                        {{ form.hidden_tag() }}
+
+                        <div class="form-group">
+                            {{ form.email.label }}
+                            {{ form.email(class="form-control") }}
+                            {% if form.email.errors %}
+                            <div class="text-danger">
+                                {% for error in form.email.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group text-center">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% with msgs = get_flashed_messages(with_categories=True) %}
+{% if msgs %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for category, message in msgs %}
+        Swal.fire({
+            title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
+            html: `
+                <p>{{ message | safe }}</p>
+                {% if category == "info" %}
+                <button onclick="copyKey()" class="btn btn-outline-primary btn-sm">Copiar código</button>
+                <br><br>
+                <strong>¡Proporciónalo al empleado!</strong>
+                {% endif %}
+            `,
+            icon: '{{ "success" if category == "success" else "info" if category == "info" else "error" }}',
+            confirmButtonText: 'OK',
+            customClass: {
+                confirmButton: 'btn btn-primary'
+            },
+            buttonsStyling: false,
+            allowOutsideClick: false,
+            showConfirmButton: '{{ "true" if category != "info" else "false" }}'
+        });
+        {% endfor %}
+    });
+
+    function copyKey() {
+        const keyText = '{{ message.split(": ")[1] if message.startswith("Código de recuperación") else "" }}';
+        navigator.clipboard.writeText(keyText).then(() => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Código copiado al portapapeles',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        });
+    }
+</script>
+{% endif %}
+{% endwith %}
+
+{% endblock %}

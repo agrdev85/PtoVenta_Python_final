@@ -1,147 +1,200 @@
 {% extends "base.html" %}
-
 {% block title %}
 Orders - CuBaro
 {% endblock %}
 <script src="https://js.stripe.com/v3/"></script>
 {% block content %}
 
+<!-- Mensajes flash con SweetAlert2 -->
 {% with msgs = get_flashed_messages(with_categories=True) %}
-{% for c, msg in msgs %}
-{% if c == 'error' %}
+{% if msgs %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for category, message in msgs %}
+        Swal.fire({
+            title: '{{ "¡Éxito!" if category == "success" else "Error" }}',
+            text: '{{ message | safe }}',
+            icon: '{{ "success" if category == "success" else "error" }}',
+            confirmButtonText: 'OK',
+            customClass: {
+                confirmButton: 'btn btn-primary'
+            },
+            buttonsStyling: false
+        });
+        {% endfor %}
+    });
+</script>
+{% endif %}
+{% endwith %}
+
+{% if not orders %}
 <div class="flash-error">
-    {% else %}
-    <div class="success">
-        {% endif %}
-        {{ msg | safe }}</div><br>
-    {% endfor %}
-    {% endwith %}
-
-    {% if not orders %}
-    <div class="flash-error">
-        Aún no has realizado ningún pedido.<br>
-        <a type="button" class="mb-2 btn btn-outline-info" href="{{ url_for('home') }}">Agregar Nuevos Artículos</a>
-    </div>
-    {% else %}
-
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="thead-dark">
-                <tr>
-                    <th>#</th>
-                    <th>Fecha</th>
-                    <th>Productos</th>
-                    <th>Total a Pagar</th>
-                    <th>Estatus</th>
-                    <th>Factura</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in orders %}
-                {% if order.status != 'Libre' %}
-                <tr data-order-id="{{ order.id }}" data-order-status="{{ order.status }}" data-order-total="0">
-                    <td>{{ loop.index }}</td>
-                    <td>{{ order.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                    <td>
-                        <div class="order-items">
-                            {% for item in order.items %}
-                            {% set item_price = item.item.price %}
-                            {% set item_total = item_price * item.quantity %}
-                            <div class="my" data-item-price="{{ item_price }}" data-item-quantity="{{ item.quantity }}"
-                                data-item-total="{{ item_total }}">
-                                {{ item.item.name }} - Precio: <span style="color: red;">{{ item_price }}cup</span>
-                                <span class="success">x Cantidad: {{ item.quantity }} </span>- Total: <span
-                                    style="color: red;">{{ item_total }}cup</span><br>
-                            </div>
-                            {% endfor %}
+    Aún no has realizado ningún pedido.<br>
+    <a type="button" class="mb-2 btn btn-outline-info" href="{{ url_for('home') }}">Agregar Nuevos Artículos</a>
+</div>
+{% else %}
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th>Productos</th>
+                <th>Total a Pagar</th>
+                <th>Estatus</th>
+                <th>Factura</th>
+                <th>Operaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            {% if order.status != 'Libre' %}
+            <tr data-order-id="{{ order.id }}" data-order-status="{{ order.status }}" data-order-total="0">
+                <td>{{ loop.index }}</td>
+                <td>{{ order.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>
+                    <div class="order-items">
+                        {% for item in order.items %}
+                        {% set item_price = item.item.price %}
+                        {% set item_total = item_price * item.quantity %}
+                        <div class="my" data-item-price="{{ item_price }}" data-item-quantity="{{ item.quantity }}"
+                            data-item-total="{{ item_total }}">
+                            {{ item.item.name }} - Precio: <span style="color: red;">{{ item_price }}cup</span>
+                            <span class="success">x Cantidad: {{ item.quantity }} </span>- Total: <span
+                                style="color: red;">{{ item_total }}cup</span><br>
                         </div>
-                    </td>
-                    <td class="order-total">0</td>
-                    <td class="order-status">
-                        {% if order.status == 'Reservado' %}
-                        <span style="color: green;">{{ order.status }}</span>
-                        {% elif order.status == 'Pagado' %}
-                        <span style="color: red;">{{ order.status }}</span>
-                        {% else %}
-                        {{ order.status }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        <!-- Icono para exportar PDF -->
-                        <a href="#" class="factura-link" data-order-id="{{ order.id }}">
-                            <i class="bi bi-file-earmark-pdf" style="color: #dc3545; font-size: 1.5em;"></i>Factura
-                        </a>
-                    </td>
+                        {% endfor %}
+                    </div>
+                </td>
+                <td class="order-total">0</td>
+                <td class="order-status">
+                    {% if order.status == 'Reservado' %}
+                    <span style="color: green;">{{ order.status }}</span>
+                    {% elif order.status == 'Pagado' %}
+                    <span style="color: red;">{{ order.status }}</span>
+                    {% else %}
+                    {{ order.status }}
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="#" class="factura-link" data-order-id="{{ order.id }}">
+                        <i class="bi bi-file-earmark-pdf" style="color: #dc3545; font-size: 1.5em;"></i> Factura
+                    </a>
+                </td>
+                <td>
+                    <!-- <a href="{{ url_for('admin.edit', type='order', id=order.id) }}" class="edit-order-link" data-order-id="{{ order.id }}">
+                        <i class="bi bi-pencil-square text-success"></i>
+                    </a> -->
+                    <a href="#" class="delete-order-link" data-order-id="{{ order.id }}">
+                        <i class="bi bi-trash3 text-danger"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div>
+    <h3>Total Neto a Pagar: <span id="total-reservado" style="color: red;"></span></h3>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let totalReservado = 0;
 
+        // Iterar sobre las filas de la tabla para calcular el total de cada orden
+        document.querySelectorAll('tr[data-order-id]').forEach(row => {
+            const status = row.getAttribute('data-order-status');
+            let orderTotal = 0;
 
-                </tr>
-                {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div>
-        <h3>Total Neto a Pagar: <span id="total-reservado" style="color: red;"></span></h3>
-    </div>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let totalReservado = 0;
-
-            // Iterar sobre las filas de la tabla para calcular el total de cada orden
-            document.querySelectorAll('tr[data-order-id]').forEach(row => {
-                const status = row.getAttribute('data-order-status');
-                let orderTotal = 0;
-
-                // Sumar los totales de cada ítem
-                row.querySelectorAll('.my').forEach(item => {
-                    const itemTotal = parseFloat(item.getAttribute('data-item-total'));
-                    orderTotal += itemTotal;
-                });
-
-                // Mostrar el total de la orden
-                row.querySelector('.order-total').textContent = `${orderTotal.toFixed(0)}`;
-
-                // Si el estado es 'Reservado', sumar al total reservado
-                if (status === 'Reservado') {
-                    totalReservado += orderTotal;
-                }
-
-                // Si el estado es 'Pagado', aplicar estilo
-                if (status === 'Pagado') {
-                    // Prueba diferentes estilos
-                    row.style.border = '2px solid red';  // Borde rojo
-                    row.style.backgroundColor = '#ffdddd';  // Color de fondo rojo claro
-                    row.style.color = 'red';  // Texto en rojo
-                }
+            // Sumar los totales de cada ítem
+            row.querySelectorAll('.my').forEach(item => {
+                const itemTotal = parseFloat(item.getAttribute('data-item-total'));
+                orderTotal += itemTotal;
             });
 
-            // Mostrar el total reservado
-            document.getElementById('total-reservado').textContent = `${totalReservado.toFixed(0)} CUP`;
+            // Mostrar el total de la orden
+            row.querySelector('.order-total').textContent = `${orderTotal.toFixed(0)}`;
 
+            // Si el estado es 'Reservado', sumar al total reservado
+            if (status === 'Reservado') {
+                totalReservado += orderTotal;
+            }
 
+            // Si el estado es 'Pagado', aplicar estilo
+            if (status === 'Pagado') {
+                row.style.border = '2px solid red';
+                row.style.backgroundColor = '#ffdddd';
+                row.style.color = 'red';
+            }
         });
 
+        // Mostrar el total reservado
+        document.getElementById('total-reservado').textContent = `${totalReservado.toFixed(0)} CUP`;
+
+        // SweetAlert2 para confirmación de eliminación
+        document.querySelectorAll('.delete-order-link').forEach(link => {
+            link.addEventListener('click', async function (e) {
+                e.preventDefault();
+                const orderId = this.getAttribute('data-order-id');
+                const row = this.closest('tr[data-order-id]');
+                const status = row.getAttribute('data-order-status');
+
+                if (status === 'Pagado') {
+                    await Swal.fire({
+                        title: 'Error',
+                        text: 'No se puede eliminar una orden en estado Pagado.',
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        customClass: {
+                            confirmButton: 'btn btn-primary'
+                        },
+                        buttonsStyling: false
+                    });
+                    return; // Detener la ejecución
+                }
+
+                if (status === 'Reservado') {
+                    const result = await Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: 'Esta acción eliminará la orden permanentemente.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Eliminar',
+                        cancelButtonText: 'Cancelar',
+                        customClass: {
+                            confirmButton: 'btn btn-danger',
+                            cancelButton: 'btn btn-secondary'
+                        },
+                        buttonsStyling: false
+                    });
+                    if (result.isConfirmed) {
+                        window.location.href = `{{ url_for('admin.delete_order', id=0) }}`.replace('0', orderId);
+                    }
+                }
+            });
+        });
+
+        
+        // SweetAlert2 para factura
         document.querySelectorAll('.factura-link').forEach(link => {
             link.addEventListener('click', async function (e) {
                 e.preventDefault();
                 const orderId = this.getAttribute('data-order-id');
-
                 const { value: formValues } = await Swal.fire({
                     title: 'Datos de la Factura',
                     html: `
-                <div class="compact-swal-form">
-                    <input id="swal-cliente" class="swal2-input compact-input" placeholder="Nombre del Cliente">
-                    <input id="swal-ci" class="swal2-input compact-input" placeholder="CI">
-                    <input id="swal-direccion" class="swal2-input compact-input" placeholder="Dirección del Cliente">
-                    <input id="swal-emitido" class="swal2-input compact-input" placeholder="Emitido por">
-                    <input id="swal-nombre-negocio" class="swal2-input compact-input" placeholder="Nombre del Negocio">
-                    <input id="swal-nit" class="swal2-input compact-input" placeholder="NIT">
-                    <input id="swal-direccion-negocio" class="swal2-input compact-input" placeholder="Dirección del Negocio">
-                    <input id="swal-telefono" class="swal2-input compact-input" placeholder="Teléfono">
-                    <input id="swal-email" class="swal2-input compact-input" placeholder="Correo">
-                </div>`,
+                    <div class="compact-swal-form">
+                        <input id="swal-cliente" class="swal2-input compact-input" placeholder="Nombre del Cliente">
+                        <input id="swal-ci" class="swal2-input compact-input" placeholder="CI">
+                        <input id="swal-direccion" class="swal2-input compact-input" placeholder="Dirección del Cliente">
+                        <input id="swal-emitido" class="swal2-input compact-input" placeholder="Emitido por">
+                        <input id="swal-nombre-negocio" class="swal2-input compact-input" placeholder="Nombre del Negocio">
+                        <input id="swal-nit" class="swal2-input compact-input" placeholder="NIT">
+                        <input id="swal-direccion-negocio" class="swal2-input compact-input" placeholder="Dirección del Negocio">
+                        <input id="swal-telefono" class="swal2-input compact-input" placeholder="Teléfono">
+                        <input id="swal-email" class="swal2-input compact-input" placeholder="Correo">
+                    </div>`,
                     focusConfirm: false,
                     showCancelButton: true,
                     confirmButtonText: 'Generar PDF',
@@ -151,39 +204,39 @@ Orders - CuBaro
                     didOpen: () => {
                         const style = document.createElement('style');
                         style.innerHTML = `
-                    .compact-swal-popup {
-                        width: 350px !important;
-                        max-height: 90vh !important;
-                        padding: 10px !important;
-                        overflow-y: auto;
-                    }
-                    .compact-swal-form {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 5px;
-                    }
-                    .compact-input {
-                        margin: 2px 0 !important;
-                        padding: 4px !important;
-                        font-size: 14px !important;
-                        height: 35px !important;
-                        line-height: 2 !important;
-                        box-sizing: border-box;
-                    }
-                    .swal2-title {
-                        font-size: 20px !important;
-                        margin: 5px 0 !important;
-                        padding: 0 !important;
-                    }
-                    .swal2-actions {
-                        margin: 5px 0 !important;
-                        padding: 0 !important;
-                    }
-                    .swal2-confirm, .swal2-cancel {
-                        font-size: 14px !important;
-                        padding: 5px 14px !important;
-                    }
-                `;
+                        .compact-swal-popup {
+                            width: 350px !important;
+                            max-height: 90vh !important;
+                            padding: 10px !important;
+                            overflow-y: auto;
+                        }
+                        .compact-swal-form {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 5px;
+                        }
+                        .compact-input {
+                            margin: 2px 0 !important;
+                            padding: 4px !important;
+                            font-size: 14px !important;
+                            height: 35px !important;
+                            line-height: 2 !important;
+                            box-sizing: border-box;
+                        }
+                        .swal2-title {
+                            font-size: 20px !important;
+                            margin: 5px 0 !important;
+                            padding: 0 !important;
+                        }
+                        .swal2-actions {
+                            margin: 5px 0 !important;
+                            padding: 0 !important;
+                        }
+                        .swal2-confirm, .swal2-cancel {
+                            font-size: 14px !important;
+                            padding: 5px 14px !important;
+                        }
+                        `;
                         document.head.appendChild(style);
                     },
                     preConfirm: () => {
@@ -196,47 +249,40 @@ Orders - CuBaro
                         const direccionNegocio = document.getElementById('swal-direccion-negocio').value.trim();
                         const telefono = document.getElementById('swal-telefono').value.trim();
                         const email = document.getElementById('swal-email').value.trim();
-
                         if (!cliente || !ci || !direccion || !emitido || !nombreNegocio || !nit || !direccionNegocio || !telefono || !email) {
                             Swal.showValidationMessage('Por favor completa todos los campos');
                             return false;
                         }
-
                         return {
                             cliente, ci, direccion, emitido,
                             nombreNegocio, nit, direccionNegocio, telefono, email
                         };
                     }
                 });
-
                 if (formValues) {
                     await Swal.fire({
                         icon: 'success',
                         title: '¡Éxito!',
-                        text: 'Factura generada con éxito',
+                        text: 'Factura generada correctamente',
                         timer: 3000,
                         showConfirmButton: false
                     });
-
                     const params = new URLSearchParams({
                         cliente: formValues.cliente,
                         ci: formValues.ci,
-                        direccion_cliente: formValues.direccion,
+                        direccionCliente: formValues.direccion,
                         emitido_por: formValues.emitido,
-                        nombre_negocio: formValues.nombreNegocio,
+                        nombreNegocio: formValues.nombreNegocio,
                         nit: formValues.nit,
                         direccion_negocio: formValues.direccionNegocio,
                         telefono: formValues.telefono,
                         email: formValues.email
                     }).toString();
-
-                    window.open(`/export_order/${orderId}?${params}`, '_blank');
+                    window.open(`/export_order/${orderId}?${params}`);
                 }
             });
         });
-
-
-    </script>
-
-    {% endif %}
-    {% endblock %}
+    });
+</script>
+{% endif %}
+{% endblock %}

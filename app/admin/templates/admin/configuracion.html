@@ -5,27 +5,15 @@ Admin Dashboard - CuBaro
 {% endblock %}
 
 {% block content %}
-<!-- Incluye SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="container-fluid">
-
-    <!-- Mostrar mensajes de flash -->
-    {% with msgs = get_flashed_messages(with_categories=True) %}
-    {% for c, msg in msgs %}
-    <div class="alert alert-{{ 'danger' if c == 'error' else 'success' }}">
-        {{ msg }}
-    </div>
-    {% endfor %}
-    {% endwith %}
-    
     <div class="d-flex justify-content-end mb-3">
         <div class="add-new btn-success btn">
-           <a href="{{ url_for('register') }}" data-toggle="tooltip" title="Añadir Empleado" class="text-light">
-              <i class="bi bi-person-plus"></i>
-           </a>
+            <a href="{{ url_for('register') }}" data-toggle="tooltip" title="Añadir Empleado" class="text-light">
+                <i class="bi bi-person-plus"></i>
+            </a>
         </div>
-      </div>
+    </div>
 
     <!-- Tabla de usuarios -->
     <div class="table-responsive">
@@ -51,11 +39,11 @@ Admin Dashboard - CuBaro
                     <td>
                         <span class="badge {{ 'badge-success' if user.admin else 'badge-danger' }}">
                             {% if current_user.id == 1 and not user.admin %}
-                                Empleado + {{ user['creator_name'] if user['creator_name'] else 'Sin Admin' }}
+                            Empleado + {{ user['creator_name'] if user['creator_name'] else 'Sin Admin' }}
                             {% else %}
-                                {{ 'Admin' if user.admin else 'Empleado' }}
+                            {{ 'Admin' if user.admin else 'Empleado' }}
                             {% endif %}
-                        </span>                              
+                        </span>
                     </td>
                     <td>{{ user.email }}</td>
                     <td>{{ user.phone }}</td>
@@ -66,25 +54,29 @@ Admin Dashboard - CuBaro
                     </td>
                     <td>
                         {% if user.membership_expiration %}
-                            {{ user.membership_expiration.strftime('%Y-%m-%d') }}
+                        {{ user.membership_expiration.strftime('%Y-%m-%d') }}
                         {% else %}
-                            Sin Membresía
+                        Sin Membresía
                         {% endif %}
                     </td>
                     <td>
                         {% if user.membership %}
-                            {{ user.membership.name }}  <!-- Mostrar el nombre de la membresía -->
+                        {{ user.membership.name }} <!-- Mostrar el nombre de la membresía -->
                         {% else %}
-                            Sin Membresía
+                        Sin Membresía
                         {% endif %}
-                    </td>               
+                    </td>
                     <td>
-                        <a href="#" class="edit-user" data-id="{{ user.id }}" data-name="{{ user.name }}" data-email="{{ user.email }}"
-                            data-phone="{{ user.phone }}" data-registration-date="{{ user.registration_date }}" data-membership-expiration="{{ user.membership_expiration }}"
-                            data-membership-id="{{ user.membership_id }}"> <!-- Asegúrate de que esto esté correctamente asignado -->
+                        <a href="#" class="edit-user" data-id="{{ user.id }}" data-name="{{ user.name }}"
+                            data-email="{{ user.email }}" data-phone="{{ user.phone }}"
+                            data-registration-date="{{ user.registration_date }}"
+                            data-membership-expiration="{{ user.membership_expiration }}"
+                            data-membership-id="{{ user.membership_id }}">
+                            <!-- Asegúrate de que esto esté correctamente asignado -->
                             <i class="bi bi-pencil-square text-success"></i>
                         </a>
-                        <a href="{{ url_for('admin.delete_user', id=user.id) }}" onclick="return confirm('¿Estás seguro de que deseas eliminar al usuario {{ user.name }}?');"><i class="bi bi-trash3 text-danger"></i></a>
+                        <a href="#" class="delete-user-link" data-user-id="{{ user.id }}"><i
+                                class="bi bi-trash3 text-danger"></i></a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -116,12 +108,16 @@ Admin Dashboard - CuBaro
                     </div>
                     <div class="form-group">
                         <label for="userPhone">Teléfono</label>
-                        <input type="text" class="form-control" id="userPhone" name="phone" maxlength="8" pattern="\d{8}" title="El teléfono debe tener exactamente 8 dígitos." required>
+                        <input type="text" class="form-control" id="userPhone" name="phone" maxlength="8"
+                            pattern="\d{8}" title="El teléfono debe tener exactamente 8 dígitos." required>
                     </div>
                     <div class="form-group position-relative">
                         <label for="password">Nueva Contraseña</label>
-                        <input type="password" class="form-control" id="password" name="password" pattern="^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$" title="La contraseña debe tener entre 8 y 30 caracteres y puede contener letras, números y símbolos.">
-                        <span onclick="togglePassword('password', 'toggleIcon')" class="position-absolute" style="top: 38px; right: 15px; cursor: pointer; color:rgb(14, 66, 238);">
+                        <input type="password" class="form-control" id="password" name="password"
+                            pattern="^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$"
+                            title="La contraseña debe tener entre 8 y 30 caracteres y puede contener letras, números y símbolos.">
+                        <span onclick="togglePassword('password', 'toggleIcon')" class="position-absolute"
+                            style="top: 38px; right: 15px; cursor: pointer; color:rgb(14, 66, 238);">
                             <i class="fa fa-eye toggle-icon" id="toggleIcon" title="Mostrar contraseña"></i>
                         </span>
                     </div>
@@ -132,15 +128,17 @@ Admin Dashboard - CuBaro
                     </div>
                     <div class="form-group">
                         <label for="membershipExpiration">Fecha de Vencimiento de Membresía</label>
-                        <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration" required>
+                        <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration"
+                            required>
                     </div>
                     <div class="form-group">
                         <label for="membership">Tipo de Membresía</label>
                         <select class="form-control" name="membership_id" id="membership" required>
                             {% for membership in memberships %}
-                                <option value="{{ membership.id }}" {% if membership.id == user.membership_id %} selected {% endif %}>
-                                    {{ membership.name }}
-                                </option>
+                            <option value="{{ membership.id }}" {% if membership.id==user.membership_id %} selected {%
+                                endif %}>
+                                {{ membership.name }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -157,99 +155,145 @@ Admin Dashboard - CuBaro
 
 <script>
     $(document).ready(function () {
-    const table = $('#userTable').DataTable({
-        "lengthMenu": [5, 10, 25, 50],
-        "ordering": true,
-        "searching": true,
-        "paging": true,
-        "info": true,
-        "columnDefs": [
-            {
-                "targets": 0, // Índice de la columna "Order ID"
-                "visible": false, // Oculta la columna
-                "searchable": false // También evita que sea buscable
-            }
-        ]
-    });
-
-    // Mostrar datos del usuario en el modal
-    $(document).on('click', '.edit-user', function () {
-    const userId = $(this).data('id');
-    const userName = $(this).data('name');
-    const userEmail = $(this).data('email');
-    const userPhone = $(this).data('phone');
-    const registrationDate = $(this).data('registrationDate'); // Puede ser undefined
-    const membershipExpiration = $(this).data('membershipExpiration');
-    const membershipId = $(this).data('membershipId');
-
-    console.log("Datos del usuario:", { userId, userName, userEmail, userPhone, registrationDate, membershipExpiration, membershipId });
-
-    // Asignar valores al modal
-    $('#userId').val(userId);
-    $('#userName').val(userName);
-    $('#userEmail').val(userEmail);
-    $('#userPhone').val(userPhone);
-
-    // Formatear registrationDate si está definido
-    if (registrationDate) {
-        const formattedRegistrationDate = new Date(registrationDate).toISOString().split('T')[0];
-        $('#registrationDate').val(formattedRegistrationDate);
-    } else {
-        $('#registrationDate').val(''); // Asignar un valor vacío si no está definido
-    }
-
-    // Formatear membershipExpiration
-    if (membershipExpiration) {
-        const formattedMembershipExpiration = new Date(membershipExpiration.replace(' ', 'T')).toISOString().split('T')[0];
-        $('#membershipExpiration').val(formattedMembershipExpiration);
-    } else {
-        $('#membershipExpiration').val('');
-    }
-
-    $('#membership').val(membershipId); // Asignar el valor correcto al select de membresía
-
-    // Mostrar el modal
-    $('#userModal').modal('show');
-});
-
-    // Manejar el envío del formulario
-    $('#userForm').on('submit', function (e) {
-        e.preventDefault();
-
-        const userId = $('#userId').val();
-        const membershipId = $('#membership').val();
-        const membershipExpiration = $('#membershipExpiration').val();
-
-        const formData = {
-            userId: userId,
-            membership_id: membershipId,
-            membership_expiration: membershipExpiration,
-            userName: $('#userName').val(),
-            userEmail: $('#userEmail').val(),
-            userPhone: $('#userPhone').val(),
-            password: $('#password').val(),
-        };
-
-        $.ajax({
-            url: `/admin/update_user/${userId}`,
-            type: 'POST',
-            data: formData,
-            success: function (response) {
-                if (response.success) {
-                    alert(response.message);
-                    $('#userModal').modal('hide');
-                    location.reload();
-                } else {
-                    alert(response.message);
+        const table = $('#userTable').DataTable({
+            "lengthMenu": [5, 10, 25, 50],
+            "ordering": true,
+            "searching": true,
+            "paging": true,
+            "info": true,
+            "columnDefs": [
+                {
+                    "targets": 0, // Índice de la columna "Order ID"
+                    "visible": false, // Oculta la columna
+                    "searchable": false // También evita que sea buscable
                 }
-            },
-            error: function () {
-                alert('Hubo un error al actualizar el usuario.');
+            ]
+        });
+
+        // SweetAlert2 para confirmación de eliminación del producto
+        document.querySelectorAll('.delete-user-link').forEach(link => {
+            link.addEventListener('click', async function (e) {
+                e.preventDefault();
+                const uId = this.getAttribute('data-user-id');
+                const result = await Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: 'Esta acción eliminará el usuario permanentemente.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Eliminar',
+                    cancelButtonText: 'Cancelar',
+                    customClass: {
+                        confirmButton: 'btn btn-danger',
+                        cancelButton: 'btn btn-secondary'
+                    },
+                    buttonsStyling: false
+                });
+                if (result.isConfirmed) {
+                    window.location.href = `{{ url_for('admin.delete_user', id=0) }}`.replace('0', uId);
+                }
+            });
+        });
+
+        // Mostrar datos del usuario en el modal
+        $(document).on('click', '.edit-user', function () {
+            const userId = $(this).data('id');
+            const userName = $(this).data('name');
+            const userEmail = $(this).data('email');
+            const userPhone = $(this).data('phone');
+            const registrationDate = $(this).data('registrationDate'); // Puede ser undefined
+            const membershipExpiration = $(this).data('membershipExpiration');
+            const membershipId = $(this).data('membershipId');
+
+            console.log("Datos del usuario:", { userId, userName, userEmail, userPhone, registrationDate, membershipExpiration, membershipId });
+
+            // Asignar valores al modal
+            $('#userId').val(userId);
+            $('#userName').val(userName);
+            $('#userEmail').val(userEmail);
+            $('#userPhone').val(userPhone);
+
+            // Formatear registrationDate si está definido
+            if (registrationDate) {
+                const formattedRegistrationDate = new Date(registrationDate).toISOString().split('T')[0];
+                $('#registrationDate').val(formattedRegistrationDate);
+            } else {
+                $('#registrationDate').val(''); // Asignar un valor vacío si no está definido
             }
+
+            // Formatear membershipExpiration
+            if (membershipExpiration) {
+                const formattedMembershipExpiration = new Date(membershipExpiration.replace(' ', 'T')).toISOString().split('T')[0];
+                $('#membershipExpiration').val(formattedMembershipExpiration);
+            } else {
+                $('#membershipExpiration').val('');
+            }
+
+            $('#membership').val(membershipId); // Asignar el valor correcto al select de membresía
+
+            // Mostrar el modal
+            $('#userModal').modal('show');
+        });
+
+        // Manejar el envío del formulario
+        $('#userForm').on('submit', function (e) {
+            e.preventDefault();
+
+            const userId = $('#userId').val();
+            const membershipId = $('#membership').val();
+            const membershipExpiration = $('#membershipExpiration').val();
+
+            const formData = {
+                userId: userId,
+                membership_id: membershipId,
+                membership_expiration: membershipExpiration,
+                userName: $('#userName').val(),
+                userEmail: $('#userEmail').val(),
+                userPhone: $('#userPhone').val(),
+                password: $('#password').val(),
+            };
+
+            $.ajax({
+                url: `/admin/update_user/${userId}`,
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        $('#userModal').modal('hide');
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert('Hubo un error al actualizar el usuario.');
+                }
+            });
         });
     });
-});
-    
-    </script>
+
+</script>
+
+<!-- Mensajes flash con SweetAlert2 -->
+{% with msgs = get_flashed_messages(with_categories=True) %}
+{% if msgs %}
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		{% for category, message in msgs %}
+		Swal.fire({
+			title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
+			text: '{{ message | safe }}',
+			icon: '{{ "success" if category == "success" else "info" if category == "info" else "error" }}',
+			confirmButtonText: 'OK',
+			customClass: {
+				confirmButton: 'btn btn-primary'
+			},
+			buttonsStyling: false
+		});
+		{% endfor %}
+	});
+</script>
+{% endif %}
+{% endwith %}
 
 {% endblock %}
