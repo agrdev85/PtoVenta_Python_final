@@ -208,20 +208,25 @@ def change_password(user_id):
 
     return render_template('change_password.html', form=form)
 
+
 @app.route('/forgot_password', methods=['GET', 'POST'])
 @limiter.limit("10 per hour")
 def forgot_password():
     form = ForgotPasswordForm()
     user = None
-    if request.method == 'POST':
-        email = form.email.data
-        user = User.query.filter_by(email=email).first()
 
-        if not user:
+    if form.email.data:
+        user = User.query.filter_by(email=form.email.data.strip().lower()).first()
+        if not user and request.method == 'POST':
             flash('No existe una cuenta con ese correo.', 'error')
             return redirect(url_for('forgot_password'))
 
-    if form.validate_on_submit():
+    if request.method == 'POST' and form.email.data and not form.master_key.data and not form.reset_code.data:
+        if user:
+            return render_template('forgot_password.html', form=form, user=user)
+        return redirect(url_for('forgot_password'))
+
+    if form.validate_on_submit() and user:
         log = PasswordResetLog(user_id=user.id, success=False)
         db.session.add(log)
 
@@ -230,36 +235,41 @@ def forgot_password():
             if not master_key or not bcrypt.check_password_hash(user.master_key, master_key):
                 flash('Llave maestra incorrecta.', 'error')
                 db.session.commit()
-                return redirect(url_for('forgot_password'))
+                return render_template('forgot_password.html', form=form, user=user)
         else:
-            reset_code = form.reset_code.data
+            reset_code = form.reset_code.data.strip().lower()  # Normalizar el código ingresado
             if not reset_code:
                 flash('Código de recuperación requerido.', 'error')
                 db.session.commit()
-                return redirect(url_for('forgot_password'))
+                return render_template('forgot_password.html', form=form, user=user)
 
-            master_key_parts = user.master_key.split('_') if user.master_key else []
-            if len(master_key_parts) != 3 or not bcrypt.check_password_hash(user.master_key, f'RESET_{reset_code}_{master_key_parts[-1]}'):
+            if not user.master_key:
+                flash('No se ha generado un código de recuperación para este usuario.', 'error')
+                db.session.commit()
+                return render_template('forgot_password.html', form=form, user=user)
+
+            reset_value = f'RESET_{reset_code}'
+            print(f"Intentando verificar: reset_code={reset_code}, reset_value={reset_value}, hash={user.master_key}")
+            if not bcrypt.check_password_hash(user.master_key, reset_value):
+                print(f"Hash no coincide para {reset_value}")
                 flash('Código de recuperación inválido.', 'error')
                 db.session.commit()
-                return redirect(url_for('forgot_password'))
+                return render_template('forgot_password.html', form=form, user=user)
 
-            try:
-                timestamp = int(master_key_parts[-1])
-                expiry = datetime.fromtimestamp(timestamp, tz=timezone.utc) + timedelta(hours=1)
+            # Expiración basada en la última actualización de master_key
+            from sqlalchemy import func
+            last_updated = db.session.query(func.max(User.updated_at)).filter_by(id=user.id).scalar()
+            if last_updated:
+                expiry = last_updated.replace(tzinfo=timezone.utc) + timedelta(hours=1)
+                print(f"Last updated: {last_updated}, Expiry: {expiry}, Now: {datetime.now(timezone.utc)}")
                 if datetime.now(timezone.utc) > expiry:
                     flash('Código de recuperación expirado.', 'error')
                     db.session.commit()
-                    return redirect(url_for('forgot_password'))
-            except ValueError:
-                flash('Código de recuperación inválido.', 'error')
-                db.session.commit()
-                return redirect(url_for('forgot_password'))
+                    return render_template('forgot_password.html', form=form, user=user)
 
         token = serializer.dumps(user.email, salt='recover-password')
         log.success = True
         db.session.commit()
-
         return redirect(url_for('reset_password', token=token))
 
     return render_template('forgot_password.html', form=form, user=user)
@@ -290,9 +300,10 @@ def reset_password():
             user.master_key = bcrypt.generate_password_hash('EMPLOYEE_CHANGED').decode('utf-8')
         db.session.commit()
         flash('Contraseña cambiada exitosamente.', 'success')
-        return redirect(url_for('login_form'))
+        return redirect(url_for('login'))
 
     return render_template('reset_password.html', form=form, token=token)
+
 
 @app.route('/generate_reset_code', methods=['GET', 'POST'])
 @login_required
@@ -303,7 +314,7 @@ def generate_reset_code():
 
     form = GenerateResetCodeForm()
     if form.validate_on_submit():
-        email = form.email.data
+        email = form.email.data.strip().lower()
         user = User.query.filter_by(email=email).first()
 
         if not user:
@@ -314,10 +325,12 @@ def generate_reset_code():
             flash('Los administradores deben usar su llave maestra.', 'error')
             return redirect(url_for('generate_reset_code'))
 
-        reset_code = secrets.token_urlsafe(8)
-        user.master_key = bcrypt.generate_password_hash(f'RESET_{reset_code}_{int(datetime.now(timezone.utc).timestamp())}').decode('utf-8')
+        reset_code = secrets.token_urlsafe(8).lower()  # Código en minúsculas
+        reset_value = f'RESET_{reset_code}'  # Solo el reset_code, sin timestamp
+        user.master_key = bcrypt.generate_password_hash(reset_value).decode('utf-8')
         db.session.commit()
 
+        print(f"Generado código para {email}: {reset_code}, Master Key: {user.master_key}")
         flash(f'Código de recuperación para {email}: {reset_code}', 'success')
         return redirect(url_for('generate_reset_code'))
 

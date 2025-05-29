@@ -40,6 +40,7 @@ class User(UserMixin, db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # ID del creador
     registration_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))  # Fecha de registro
     membership_expiration = db.Column(db.DateTime, nullable=True)  # Fecha de vencimiento de membresía
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))  # Fecha de expiracion de Codigo de recuperacion empleado
     membership_id = db.Column(db.Integer, db.ForeignKey('memberships.id'), nullable=False)  # Relación con membresía
     membership = db.relationship('Membership', backref='users')
     employees = db.relationship('User', backref='creator', remote_side=[id], lazy='select')  # Relación empleados

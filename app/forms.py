@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import HiddenField, StringField, PasswordField, SubmitField, SelectField
-from wtforms.validators import DataRequired, Email, Length, EqualTo, Regexp
+from wtforms.validators import DataRequired, Email, Length, EqualTo, Regexp, Optional
 
 
 class LoginForm(FlaskForm):
@@ -99,11 +99,12 @@ class EmployeeRegisterForm(FlaskForm):
     
     submit = SubmitField("Registrar Empleado")   
 
+
 class ForgotPasswordForm(FlaskForm):
-    email = StringField('Correo Electrónico', validators=[DataRequired(), Email()])
-    master_key = StringField('Llave Maestra (solo administradores)', validators=[])
-    reset_code = StringField('Código de Recuperación (solo empleados)', validators=[])
-    submit = SubmitField('Verificar')
+    email = StringField("Email:", validators=[DataRequired(message="El email es requerido."), Email(message="Debe ingresar un email válido.")])
+    master_key = StringField("Llave Maestra:", validators=[Optional()])  # Opcional hasta el segundo paso
+    reset_code = StringField("Código de Recuperación:", validators=[Optional()])  # Opcional hasta el segundo paso
+    submit = SubmitField("Enviar")
 
 class ResetPasswordForm(FlaskForm):
     password = PasswordField('Nueva Contraseña', validators=[DataRequired(), Length(min=8)])

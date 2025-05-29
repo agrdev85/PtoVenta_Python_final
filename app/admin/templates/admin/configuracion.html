@@ -8,9 +8,15 @@ Admin Dashboard - CuBaro
 
 <div class="container-fluid">
     <div class="d-flex justify-content-end mb-3">
-        <div class="add-new btn-success btn">
+        <div class="add-new btn-success btn mr-3">
             <a href="{{ url_for('register') }}" data-toggle="tooltip" title="Añadir Empleado" class="text-light">
                 <i class="bi bi-person-plus"></i>
+            </a>
+        </div>
+        <div class="add-new btn-warning btn">
+            <a href="{{ url_for('generate_reset_code') }}" data-toggle="tooltip"
+                title="Generar clave para recuperar Empleado" class="text-light">
+                <i class="bi bi-key"></i>
             </a>
         </div>
     </div>
@@ -278,20 +284,20 @@ Admin Dashboard - CuBaro
 {% with msgs = get_flashed_messages(with_categories=True) %}
 {% if msgs %}
 <script>
-	document.addEventListener("DOMContentLoaded", function () {
-		{% for category, message in msgs %}
-		Swal.fire({
-			title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
-			text: '{{ message | safe }}',
-			icon: '{{ "success" if category == "success" else "info" if category == "info" else "error" }}',
-			confirmButtonText: 'OK',
-			customClass: {
-				confirmButton: 'btn btn-primary'
-			},
-			buttonsStyling: false
-		});
-		{% endfor %}
-	});
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for category, message in msgs %}
+        Swal.fire({
+            title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
+            text: '{{ message | safe }}',
+            icon: '{{ "success" if category == "success" else "info" if category == "info" else "error" }}',
+            confirmButtonText: 'OK',
+            customClass: {
+                confirmButton: 'btn btn-primary'
+            },
+            buttonsStyling: false
+        });
+        {% endfor %}
+    });
 </script>
 {% endif %}
 {% endwith %}

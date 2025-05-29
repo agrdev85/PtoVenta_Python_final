@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 
 {% block title %}
-Generate Reset Code - CuBaro
+Generar Código de Recuperación - CuBaro
 {% endblock %}
 
 {% block content %}
-
 <div class="row justify-content-center mt-0">
     <img id="logoAnimated" src="{{ url_for('static', filename='img/logoo.png') }}" height="100" width="150">
 </div>
@@ -44,43 +43,74 @@ Generate Reset Code - CuBaro
     </div>
 </div>
 
-{% with msgs = get_flashed_messages(with_categories=True) %}
-{% if msgs %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        {% for category, message in msgs %}
-        Swal.fire({
-            title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
-            html: `
-                <p>{{ message | safe }}</p>
-                {% if category == "info" %}
-                <button onclick="copyKey()" class="btn btn-outline-primary btn-sm">Copiar código</button>
-                <br><br>
-                <strong>¡Proporciónalo al empleado!</strong>
-                {% endif %}
-            `,
-            icon: '{{ "success" if category == "success" else "info" if category == "info" else "error" }}',
-            confirmButtonText: 'OK',
-            customClass: {
-                confirmButton: 'btn btn-primary'
-            },
-            buttonsStyling: false,
-            allowOutsideClick: false,
-            showConfirmButton: '{{ "true" if category != "info" else "false" }}'
-        });
+        {% for category, message in messages %}
+            {% if message.startswith("Código de recuperación") %}
+                const keyText = '{{ message.split(": ")[1] }}';  // Extrae el código de recuperación
+                Swal.fire({
+                    title: '<i class="bi bi-check-circle" style="color: #28a745;"></i> Código Generado',
+                    html: `
+                        <p><i class="bi bi-key" style="color: #007bff;"></i> Código de recuperación para <strong>{{ message.split(": ")[0].split("para ")[1] }}</strong>:</p>
+                        <div id="keyBox" style="font-size: 1.6em; font-weight: bold; color: #0056b3; background: #f0f8ff; padding: 10px; border-radius: 10px; display: inline-block;">
+                            ${keyText}
+                        </div>
+                        <br><br>
+                        <button onclick="copyKey('${keyText}')" class="btn btn-outline-primary btn-sm"><i class="bi bi-copy"></i> Copiar código</button>
+                        <br><br>
+                        <p><i class="bi bi-shield-alt" style="color: #17a2b8;"></i> <strong>¡Proporciónalo al empleado!</strong></p>
+                    `,
+                    icon: 'success',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    showCloseButton: false
+                });
+            {% else %}
+                Swal.fire({
+                    title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
+                    html: '{{ message | safe }}',
+                    icon: '{{ "success" if category == "success" else "info" if category == "info" else "error" }}',
+                    confirmButtonText: 'OK',
+                    customClass: {
+                        confirmButton: 'btn btn-primary'
+                    },
+                    buttonsStyling: false
+                });
+            {% endif %}
         {% endfor %}
     });
 
-    function copyKey() {
-        const keyText = '{{ message.split(": ")[1] if message.startswith("Código de recuperación") else "" }}';
+    function copyKey(keyText) {
         navigator.clipboard.writeText(keyText).then(() => {
+            Swal.close();
             Swal.fire({
-                toast: true,
-                position: 'top-end',
+                title: '<i class="bi bi-check-circle" style="color: #28a745;"></i> Código Copiado',
+                html: `
+                    <p>Código de recuperación copiado al portapapeles.</p>
+                    <br>
+                    <a href="{{ url_for('admin.configuracion') }}" class="btn btn-primary">Ir a Configuración</a>
+                `,
                 icon: 'success',
-                title: 'Código copiado al portapapeles',
                 showConfirmButton: false,
-                timer: 2000
+                timer: 5000,
+                timerProgressBar: true,
+                didClose: () => {
+                    window.location.href = '{{ url_for("admin.configuracion") }}';
+                }
+            });
+        }).catch(err => {
+            Swal.fire({
+                title: '<i class="bi bi-times-circle" style="color: #dc3545;"></i> Error',
+                html: '<p>Error al copiar el código.</p>',
+                icon: 'error',
+                confirmButtonText: 'OK',
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                },
+                buttonsStyling: false
             });
         });
     }
