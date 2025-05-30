@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, json, render_template, session, url_for, flash, request, make_response
+from flask import Flask, Blueprint, jsonify, json, render_template, session, url_for, flash, request, make_response
 from flask_login import current_user, login_required
 from sqlalchemy import func
 from werkzeug.utils import redirect, secure_filename
@@ -7,7 +7,9 @@ from ..admin.forms import AddItemForm, OrderEditForm
 from ..funcs import admin_only
 import logging
 from sqlalchemy.orm import aliased, joinedload
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask_bcrypt import Bcrypt  # Ensure Flask-Bcrypt is imported
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 import os
 from datetime import datetime, timedelta, timezone
 from collections import Counter
@@ -15,6 +17,11 @@ from weasyprint import HTML
 
 
 admin = Blueprint("admin", __name__, url_prefix="/admin", static_folder="static", template_folder="templates")
+
+app = Flask(__name__, static_folder='static')
+bcrypt = Bcrypt(app)  # Initialize Flask-Bcrypt
+csrf = CSRFProtect(app)
+
 
 def eliminar_alerta_si_corresponde(item):
     """
@@ -433,35 +440,28 @@ def update_order_status_to_free():
     return redirect(url_for('admin.dashboard'))
     
 
-@admin.route('/configuracion', methods=['GET'])
-def configuracion():
-    # Crear un alias para referenciar al administrador (creador)
-    admin_alias = aliased(User)
 
-    # Consultar todas las membresías disponibles
+@admin.route('/configuracion', methods=['GET'])
+@login_required
+def configuracion():
+    admin_alias = aliased(User)
     memberships = Membership.query.all()
 
-    # Verificar si el usuario actual es el superadmin
-    if current_user.id == 1:  # Supongamos que el superadmin tiene ID 1
-        # Si es superadmin, mostrar todos los usuarios
+    if current_user.id == 1:
         users = db.session.query(
-            User,  # El usuario actual
-            admin_alias.name.label('creator_name')  # Nombre del creador
+            User, admin_alias.name.label('creator_name')
         ).outerjoin(
-            admin_alias, User.created_by == admin_alias.id  # Relacionar creado_por con ID del administrador
-        ).options(joinedload(User.membership)).all()  # Cargar la relación membership
+            admin_alias, User.created_by == admin_alias.id
+        ).options(joinedload(User.membership)).all()
     else:
-        # Si es un administrador normal, mostrar solo sus empleados
         users = db.session.query(
-            User,
-            admin_alias.name.label('creator_name')
+            User, admin_alias.name.label('creator_name')
         ).outerjoin(
             admin_alias, User.created_by == admin_alias.id
         ).filter(
-            User.created_by == current_user.id  # Filtrar solo usuarios creados por el administrador actual
+            User.created_by == current_user.id
         ).all()
 
-    # Formatear datos para la plantilla
     user_data = [
         {
             'id': user.id,
@@ -474,15 +474,22 @@ def configuracion():
             'created_by': user.created_by,
             'registration_date': user.registration_date,
             'membership_expiration': user.membership_expiration,
-            'membership_id': user.membership_id,  # Para que se seleccione la membresía en el modal
-            'membership': user.membership,  # Incluir la membresía en los datos
+            'membership_id': user.membership_id,
+            'membership': user.membership,
             'creator_name': creator_name if creator_name else 'Sin Admin'
         }
         for user, creator_name in users
     ]
     
-    # Renderizar plantilla
-    return render_template('admin/configuracion.html', users=user_data, memberships=memberships, user=current_user)
+    csrf_token = generate_csrf()
+    logging.info(f"CSRF token generado: {csrf_token}")  # Depuración
+
+    return render_template('admin/configuracion.html', 
+                         users=user_data, 
+                         memberships=memberships, 
+                         user=current_user, 
+                         csrf_token=csrf_token)
+
 
 @admin.route('/pomodoro', methods=['GET'])
 def pomodoro():
@@ -528,16 +535,16 @@ def update_user(user_id):
             user.phone = user_phone
             user.membership_expiration = membership_expiration
             user.membership_id = membership_id  # Asignar la nueva membresía
-            user.email_confirmed = request.form.get('email_confirmed', 1)
+            user.email_confirmed = request.form.get('email_confirmed', '1')
 
             # Actualizar contraseña si se proporciona
             if password:
-                user.password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
+                user.password = bcrypt.generate_password_hash(password).decode('utf-8')
 
             # Actualizar la fecha de vencimiento de los empleados del administrador
             if user.admin:
                 User.query.filter(User.created_by == user.id).update(
-                    {'membership_id': membership_id, 'membership_expiration': membership_expiration, 'email_confirmed': 1}
+                    {'membership_id': membership_id, 'membership_expiration': membership_expiration, 'email_confirmed': '1'}
                 )
 
         else:  # Administradores normales
@@ -548,7 +555,7 @@ def update_user(user_id):
 
                 # Actualizar contraseña si se proporciona
                 if password:
-                    user.password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
+                    user.password = bcrypt.generate_password_hash(password).decode('utf-8')
             else:
                 return jsonify({'success': False, 'message': 'No tienes permisos para actualizar este usuario.'}), 403
 
@@ -560,7 +567,6 @@ def update_user(user_id):
         db.session.rollback()
         logging.error(f'Error al actualizar usuario: {str(e)}', exc_info=True)
         return jsonify({'success': False, 'message': 'Error interno al actualizar el usuario.', 'details': str(e)}), 500
-    
 
 @admin.route('/delete_user/<int:id>')
 @admin_only
