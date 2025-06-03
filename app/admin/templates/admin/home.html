@@ -4,8 +4,6 @@
 Admin Dashboard - CuBaro
 {% endblock %}
 
-<script src="https://js.stripe.com/v3/"></script>
-
 {% block content %}
 
 <!-- Mensajes flash con SweetAlert2 -->
@@ -90,6 +88,7 @@ Admin Dashboard - CuBaro
                 </td>
                 <td>
                     <form method="POST" action="{{ url_for('admin.update_order_status', id=order.id) }}">
+                        <input type="hidden" name="csrf_token" id="csrf_token_{{ order.id }}" value="{{ csrf_token() }}">
                         <select name="status">
                             <option value="Pagado" {% if order.status=='Pagado' %}selected{% endif %}>Pagado
                             </option>
@@ -134,6 +133,11 @@ Admin Dashboard - CuBaro
                     "searchable": false // También evita que sea buscable
                 }
             ]
+        });
+
+        // Depurar CSRF tokens
+        document.querySelectorAll('input[name="csrf_token"]').forEach(input => {
+            console.log(`CSRF Token para orden ${input.id}:`, input.value || "No encontrado");
         });
 
         // SweetAlert2 para confirmación de eliminación

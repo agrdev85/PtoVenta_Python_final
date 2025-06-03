@@ -1,5 +1,6 @@
 from flask import Flask, Blueprint, jsonify, json, render_template, session, url_for, flash, request, make_response
 from flask_login import current_user, login_required
+from pydantic import validate_call
 from sqlalchemy import func
 from werkzeug.utils import redirect, secure_filename
 from ..db_models import Alert, Membership, Order, Ordered_item, Item, db, User
@@ -50,23 +51,37 @@ def dashboard():
 
     return render_template("admin/home.html", orders=orders, alerts=alerts)
 
+
 @admin.route('/update_order_status/<int:id>', methods=['POST'])
 @admin_only
 def update_order_status(id):
-    # Validar que la orden pertenece al administrador actual o a un empleado del administrador actual
-    order = Order.query.join(User, Order.uid == User.id).filter(
-        Order.id == id,
-        (User.created_by == current_user.id) | (User.id == current_user.id)  # Verificar si es del admin o de un empleado del admin
-    ).first_or_404()
-    status = request.form.get('status')
-    if status in ['Pagado', 'Libre', 'Reservado']:
-        order.status = status
-        order.date = datetime.now()
-        db.session.commit()
-        flash(f"¡Estado de la orden actualizado exitosamente a '{status}'!", 'success')
-    else:
-        flash("¡Estado no válido!", 'error')
-    return redirect(url_for('admin.dashboard'))
+    try:
+        # No validamos CSRF manualmente; CSRFProtect lo hace automáticamente
+        csrf_token = request.form.get('csrf_token')
+        logging.info(f"CSRF Token recibido: {csrf_token}")
+
+        # Validar que la orden pertenece al admin o empleado
+        order = Order.query.join(User, Order.uid == User.id).filter(
+            Order.id == id,
+            (User.created_by == current_user.id) | (User.id == current_user.id)
+        ).first_or_404()
+
+        status = request.form.get('status')
+        if status in ['Pagado', 'Libre', 'Reservado']:
+            order.status = status
+            order.date = datetime.now()
+            db.session.commit()
+            flash(f"¡Estado de la orden actualizado exitosamente a '{status}'!", "success")
+        else:
+            flash("¡Estado no válido!", "error")
+
+        return redirect(url_for('admin.dashboard'))
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error al actualizar orden {id}: {str(e)}", exc_info=True)
+        flash("Error al actualizar la orden.", "error")
+        return redirect(url_for('admin.dashboard')), 500
 
 def create_user_folder(user_id):
     """ Crea una carpeta para el usuario dentro de app/static/upload/ """
@@ -568,33 +583,43 @@ def update_user(user_id):
         logging.error(f'Error al actualizar usuario: {str(e)}', exc_info=True)
         return jsonify({'success': False, 'message': 'Error interno al actualizar el usuario.', 'details': str(e)}), 500
 
-@admin.route('/delete_user/<int:id>')
+
+@admin.route('/delete_user/<int:id>', methods=['POST'])
 @admin_only
 def delete_user(id):
-    if id == 1:
-        flash("¡El superadministrador no puede ser eliminado!", "error")
-        return redirect(url_for('admin.configuracion'))
-
-    user_to_delete = User.query.get(id)
-
-    if not user_to_delete:
-        flash("El usuario no existe.", "error")
-        return redirect(url_for('admin.configuracion'))
-
-    if current_user.id != 1 and user_to_delete.created_by != current_user.id:
-        flash("No tienes permiso para eliminar este usuario.", "error")
-        return redirect(url_for('admin.configuracion'))
-
-    # Verificar si el usuario tiene relaciones activas
-    if user_to_delete.orders:
-        flash("No se puede eliminar el usuario porque tiene órdenes asociadas.", "error")
-        return redirect(url_for('admin.configuracion'))
-
     try:
+        # Validar CSRF token
+        csrf_token = request.form.get('csrf_token_field')  # Cambiado a csrf_token_field
+        logging.info(f"CSRF Token recibido: {csrf_token}")
+        try:
+            validate_call(csrf_token)
+        except Exception as e:
+            logging.error(f"Error de CSRF: {str(e)}")
+            return jsonify({'success': False, 'message': 'El token CSRF es inválido o falta.'}), 400
+
+        if id == 1:
+            flash("¡El superadministrador no puede ser eliminado!", "error")
+            return jsonify({'success': False, 'message': 'El superadministrador no puede ser eliminado.'}), 403
+
+        user_to_delete = User.query.get(id)
+        if not user_to_delete:
+            flash("El usuario no existe.", "error")
+            return jsonify({'success': False, 'message': 'El usuario no existe.'}), 404
+
+        if current_user.id != 1 and user_to_delete.created_by != current_user.id:
+            flash("No tienes permiso para eliminar este usuario.", "error")
+            return jsonify({'success': False, 'message': 'No tienes permiso para eliminar este usuario.'}), 403
+
+        if user_to_delete.orders:
+            flash("No se puede eliminar el usuario porque tiene órdenes asociadas.", "error")
+            return jsonify({'success': False, 'message': 'No se puede eliminar el usuario porque tiene órdenes asociadas.'}), 400
+
         db.session.delete(user_to_delete)
         db.session.commit()
         flash(f"¡Usuario {user_to_delete.name} eliminado exitosamente!", "success")
-    except Exception as e:
-        flash(f"Ocurrió un error al eliminar el usuario: {str(e)}", "error")
+        return jsonify({'success': True, 'message': f'Usuario {user_to_delete.name} eliminado exitosamente.'})
 
-    return redirect(url_for('admin.configuracion'))
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error al eliminar usuario {id}: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'message': 'Error al eliminar el usuario.', 'details': str(e)}), 500

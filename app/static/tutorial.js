@@ -1,192 +1,12 @@
-{% import "bootstrap/wtf.html" as wtf %}
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <!-- Required meta tags -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel="icon" href="{{ url_for('static', filename='img/logoo.png') }}">
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-  <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css"
-    rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  <!-- Animate -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <!-- Incluye DataTables CSS y JS -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- jQuery primero -->
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-  <script type="text/javascript" charset="utf8"
-    src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-
-  <!-- Incluye Botones Bootstrap CSS-->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-switch-button/css/bootstrap-switch-button.min.css"
-    rel="stylesheet">
-
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-  <title>{% block title %} {% endblock %}</title>
-
-</head>
-
-<body>
-
-  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-    <a class="navbar-brand" href="{{ url_for('home') }}" data-toggle="tooltip" title="Inicio">
-      <img src="{{ url_for('static', filename='img/logoo.png') }}" height="30" width="60"> CuBaro
-    </a>
-
-
-
-    <ul class="navbar-nav d-flex flex-row">
-      <!-- Formulario de búsqueda siempre visible -->
-      {% if request.endpoint == 'home' %}
-      <form class="form-inline d-flex ml-auto mr-3">
-        <input class="form-control" type="search" name="query" id="search-input" placeholder="Buscar" size="30"
-          autocomplete="off">
-      </form>
-      {% endif %}
-
-      <!-- Botones visibles siempre -->
-      <div class="d-flex ml-auto justify-content-center">
-        {% if not current_user.is_authenticated %}
-        <a class="btn btn-outline-primary mr-2 {% if request.endpoint == 'login' %}active{% endif %}"
-          href="{{ url_for('login') }}">Iniciar Sesión</a>
-        <a class="btn btn-outline-primary {% if request.endpoint == 'register_admin' %}active{% endif %}"
-          href="{{ url_for('register_admin') }}">Registrarse</a>
-        {% else %}
-        <li class="nav-item mr-2 {% if request.endpoint == 'orders' %}active{% endif %}">
-          <a class="nav-link" href="{{ url_for('orders') }}" data-toggle="tooltip" title="Órdenes">
-            <div class="icon-circle">
-              <i class="bi bi-bell"></i>
-            </div>
-          </a>
-        </li>
-        <li class="nav-item mr-2 {% if request.endpoint == 'cart' %}active{% endif %}">
-          <a class="nav-link" href="{{ url_for('cart') }}" data-toggle="tooltip" title="Carrito">
-            <div class="icon-circle">
-              <i class="fa fa-shopping-cart"></i>
-            </div>
-          </a>
-        </li>
-        <li class="nav-item mr-2">
-          <a class="nav-link" href="{{ url_for('membership_plans') }}" data-toggle="tooltip" title="FAQ">
-            <div class="icon-circle">
-              <i class="bi bi-question-circle-fill"></i>
-            </div>
-          </a>
-        </li>
-        <div class="dropdown ml-auto">
-          <a class="btn btn-outline-primary dropdown-toggle" href="#" id="navbarDropdown" role="button"
-            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fa fa-user-circle"></i> {{ current_user.name }}
-          </a>
-          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-            {% if current_user.admin == 1 %}
-            <a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">Admin</a>
-            {% endif %}
-            <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Salir</a>
-          </div>
-        </div>
-        {% endif %}
-      </div>
-    </ul>
-  </nav>
-
-  <div class="container">
-    <div class="main">
-      {% block content %}
-      {% endblock %}
-
-      <!-- Botón flotante de Telegram -->
-      <a href="https://t.me/CuBaro_soporte" target="_blank" class="telegram-float">
-        <i class="fa fa-telegram fa-2x"></i> Soporte
-    </a>
-    </div>
-  </div>
-  <footer class="bg-light text-center text-lg-start">
-    <div class="text-center p-3">
-      © {{ now.year }} Copyright:
-      CuBaro
-    </div>
-
-  </footer>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-    crossorigin="anonymous"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-    crossorigin="anonymous"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
-
-  <script>
-    $(document).ready(function () {
-      $('.table').DataTable({
-        "lengthMenu": [5, 10, 25, 50],
-        "ordering": true,
-        "searching": true,
-        "paging": true,
-        "info": true,
-        "columnDefs": [
-          {
-            "targets": 0, // Índice de la columna "Order ID"
-            "visible": false, // Oculta la columna
-            "searchable": false // También evita que sea buscable
-          }
-        ]
-      });
-    });
-
-
-    document.addEventListener('DOMContentLoaded', function () {
-      // Activar tooltips
-      $(function () {
-        $('[data-toggle="tooltip"]').tooltip();
-      });
-      const searchInput = document.getElementById('search-input');
-      const searchResults = document.getElementById('search-results');
-
-      searchInput.addEventListener('input', function () {
-        const query = searchInput.value.trim();
-
-        // Solo buscar si hay al menos un carácter
-        if (query.length > 0) {
-          fetch(`/search?query=${encodeURIComponent(query)}`)
-            .then(response => response.text())
-            .then(data => {
-              // Muestra los resultados de la búsqueda en el contenedor
-              searchResults.innerHTML = data;
-            })
-            .catch(error => console.error('Error en la búsqueda:', error));
-        } else {
-          // Si no hay búsqueda, limpia los resultados
-          searchResults.innerHTML = '';
-        }
-      });
-
-    });
-
-    // JavaScript para asegurar que solo se ingresen números
-    document.querySelector('input[name="phone"]').addEventListener('input', function (e) {
-      this.value = this.value.replace(/[^0-9]/g, ''); // Elimina todo lo que no sea un número
-    });
-
-    function showTutorial() {
-      console.log("Tutorial modal opened"); // Debug
-      Swal.fire({
+function showTutorial() {
+    console.log("Tutorial modal opened"); // Debug
+    Swal.fire({
         html: `
             <div class="tutorial-slider-container">
                 <!-- Step 1: Login -->
                 <div class="tutorial-card active" data-index="0">
                     <div class="tutorial-image-container">
-                        <img src="{{ url_for('static', filename='img/login.png') }}" alt="Paso 1">
+                        <img src="{{ url_for('static', filename='login.png') }}" alt="Paso 1">
                         <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
                             <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm0-2a2.5 2.5 0 002.5-2.5c0-.28-.05-.54-.14-.79L12.29 10H11.5v-.5h.79l-.43-1.29c-.25-.09-.51-.14-.79-.14A2.5 2.5 0 009 10.5c0 .28.05.54.14.79l.43 1.29h-.79v.5h-.79l.43 1.29c.25.09.51.14.79.14z"/></svg>
                         </button>
@@ -238,7 +58,7 @@
                 <!-- Step 5: Process Sale -->
                 <div class="tutorial-card" data-index="4">
                     <div class="tutorial-image-container">
-                        <img src="{{ url_for('static', filename='img/factura.png') }}" alt="Paso 5">
+                        <img src="{{ url_for('static', filename='./img/factura.png') }}" alt="Paso 5">
                         <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
                             <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm0-2a2.5 2.5 0 002.5-2.5c0-.28-.05-.54-.14-.79L12.29 10H11.5v-.5h.79l-.43-1.29c-.25-.09-.51-.14-.79-.14A2.5 2.5 0 009 10.5c0 .28.05.54.14.79l.43 1.29h-.79v.5h-.79l.43 1.29c.25.09.51.14.79.14z"/></svg>
                         </button>
@@ -304,57 +124,42 @@
         showCloseButton: true,
         allowOutsideClick: false,
         customClass: {
-          popup: 'tutorial-modal'
+            popup: 'tutorial-modal'
         },
         didOpen: () => {
-          console.log("Slider initialized"); // Debug
-          const cards = document.querySelectorAll('.tutorial-card');
-          let currentIndex = 0;
+            console.log("Slider initialized"); // Debug
+            const cards = document.querySelectorAll('.tutorial-card');
+            let currentIndex = 0;
 
-          function updateSlider() {
-            cards.forEach((card, index) => {
-              card.classList.toggle('active', index === currentIndex);
-              card.style.opacity = index === currentIndex ? '1' : '0';
-              card.style.transform = index === currentIndex ? 'translateY(0)' : 'translateY(20px)';
-            });
-            console.log(`Current slide: ${currentIndex + 1}`); // Debug
-          }
-
-          window.changeSlide = function (direction) {
-            currentIndex = (currentIndex + direction + cards.length) % cards.length;
-            updateSlider();
-          };
-
-          window.toggleZoom = function (element) {
-            const overlay = document.querySelector('.tutorial-zoom-overlay');
-            const overlayImg = overlay.querySelector('img');
-            if (element.classList.contains('tutorial-zoom-button')) {
-              const img = element.parentElement.querySelector('img');
-              overlayImg.src = img.src;
-              overlay.classList.add('active');
-              console.log("Zoom opened"); // Debug
-            } else {
-              overlay.classList.remove('active');
-              console.log("Zoom closed"); // Debug
+            function updateSlider() {
+                cards.forEach((card, index) => {
+                    card.classList.toggle('active', index === currentIndex);
+                    card.style.opacity = index === currentIndex ? '1' : '0';
+                    card.style.transform = index === currentIndex ? 'translateY(0)' : 'translateY(20px)';
+                });
+                console.log(`Current slide: ${currentIndex + 1}`); // Debug
             }
-          };
 
-          updateSlider();
+            window.changeSlide = function(direction) {
+                currentIndex = (currentIndex + direction + cards.length) % cards.length;
+                updateSlider();
+            };
+
+            window.toggleZoom = function(element) {
+                const overlay = document.querySelector('.tutorial-zoom-overlay');
+                const overlayImg = overlay.querySelector('img');
+                if (element.classList.contains('tutorial-zoom-button')) {
+                    const img = element.parentElement.querySelector('img');
+                    overlayImg.src = img.src;
+                    overlay.classList.add('active');
+                    console.log("Zoom opened"); // Debug
+                } else {
+                    overlay.classList.remove('active');
+                    console.log("Zoom closed"); // Debug
+                }
+            };
+
+            updateSlider();
         }
-      });
-    }
-
-  </script>
-
-  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-
-  <!-- Enlazar el archivo JS que maneja el comportamiento del botón -->
-  <script src="{{ url_for('static', filename='styles.js') }}"></script>
-
-  <script src="{{ url_for('static', filename='showPw.js') }}"></script>
-
-  <script src="{{ url_for('static', filename='animate.js') }}"></script>
-
-</body>
-
-</html>
+    });
+}

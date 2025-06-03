@@ -7,8 +7,8 @@ Admin Dashboard - CuBaro
 {% block content %}
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-end mb-3 mr-2">
-        <div class="add-new btn-success btn me-2">
+    <div class="d-flex justify-content-end mb-3">
+        <div class="add-new btn-success btn mr-2">
             <a href="{{ url_for('register') }}" data-toggle="tooltip" title="Añadir Empleado" class="text-light">
                 <i class="bi bi-person-plus"></i>
             </a>
@@ -93,14 +93,16 @@ Admin Dashboard - CuBaro
 </div>
 
 <!-- Modal de gestión de usuarios -->
-<div class="modal fade" id="userModal" tabindex=-1 aria-labelledby="userModalLabel" aria-hidden="true">
+<div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-labelledby="userModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="userForm">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="modal-header">
                     <h5 class="modal-title" id="userModalLabel">Editar Usuario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="userId" name="user_id">
@@ -152,7 +154,7 @@ Admin Dashboard - CuBaro
                     {% endif %}
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                 </div>
             </form>
@@ -179,39 +181,37 @@ $(document).ready(function () {
     });
 
     // SweetAlert2 para confirmación de eliminación con AJAX
-    document.querySelectorAll('.delete-user-link').forEach(link => {
-        link.addEventListener('click', async function (e) {
-            e.preventDefault();
-            const userId = this.getAttribute('data-user-id');
-            const csrfToken = $('input[name="csrf_token"]').val();
+    $(document).on('click', '.delete-user-link', function (e) {
+        e.preventDefault();
+        const userId = $(this).data('user-id');
+        const csrfToken = $('input[name="csrf_token"]').val();
 
-            if (!csrfToken) {
-                console.error("CSRF token no encontrado");
-                Swal.fire({
-                    title: 'Error',
-                    text: 'El token CSRF no está presente.',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-                return;
-            }
-
-            const result = await Swal.fire({
-                title: '¿Estás seguro?',
-                text: 'Esta acción eliminará el usuario permanentemente.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Eliminar',
-                cancelButtonText: 'Cancelar',
-                customClass: {
-                    confirmButton: 'btn btn-danger',
-                    cancelButton: 'btn btn-secondary'
-                },
+        if (!csrfToken) {
+            console.error("CSRF token no encontrado");
+            Swal.fire({
+                title: 'Error',
+                text: 'El token CSRF no está presente.',
+                icon: 'error',
+                confirmButtonText: 'OK',
+                customClass: { confirmButton: 'btn btn-primary' },
                 buttonsStyling: false
             });
+            return;
+        }
 
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: 'Esta acción eliminará el usuario permanentemente.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar',
+            customClass: {
+                confirmButton: 'btn btn-danger',
+                cancelButton: 'btn btn-secondary'
+            },
+            buttonsStyling: false
+        }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
                     url: `/admin/delete_user/${userId}`,
@@ -230,7 +230,7 @@ $(document).ready(function () {
                                 customClass: { confirmButton: 'btn btn-primary' },
                                 buttonsStyling: false
                             }).then(() => {
-                                table.row($(`tr td:contains(${userId})`).closest('tr')).remove().draw();
+                                table.row($(e.target).closest('tr')).remove().draw();
                             });
                         } else {
                             Swal.fire({
@@ -272,14 +272,12 @@ $(document).ready(function () {
 
         console.log("Datos del usuario:", { userId, userName, userEmail, userPhone, registrationDate, membershipExpiration, membershipId, emailConfirmed });
 
-        // Asignar valores al modal
         $('#userId').val(userId);
         $('#userName').val(userName);
         $('#userEmail').val(userEmail);
         $('#userPhone').val(userPhone);
         $('#emailConfirmed').prop('checked', emailConfirmed);
 
-        // Formatear fechas
         if (registrationDate) {
             try {
                 const formattedRegistrationDate = new Date(registrationDate).toISOString().split('T')[0];
@@ -304,7 +302,6 @@ $(document).ready(function () {
             $('#membershipExpiration').val('');
         }
 
-        // Asegurar que el select de membresía se establezca correctamente
         const membershipSelect = $('#membership');
         if (membershipSelect.length) {
             membershipSelect.val(membershipId || '');
@@ -353,7 +350,6 @@ $(document).ready(function () {
             csrf_token: csrfTokenElement.val()
         };
 
-        // Validar campos obligatorios para superadmin
         const isSuperAdmin = Number('{{ current_user.id | default(0) | int }}') === 1;
         if (isSuperAdmin) {
             if (!formData.membership_id || formData.membership_id === '') {
@@ -432,17 +428,10 @@ $(document).ready(function () {
         const input = document.getElementById('password');
         const icon = document.getElementById('toggleIcon');
         if (input && icon) {
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-                icon.title = 'Ocultar contraseña';
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-                icon.title = 'Mostrar contraseña';
-            }
+            input.type = input.type === 'password' ? 'text' : 'password';
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+            icon.title = input.type === 'password' ? 'Mostrar contraseña' : 'Ocultar contraseña';
         } else {
             console.warn("Elemento de contraseña o ícono no encontrado.");
         }
@@ -451,7 +440,7 @@ $(document).ready(function () {
 </script>
 
 <!-- Mensajes flash con SweetAlert2 -->
-{% with msgs = get_flashed_messages(with_categories=True) %}
+{% with msgs = get_flashed_messages(with_categories=true) %}
 {% if msgs %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -459,7 +448,7 @@ document.addEventListener("DOMContentLoaded", function () {
     Swal.fire({
         title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
         text: '{{ message | safe }}',
-        icon: '{{ "success" if category == "success" else "info" if category == "info" else "error" }}',
+        icon: '{{ category }}',
         confirmButtonText: 'OK',
         customClass: { confirmButton: 'btn btn-primary' },
         buttonsStyling: false

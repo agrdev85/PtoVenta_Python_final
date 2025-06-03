@@ -102,7 +102,7 @@ def check_stock():
                 ).delete()
 
                 # Crear una nueva alerta actualizada
-                message = f"ALERTA: El producto '{item.name}' tiene un stock de {item.stock}, que es menor o igual al stock mínimo de {item.stock_min}."
+                message = f"ALERTA: Debe comprar '{item.name}' tiene un stock de {item.stock}, menor o igual al stock mínimo definido en {item.stock_min}."
                 nueva_alerta = Alert(
                     message=message,
                     category='warning',
@@ -210,7 +210,7 @@ def change_password(user_id):
 
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
-@limiter.limit("10 per hour")
+@limiter.limit("5 per hour")
 def forgot_password():
     form = ForgotPasswordForm()
     user = None
@@ -406,7 +406,7 @@ def membership_plans():
 
 
 @app.route('/login', methods=['POST', 'GET'])   
-@limiter.limit("15 per hour")
+@limiter.limit("5 per hour")
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('admin.dashboard' if current_user.admin else 'orders'))
