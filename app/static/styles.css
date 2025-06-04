@@ -1037,310 +1037,309 @@ fijate en el este apartado para que despues arreglemos algo
 
 /* Estilos para el modal de tutorial */
 .tutorial-modal {
-	width: 90%;
-	max-width: 90%;
-	margin: 0 auto;
-	padding: 0;
+    width: 90%;
+    max-width: 90%;
+    margin: 0 auto;
+    padding: 0;
 }
 
 .tutorial-slider-container {
-	position: relative;
-	padding: 15px;
-	overflow-y: auto;
-	/* Permite scroll vertical */
-	max-height: 85vh;
-	/* Ajusta la altura máxima para evitar desbordamiento */
-	background: transparent;
-	/* Fondo transparente para que el gradiente de la tarjeta sea visible */
+    position: relative;
+    padding: 15px;
+    overflow-y: auto;
+    max-height: 85vh;
+    background: transparent;
 }
 
 .tutorial-card {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	opacity: 0;
-	transform: translateY(20px);
-	transition: opacity 0.5s ease, transform 0.5s ease;
-	background: linear-gradient(135deg, #ece6de, #a9cbf1);
-	/* Gradiente por defecto */
-	border-radius: 10px;
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-	transition: transform 0.3s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    background: linear-gradient(135deg, #ece6de, #a9cbf1);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
 }
 
 .tutorial-card.active {
-	position: relative;
-	opacity: 1;
-	transform: translateY(0);
+    position: relative;
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .tutorial-card:hover {
-	transform: scale(1.02);
+    transform: scale(1.02);
 }
 
 .tutorial-image-container {
-	position: relative;
-	margin-bottom: 10px;
+    position: relative;
+    margin-bottom: 10px;
 }
 
 .tutorial-image-container img {
-	width: 100%;
-	height: auto;
-	border-radius: 10px 10px 0 0;
-	max-height: 300px;
-	object-fit: contain;
+    width: 100%;
+    height: auto;
+    border-radius: 10px 10px 0 0;
+    max-height: 300px;
+    object-fit: contain;
 }
 
 .tutorial-zoom-button {
-	position: absolute;
-	bottom: 10px;
-	right: 10px;
-	background: rgba(0, 0, 0, 0.5);
-	border: none;
-	border-radius: 50%;
-	width: 40px;
-	height: 40px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tutorial-zoom-button svg {
-	width: 20px;
-	height: 20px;
-	fill: white;
+    width: 20px;
+    height: 20px;
+    fill: white;
 }
 
 .tutorial-zoom-overlay {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: rgba(0, 0, 0, 0.8);
-	display: none;
-	align-items: center;
-	justify-content: center;
-	z-index: 10000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
 }
 
 .tutorial-zoom-overlay.active {
-	display: flex;
+    display: flex;
 }
 
 .tutorial-zoom-overlay img {
-	max-width: 90%;
-	max-height: 90%;
-	border-radius: 10px;
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 10px;
 }
 
 .tutorial-nav-button {
-	position: absolute;
-	top: 50%;
-	transform: translateY(-50%);
-	background: rgba(0, 0, 0, 0.5);
-	border: none;
-	border-radius: 50%;
-	width: 40px;
-	height: 40px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tutorial-nav-button.prev {
-	left: 10px;
+    left: 10px;
 }
 
 .tutorial-nav-button.next {
-	right: 10px;
+    right: 10px;
 }
 
 .tutorial-nav-button svg {
-	width: 20px;
-	height: 20px;
-	fill: white;
+    width: 20px;
+    height: 20px;
+    fill: white;
 }
 
 .tutorial-text-container {
-	padding: 1.5rem;
-	text-align: center;
+    padding: 1.5rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.85); /* Fondo blanco semitransparente para mejor contraste */
+    border-radius: 0 0 10px 10px; /* Bordes redondeados solo en la parte inferior */
+    margin-top: -10px; /* Ajusta el espacio entre la imagen y el texto */
 }
 
 .tutorial-text-container h5 {
-	font-size: 1.5rem;
-	margin-bottom: 10px;
-	font-weight: bold;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #333; /* Color oscuro para alto contraste */
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5); /* Sombra clara para destacar */
 }
 
 .tutorial-text-container p {
-	font-size: 1rem;
-	line-height: 1.5;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #444; /* Color ligeramente más claro pero legible */
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
 /* Móviles pequeños (<576px) */
 @media (max-width: 576px) {
-	.tutorial-modal {
-		width: 98%;
-		max-width: 98%;
-		padding: 5px;
-		margin: 0 auto;
-	}
+    .tutorial-modal {
+        width: 98%;
+        max-width: 98%;
+        padding: 5px;
+        margin: 0 auto;
+    }
 
-	.tutorial-slider-container {
-		padding: 10px;
-		max-height: 80vh;
-	}
+    .tutorial-slider-container {
+        padding: 10px;
+        max-height: 80vh;
+    }
 
-	.tutorial-card {
-		border-radius: 8px;
-	}
+    .tutorial-card {
+        border-radius: 8px;
+    }
 
-	.tutorial-image-container img {
-		max-height: 180px;
-		/* Reduce la altura en móviles */
-		border-radius: 8px 8px 0 0;
-	}
+    .tutorial-image-container img {
+        max-height: 180px;
+        border-radius: 8px 8px 0 0;
+    }
 
-	.tutorial-text-container {
-		padding: 1rem;
-	}
+    .tutorial-text-container {
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.9); /* Más opaco en móviles para mejor legibilidad */
+        border-radius: 0 0 8px 8px;
+    }
 
-	.tutorial-text-container h5 {
-		font-size: 1.1rem;
-		margin-bottom: 8px;
-	}
+    .tutorial-text-container h5 {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
 
-	.tutorial-text-container p {
-		font-size: 0.85rem;
-		line-height: 1.4;
-	}
+    .tutorial-text-container p {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
 
-	.tutorial-zoom-button,
-	.tutorial-nav-button {
-		width: 30px;
-		height: 30px;
-	}
+    .tutorial-zoom-button, .tutorial-nav-button {
+        width: 30px;
+        height: 30px;
+    }
 
-	.tutorial-zoom-button svg,
-	.tutorial-nav-button svg {
-		width: 15px;
-		height: 15px;
-	}
+    .tutorial-zoom-button svg, .tutorial-nav-button svg {
+        width: 15px;
+        height: 15px;
+    }
 
-	.tutorial-nav-button.prev {
-		left: 5px;
-	}
+    .tutorial-nav-button.prev {
+        left: 5px;
+    }
 
-	.tutorial-nav-button.next {
-		right: 5px;
-	}
+    .tutorial-nav-button.next {
+        right: 5px;
+    }
 
-	.tutorial-text-container i,
-	.tutorial-fill {
-		font-size: 1.1em !important;
-	}
+    .tutorial-text-container i, .tutorial-fill {
+        font-size: 1.1em !important;
+    }
 }
 
 /* Móviles grandes (576px-767px) */
 @media (min-width: 576px) and (max-width: 767px) {
-	.tutorial-modal {
-		width: 95%;
-		max-width: 95%;
-		padding: 10px;
-	}
+    .tutorial-modal {
+        width: 95%;
+        max-width: 95%;
+        padding: 10px;
+    }
 
-	.tutorial-slider-container {
-		padding: 12px;
-		max-height: 82vh;
-	}
+    .tutorial-slider-container {
+        padding: 12px;
+        max-height: 82vh;
+    }
 
-	.tutorial-image-container img {
-		max-height: 220px;
-	}
+    .tutorial-image-container img {
+        max-height: 220px;
+    }
 
-	.tutorial-text-container {
-		padding: 1.25rem;
-	}
+    .tutorial-text-container {
+        padding: 1.25rem;
+    }
 
-	.tutorial-text-container h5 {
-		font-size: 1.3rem;
-	}
+    .tutorial-text-container h5 {
+        font-size: 1.3rem;
+    }
 
-	.tutorial-text-container p {
-		font-size: 0.9rem;
-	}
+    .tutorial-text-container p {
+        font-size: 0.9rem;
+    }
 
-	.tutorial-zoom-button,
-	.tutorial-nav-button {
-		width: 35px;
-		height: 35px;
-	}
+    .tutorial-zoom-button, .tutorial-nav-button {
+        width: 35px;
+        height: 35px;
+    }
 
-	.tutorial-zoom-button svg,
-	.tutorial-nav-button svg {
-		width: 18px;
-		height: 18px;
-	}
+    .tutorial-zoom-button svg, .tutorial-nav-button svg {
+        width: 18px;
+        height: 18px;
+    }
 }
 
 /* Tablets (768px-991px) */
 @media (min-width: 768px) and (max-width: 991px) {
-	.tutorial-modal {
-		width: 85%;
-		max-width: 85%;
-		padding: 15px;
-	}
+    .tutorial-modal {
+        width: 85%;
+        max-width: 85%;
+        padding: 15px;
+    }
 
-	.tutorial-slider-container {
-		padding: 15px;
-		max-height: 85vh;
-	}
+    .tutorial-slider-container {
+        padding: 15px;
+        max-height: 85vh;
+    }
 
-	.tutorial-image-container img {
-		max-height: 250px;
-	}
+    .tutorial-image-container img {
+        max-height: 250px;
+    }
 
-	.tutorial-text-container {
-		padding: 1.5rem;
-	}
+    .tutorial-text-container {
+        padding: 1.5rem;
+    }
 
-	.tutorial-text-container h5 {
-		font-size: 1.4rem;
-	}
+    .tutorial-text-container h5 {
+        font-size: 1.4rem;
+    }
 
-	.tutorial-text-container p {
-		font-size: 1rem;
-	}
+    .tutorial-text-container p {
+        font-size: 1rem;
+    }
 }
 
 /* Laptops y PCs (≥992px) */
 @media (min-width: 992px) {
-	.tutorial-modal {
-		width: 100%;
-		max-width: 100%;
-		padding: 20px;
-	}
+    .tutorial-modal {
+        width: 100%;
+        max-width: 100%;
+        padding: 20px;
+    }
 
-	.tutorial-slider-container {
-		padding: 20px;
-		max-height: 85vh;
-	}
+    .tutorial-slider-container {
+        padding: 20px;
+        max-height: 85vh;
+    }
 
-	.tutorial-image-container img {
-		max-height: 300px;
-	}
+    .tutorial-image-container img {
+        max-height: 300px;
+    }
 
-	.tutorial-text-container {
-		padding: 2rem;
-	}
+    .tutorial-text-container {
+        padding: 2rem;
+    }
 
-	.tutorial-text-container h5 {
-		font-size: 1.75rem;
-	}
+    .tutorial-text-container h5 {
+        font-size: 1.75rem;
+    }
 
-	.tutorial-text-container p {
-		font-size: 1.1rem;
-	}
+    .tutorial-text-container p {
+        font-size: 1.1rem;
+    }
 }
