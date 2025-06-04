@@ -406,7 +406,7 @@ def membership_plans():
 
 
 @app.route('/login', methods=['POST', 'GET'])   
-@limiter.limit("5 per hour")
+@limiter.limit("15 per hour")
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('admin.dashboard' if current_user.admin else 'orders'))

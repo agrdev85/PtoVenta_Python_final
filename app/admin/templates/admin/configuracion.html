@@ -1,462 +1,430 @@
-{% extends "admin/base.html" %}
+{% extends "base.html" %}
 
 {% block title %}
-Admin Dashboard - CuBaro
+    Planes de Membresía | CuBaro
 {% endblock %}
-
+<script src="https://js.stripe.com/v3/"></script>
 {% block content %}
+<style>
+    /* Ajustes generales */
+    #logoAnimated {
+        max-width: 100%;
+        height: auto;
+    }
 
-<div class="container-fluid">
-    <div class="d-flex justify-content-end mb-3">
-        <div class="add-new btn-success btn mr-2">
-            <a href="{{ url_for('register') }}" data-toggle="tooltip" title="Añadir Empleado" class="text-light">
-                <i class="bi bi-person-plus"></i>
-            </a>
-        </div>
-        <div class="add-new btn-warning btn">
-            <a href="{{ url_for('generate_reset_code') }}" data-toggle="tooltip" title="Generar código para recuperar cuenta de Empleado" class="text-light">
-                <i class="bi bi-key"></i>
-            </a>
-        </div>
-    </div>
+    .membership-card {
+        transition: transform 0.3s ease;
+    }
 
-    <!-- Tabla de usuarios -->
-    <div class="table-responsive">
-        <table id="userTable" class="table table-striped table-hover">
-            <thead class="thead-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>User</th>
-                    <th>Email</th>
-                    <th>Teléfono</th>
-                    <th>Estado</th>
-                    <th>Membresía</th>
-                    <th>Tipo</th>
-                    <th>Operaciones</th>
-                </tr>
-            </thead>
-            <tbody id="userTableBody">
-                {% for user in users %}
-                <tr>
-                    <td>{{ user.id }}</td>
-                    <td>{{ user.name }}</td>
-                    <td>
-                        <span class="badge {{ 'badge-success' if user.admin else 'badge-danger' }}">
-                            {% if current_user.id == 1 and not user.admin %}
-                            Empleado + {{ user.creator_name | default('Sin Admin') }}
-                            {% else %}
-                            {{ 'Admin' if user.admin else 'Empleado' }}
-                            {% endif %}
-                        </span>
-                    </td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.phone }}</td>
-                    <td>
-                        <span class="badge {{ 'badge-success' if user.email_confirmed else 'badge-danger' }}">
-                            {{ 'Enable' if user.email_confirmed else 'Disable' }}
-                        </span>
-                    </td>
-                    <td>
-                        {% if user.membership_expiration %}
-                        {{ user.membership_expiration.strftime('%Y-%m-%d') }}
-                        {% else %}
-                        Sin Membresía
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if user.membership %}
-                        {{ user.membership.name }}
-                        {% else %}
-                        Sin Membresía
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="#" class="edit-user" 
-                           data-id="{{ user.id }}"
-                           data-name="{{ user.name }}"
-                           data-email="{{ user.email }}"
-                           data-phone="{{ user.phone }}"
-                           data-registration-date="{{ user.registration_date | default('') }}"
-                           data-membership-expiration="{{ user.membership_expiration | default('') }}"
-                           data-membership-id="{{ user.membership_id | default('') }}"
-                           data-email-confirmed="{{ '1' if user.email_confirmed else '0' }}">
-                            <i class="bi bi-pencil-square text-success"></i>
-                        </a>
-                        <a href="#" class="delete-user-link" data-user-id="{{ user.id }}"><i class="bi bi-trash3 text-danger"></i></a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+    .membership-card:hover {
+        transform: scale(1.05);
+    }
 
-<!-- Modal de gestión de usuarios -->
-<div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-labelledby="userModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="userForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="userModalLabel">Editar Usuario</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="userId" name="user_id">
-                    <div class="form-group">
-                        <label for="userName">Nombre</label>
-                        <input type="text" class="form-control" id="userName" name="userName" maxlength="12" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="userEmail">Email</label>
-                        <input type="email" class="form-control" id="userEmail" name="userEmail" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="userPhone">Teléfono</label>
-                        <input type="text" class="form-control" id="userPhone" name="userPhone" maxlength="8"
-                               pattern="\d{8}" title="El teléfono debe tener exactamente 8 dígitos." required>
-                    </div>
-                    <div class="form-group position-relative">
-                        <label for="password">Nueva Contraseña</label>
-                        <input type="password" class="form-control" id="password" name="password"
-                               pattern="^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$"
-                               title="La contraseña debe tener entre 8 y 30 caracteres y puede contener letras, números y símbolos.">
-                        <span onclick="togglePassword()" class="position-absolute"
-                              style="top: 38px; right: 15px; cursor: pointer; color: rgb(14, 66, 238);">
-                            <i class="fa fa-eye toggle-icon" id="toggleIcon" title="Mostrar contraseña"></i>
-                        </span>
-                    </div>
-                    {% if current_user.id == 1 %}
-                    <div class="form-group">
-                        <label for="registrationDate">Fecha de Registro</label>
-                        <input type="date" class="form-control" id="registrationDate" name="registration_date" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="membershipExpiration">Fecha de Vencimiento de Membresía</label>
-                        <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="membership">Tipo de Membresía</label>
-                        <select class="form-control" id="membership" name="membership_id" required>
-                            <option value="" disabled>Selecciona una membresía</option>
-                            {% for membership in memberships %}
-                            <option value="{{ membership.id }}">{{ membership.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="emailConfirmed">Email Confirmado</label>
-                        <input type="checkbox" id="emailConfirmed" name="email_confirmed" value="1">
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+    .membership-card .card-body {
+        padding: 1.5rem;
+    }
 
-<script>
-$(document).ready(function () {
-    // Inicializar DataTable
-    const table = $('#userTable').DataTable({
-        "lengthMenu": [5, 10, 25, 50],
-        "ordering": true,
-        "searching": true,
-        "paging": true,
-        "info": true,
-        "columnDefs": [
-            {
-                "targets": 0,
-                "visible": false,
-                "searchable": false
-            }
-        ]
-    });
+    .membership-card ul {
+        margin-bottom: 1.5rem;
+    }
 
-    // SweetAlert2 para confirmación de eliminación con AJAX
-    $(document).on('click', '.delete-user-link', function (e) {
-        e.preventDefault();
-        const userId = $(this).data('user-id');
-        const csrfToken = $('input[name="csrf_token"]').val();
+    .membership-card .btn {
+        font-size: 1rem;
+    }
 
-        if (!csrfToken) {
-            console.error("CSRF token no encontrado");
-            Swal.fire({
-                title: 'Error',
-                text: 'El token CSRF no está presente.',
-                icon: 'error',
-                confirmButtonText: 'OK',
-                customClass: { confirmButton: 'btn btn-primary' },
-                buttonsStyling: false
-            });
-            return;
+    #tuto {
+        display: inline-block;
+        margin-left: 10px;
+    }
+
+    .tutorial-button {
+        font-size: 1.5rem;
+        padding: 5px 10px;
+    }
+
+    .accordion .card-header button {
+        white-space: normal;
+        text-align: left;
+        padding: 0.75rem;
+    }
+
+    .accordion .card-body {
+        padding: 1rem;
+    }
+
+    /* Móviles pequeños (<576px) */
+    @media (max-width: 576px) {
+        #logoAnimated {
+            width: 120px;
+            height: auto;
         }
 
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: 'Esta acción eliminará el usuario permanentemente.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Eliminar',
-            cancelButtonText: 'Cancelar',
-            customClass: {
-                confirmButton: 'btn btn-danger',
-                cancelButton: 'btn btn-secondary'
-            },
-            buttonsStyling: false
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: `/admin/delete_user/${userId}`,
-                    type: 'POST',
-                    data: { csrf_token: csrfToken },
-                    headers: {
-                        'X-CSRF-Token': csrfToken
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            Swal.fire({
-                                title: 'Éxito',
-                                text: response.message,
-                                icon: 'success',
-                                confirmButtonText: 'OK',
-                                customClass: { confirmButton: 'btn btn-primary' },
-                                buttonsStyling: false
-                            }).then(() => {
-                                table.row($(e.target).closest('tr')).remove().draw();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'Error',
-                                text: response.message + (response.details ? `: ${response.details}` : ''),
-                                icon: 'error',
-                                confirmButtonText: 'OK',
-                                customClass: { confirmButton: 'btn btn-primary' },
-                                buttonsStyling: false
-                            });
-                        }
-                    },
-                    error: function (xhr) {
-                        console.error("Error AJAX:", xhr.responseText);
-                        Swal.fire({
-                            title: 'Error',
-                            text: xhr.responseJSON?.message || 'Error al eliminar el usuario.',
-                            icon: 'error',
-                            confirmButtonText: 'OK',
-                            customClass: { confirmButton: 'btn btn-primary' },
-                            buttonsStyling: false
-                        });
-                    }
-                });
-            }
-        });
-    });
-
-    // Mostrar datos del usuario en el modal
-    $(document).on('click', '.edit-user', function () {
-        const userId = $(this).data('id');
-        const userName = $(this).data('name');
-        const userEmail = $(this).data('email');
-        const userPhone = $(this).data('phone');
-        const registrationDate = $(this).data('registration-date');
-        const membershipExpiration = $(this).data('membership-expiration');
-        const membershipId = $(this).data('membership-id');
-        const emailConfirmed = $(this).data('email-confirmed') === '1';
-
-        console.log("Datos del usuario:", { userId, userName, userEmail, userPhone, registrationDate, membershipExpiration, membershipId, emailConfirmed });
-
-        $('#userId').val(userId);
-        $('#userName').val(userName);
-        $('#userEmail').val(userEmail);
-        $('#userPhone').val(userPhone);
-        $('#emailConfirmed').prop('checked', emailConfirmed);
-
-        if (registrationDate) {
-            try {
-                const formattedRegistrationDate = new Date(registrationDate).toISOString().split('T')[0];
-                $('#registrationDate').val(formattedRegistrationDate);
-            } catch (e) {
-                console.error("Error al formatear fecha de registro:", e);
-                $('#registrationDate').val('');
-            }
-        } else {
-            $('#registrationDate').val('');
+        h1.text-center {
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
         }
 
-        if (membershipExpiration) {
-            try {
-                const formattedMembershipExpiration = new Date(membershipExpiration).toISOString().split('T')[0];
-                $('#membershipExpiration').val(formattedMembershipExpiration);
-            } catch (e) {
-                console.error("Error al formatear fecha de vencimiento:", e);
-                $('#membershipExpiration').val('');
-            }
-        } else {
-            $('#membershipExpiration').val('');
+        h2.text-center {
+            font-size: 1.5rem;
         }
 
-        const membershipSelect = $('#membership');
-        if (membershipSelect.length) {
-            membershipSelect.val(membershipId || '');
-            membershipSelect.trigger('change');
+        .membership-card .card-body {
+            padding: 1rem;
         }
 
-        $('#userModal').modal('show');
-    });
-
-    // Manejar el envío del formulario
-    $('#userForm').on('submit', function (e) {
-        e.preventDefault();
-
-        const userIdElement = $('#userId');
-        const userNameElement = $('#userName');
-        const userEmailElement = $('#userEmail');
-        const userPhoneElement = $('#userPhone');
-        const passwordElement = $('#password');
-        const membershipElement = $('#membership');
-        const membershipExpirationElement = $('#membershipExpiration');
-        const emailConfirmedElement = $('#emailConfirmed');
-        const csrfTokenElement = $('input[name="csrf_token"]');
-
-        if (!csrfTokenElement.length || !csrfTokenElement.val()) {
-            console.error("CSRF token no encontrado o vacío");
-            Swal.fire({
-                title: 'Error',
-                text: 'El token CSRF no está presente.',
-                icon: 'error',
-                confirmButtonText: 'OK',
-                customClass: { confirmButton: 'btn btn-primary' },
-                buttonsStyling: false
-            });
-            return;
+        .membership-card h3.card-title {
+            font-size: 1.25rem;
         }
 
-        const formData = {
-            user_id: userIdElement.val(),
-            userName: userNameElement.val(),
-            userEmail: userEmailElement.val(),
-            userPhone: userPhoneElement.val(),
-            password: passwordElement.val() || null,
-            membership_id: membershipElement.length ? (membershipElement.val() || null) : null,
-            membership_expiration: membershipExpirationElement.length ? (membershipExpirationElement.val() || null) : null,
-            email_confirmed: emailConfirmedElement.length && emailConfirmedElement.is(':checked') ? '1' : '0',
-            csrf_token: csrfTokenElement.val()
-        };
-
-        const isSuperAdmin = Number('{{ current_user.id | default(0) | int }}') === 1;
-        if (isSuperAdmin) {
-            if (!formData.membership_id || formData.membership_id === '') {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Debes seleccionar un tipo de membresía.',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-                return;
-            }
-            if (!formData.membership_expiration) {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Debes ingresar una fecha de vencimiento de membresía.',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-                return;
-            }
+        .membership-card p.card-text {
+            font-size: 0.9rem;
         }
 
-        console.log("Datos enviados:", formData);
+        .membership-card h3.fw-bold {
+            font-size: 1.5rem;
+        }
 
-        $.ajax({
-            url: `/admin/update_user/${formData.user_id}`,
-            type: 'POST',
-            data: $.param(formData),
-            headers: {
-                'X-CSRF-Token': formData.csrf_token
-            },
-            success: function (response) {
-                if (response.success) {
-                    Swal.fire({
-                        title: 'Éxito',
-                        text: response.message,
-                        icon: 'success',
-                        confirmButtonText: 'OK',
-                        customClass: { confirmButton: 'btn btn-primary' },
-                        buttonsStyling: false
-                    }).then(() => {
-                        $('#userModal').modal('hide');
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'Error',
-                        text: response.message + (response.details ? `: ${response.details}` : ''),
-                        icon: 'error',
-                        confirmButtonText: 'OK',
-                        customClass: { confirmButton: 'btn btn-primary' },
-                        buttonsStyling: false
-                    });
-                }
-            },
-            error: function (xhr) {
-                console.error("Error AJAX:", xhr.responseText);
-                Swal.fire({
-                    title: 'Error',
-                    text: xhr.responseJSON?.message || 'Error al actualizar el usuario.',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-            }
-        });
-    });
+        .membership-card ul li {
+            font-size: 0.85rem;
+        }
 
-    // Función para alternar visibilidad de contraseña
-    function togglePassword() {
-        const input = document.getElementById('password');
-        const icon = document.getElementById('toggleIcon');
-        if (input && icon) {
-            input.type = input.type === 'password' ? 'text' : 'password';
-            icon.classList.toggle('fa-eye');
-            icon.classList.toggle('fa-eye-slash');
-            icon.title = input.type === 'password' ? 'Mostrar contraseña' : 'Ocultar contraseña';
-        } else {
-            console.warn("Elemento de contraseña o ícono no encontrado.");
+        .membership-card .btn {
+            font-size: 0.9rem;
+            padding: 0.5rem;
+        }
+
+        .row.justify-content-center.gap-4 {
+            gap: 1.5rem !important;
+        }
+
+        .accordion .card-header button {
+            font-size: 0.95rem;
+        }
+
+        .accordion .card-body {
+            font-size: 0.9rem;
+        }
+
+        #tuto {
+            margin-left: 5px;
+        }
+
+        .tutorial-button {
+            font-size: 1.2rem;
+            padding: 3px 6px;
         }
     }
-});
-</script>
 
-<!-- Mensajes flash con SweetAlert2 -->
-{% with msgs = get_flashed_messages(with_categories=true) %}
-{% if msgs %}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    {% for category, message in msgs %}
-    Swal.fire({
-        title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
-        text: '{{ message | safe }}',
-        icon: '{{ category }}',
-        confirmButtonText: 'OK',
-        customClass: { confirmButton: 'btn btn-primary' },
-        buttonsStyling: false
-    });
+    /* Móviles grandes (576px-767px) */
+    @media (min-width: 576px) and (max-width: 767px) {
+        #logoAnimated {
+            width: 140px;
+            height: auto;
+        }
+
+        h1.text-center {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        h2.text-center {
+            font-size: 1.75rem;
+        }
+
+        .membership-card .card-body {
+            padding: 1.25rem;
+        }
+
+        .membership-card h3.card-title {
+            font-size: 1.5rem;
+        }
+
+        .membership-card p.card-text {
+            font-size: 1rem;
+        }
+
+        .membership-card h3.fw-bold {
+            font-size: 1.75rem;
+        }
+
+        .membership-card ul li {
+            font-size: 0.9rem;
+        }
+
+        .membership-card .btn {
+            font-size: 0.95rem;
+            padding: 0.75rem;
+        }
+
+        .row.justify-content-center.gap-4 {
+            gap: 2rem !important;
+        }
+
+        .accordion .card-header button {
+            font-size: 1rem;
+        }
+
+        .accordion .card-body {
+            font-size: 0.95rem;
+        }
+
+        #tuto {
+            margin-left: 8px;
+        }
+
+        .tutorial-button {
+            font-size: 1.3rem;
+            padding: 4px 8px;
+        }
+    }
+
+    /* Tablets (768px-991px) */
+    @media (min-width: 768px) and (max-width: 991px) {
+        #logoAnimated {
+            width: 160px;
+            height: auto;
+        }
+
+        h1.text-center {
+            font-size: 2.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        h2.text-center {
+            font-size: 2rem;
+        }
+
+        .membership-card .card-body {
+            padding: 1.5rem;
+        }
+
+        .membership-card h3.card-title {
+            font-size: 1.75rem;
+        }
+
+        .membership-card p.card-text {
+            font-size: 1.1rem;
+        }
+
+        .membership-card h3.fw-bold {
+            font-size: 2rem;
+        }
+
+        .membership-card ul li {
+            font-size: 1rem;
+        }
+
+        .membership-card .btn {
+            font-size: 1rem;
+            padding: 0.75rem;
+        }
+
+        .row.justify-content-center.gap-4 {
+            gap: 2.5rem !important;
+        }
+
+        .accordion .card-header button {
+            font-size: 1.1rem;
+        }
+
+        .accordion .card-body {
+            font-size: 1rem;
+        }
+
+        #tuto {
+            margin-left: 10px;
+        }
+
+        .tutorial-button {
+            font-size: 1.4rem;
+            padding: 5px 10px;
+        }
+    }
+
+    /* Laptops y PCs (≥992px) */
+    @media (min-width: 992px) {
+        #logoAnimated {
+            width: 150px;
+            height: auto;
+        }
+
+        h1.text-center {
+            font-size: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        h2.text-center {
+            font-size: 2.25rem;
+        }
+
+        .membership-card .card-body {
+            padding: 2rem;
+        }
+
+        .membership-card h3.card-title {
+            font-size: 2rem;
+        }
+
+        .membership-card p.card-text {
+            font-size: 1.2rem;
+        }
+
+        .membership-card h3.fw-bold {
+            font-size: 2.5rem;
+        }
+
+        .membership-card ul li {
+            font-size: 1.1rem;
+        }
+
+        .membership-card .btn {
+            font-size: 1.1rem;
+            padding: 1rem;
+        }
+
+        .row.justify-content-center.gap-4 {
+            gap: 3rem !important;
+        }
+
+        .accordion .card-header button {
+            font-size: 1.25rem;
+        }
+
+        .accordion .card-body {
+            font-size: 1.1rem;
+        }
+
+        #tuto {
+            margin-left: 15px;
+        }
+
+        .tutorial-button {
+            font-size: 1.5rem;
+            padding: 5px 10px;
+        }
+    }
+</style>
+
+{% with msgs = get_flashed_messages(with_categories=True) %}
+    {% for c, msg in msgs %}
+        {% if c == 'error' %}
+            <div class="flash-error">
+        {% else %}
+            <div class="success">
+        {% endif %}
+        {{ msg | safe }}</div>
     {% endfor %}
-});
-</script>
-{% endif %}
 {% endwith %}
 
+<div class="row justify-content-center mt-0">
+    <img id="logoAnimated" src="{{ url_for('static', filename='img/logoo.png') }}" alt="Logo CuBaro">
+</div>
+<h1 class="text-center mb-4">Elige tu Plan de Membresía</h1>
+
+<!-- Cards de Membresía -->
+<div class="container">
+    <div class="row justify-content-center gap-4">
+        <!-- Plan Prueba -->
+        <div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="card membership-card shadow-lg bg-warning rounded"
+                style="background: linear-gradient(135deg, #ece6de, #a9cbf1);">
+                <div class="card-body text-center">
+                    <h3 class="card-title fw-bold">Plan de Prueba</h3>
+                    <p class="card-text">Prueba nuestra plataforma durante 7 días con acceso limitado a 3 empleados.</p>
+                    <h3 class="fw-bold text-primary">$0 / 7 días</h3>
+                    <ul class="list-unstyled">
+                        <li>✅ Hasta 3 empleados</li>
+                        <li>✅ Hasta 5 productos</li>
+                        <li>⚠️ Acceso limitado a funciones básicas</li>
+                    </ul>
+                    <a href="{{ url_for('register_admin') }}" class="btn btn-primary w-100">Comienza tu Prueba</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plan Básico -->
+        <div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="card membership-card shadow-lg bg-danger rounded"
+                style="background: linear-gradient(135deg, #aff19b, #5ed180e8);">
+                <div class="card-body text-center">
+                    <h3 class="card-title fw-bold">Plan Básico</h3>
+                    <p class="card-text">Accede a productos limitados, ideal para clientes ocasionales.</p>
+                    <h3 class="fw-bold text-success">$4.99 / mes</h3>
+                    <ul class="list-unstyled">
+                        <li>✅ Hasta 3 empleados</li>
+                        <li>✅ Hasta 12 productos</li>
+                        <li>✅ Soporte básico</li>
+                        <li>✅ Acceso a todas las funciones</li>
+                    </ul>
+                    <a href="{{ url_for('register_admin') }}" class="btn btn-success w-100">Suscribirse</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plan Profesional -->
+        <div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="card membership-card shadow-lg bg-warning rounded"
+                style="background: linear-gradient(135deg, #ebb1cc, #f07575);">
+                <div class="card-body text-center">
+                    <h3 class="card-title fw-bold">Plan Profesional</h3>
+                    <p class="card-text">Mejora tu experiencia con soporte prioritario y más productos.</p>
+                    <h3 class="fw-bold text-danger">$9.99 / mes</h3>
+                    <ul class="list-unstyled">
+                        <li>✅ Hasta 5 empleados</li>
+                        <li>✅ Hasta 40 productos</li>
+                        <li>✅ Acceso a todas las funciones</li>
+                        <li>🚀 Soporte prioritario</li>
+                        <li>💰 Descuento del 15%</li>
+                    </ul>
+                    <a href="{{ url_for('register_admin') }}" class="btn btn-danger w-100">Suscribirse</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acordeón de Preguntas Frecuentes -->
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Preguntas Frecuentes  
+        <div id="tuto">
+            <button class="tutorial-button" style="border-radius: 100px;" data-toggle="tooltip" title="Iniciar Tutorial" onclick="showTutorial()">
+                <i class="bi bi-question-circle-fill"></i>
+            </button>
+        </div>
+    </h2>
+   
+    <div class="accordion" id="accordionExample">
+        {% set preguntas_respuestas = [
+        ('¿Cómo me registro y qué pasa después de los 7 días?', '✅ Después de registrarte, tendrás 7 días de prueba. Luego, si decides continuar, puedes realizar un pago y activar tu membresía. Si no pagas después de los 7 días, tu cuenta será desactivada.'),
+        ('¿Como puedo adquirir una membresia?', '✅ Después de registrarte, tendrás que contactar a soporte para realizar un pago por transferencia en CUP por el valor de tu membresía al cambio actual en el TOQUE.'),
+        ('¿Cómo puedo renovar mi membresía?', '✅ Puedes renovar tu membresía contactando a Soporte. Una vez que realices el pago, tu cuenta se reactivará y se asignará el nuevo período de membresía.'),
+        ('¿Qué sucede si mi cuenta se desactiva por falta de pago?', '✅ Si tu cuenta se desactiva, tendrás que ponerte en contacto con soporte para reactivarla. El costo de la reactivación será determinado por el tipo de membresía que elijas.'),
+        ('¿Puedo cambiar mi plan de membresía?', '✅ Sí, puedes cambiar tu plan de membresía en cualquier momento. Si deseas cambiar tu plan, por favor contacta a nuestro soporte.'),
+        ('¿Puedo personalizar mi plan con beneficios extras?', '✅ Si deseas un plan con beneficios que no cubren los planes existentes, puedes ponerte en contacto con soporte para diseñar un plan a medida.')
+        ] %}
+
+        {% for pregunta, respuesta in preguntas_respuestas %}
+        {% set index = loop.index0 %}
+        <div class="card mb-3">
+            <div class="card-header" id="heading{{ index }}" data-toggle="tooltip" title="{{ pregunta }}">
+                <h5 class="mb-0">
+                    <button class="btn btn-link {% if index != 0 %}collapsed{% endif %}" type="button"
+                        data-toggle="collapse" data-target="#collapse{{ index }}"
+                        aria-expanded="{% if index == 0 %}true{% else %}false{% endif %}"
+                        aria-controls="collapse{{ index }}">
+                        {{ pregunta }}
+                    </button>
+                </h5>
+            </div>
+
+            <div id="collapse{{ index }}" class="collapse {% if index == 0 %}show{% endif %}"
+                aria-labelledby="heading{{ index }}" data-parent="#accordionExample">
+                <div class="card-body">
+                    {{ respuesta }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

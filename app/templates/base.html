@@ -32,6 +32,96 @@
 
   <title>{% block title %} {% endblock %}</title>
 
+  <style>
+    /* Ajustes generales para responsividad */
+    body {
+      padding-bottom: 70px;
+      /* Espacio para el botón flotante */
+    }
+
+    /* Botón de Telegram */
+
+    .telegram-float i {
+      font-size: 24px;
+    }
+
+    /* Estilos para flash messages */
+    .flash-error,
+    .success {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .flash-error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    /* Ajustes para diferentes dispositivos */
+    @media (max-width: 576px) {
+
+      /* Móviles pequeños */
+      .telegram-float {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 10px;
+      }
+
+      .telegram-float i {
+        font-size: 18px;
+      }
+    }
+
+    @media (min-width: 576px) and (max-width: 767px) {
+
+      /* Móviles grandes */
+      .telegram-float {
+        bottom: 15px;
+        right: 15px;
+        padding: 8px 12px;
+      }
+
+      .telegram-float i {
+        font-size: 20px;
+      }
+    }
+
+    @media (min-width: 768px) and (max-width: 991px) {
+
+      /* Tablets */
+      .telegram-float {
+        bottom: 20px;
+        right: 20px;
+        padding: 9px 13px;
+      }
+
+      .telegram-float i {
+        font-size: 22px;
+      }
+    }
+
+    @media (min-width: 992px) {
+
+      /* Laptops y PCs */
+      .telegram-float {
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 15px;
+      }
+
+      .telegram-float i {
+        font-size: 24px;
+      }
+    }
+  </style>
+
 </head>
 
 <body>
@@ -106,7 +196,7 @@
       <!-- Botón flotante de Telegram -->
       <a href="https://t.me/CuBaro_soporte" target="_blank" class="telegram-float">
         <i class="fa fa-telegram fa-2x"></i> Soporte
-    </a>
+      </a>
     </div>
   </div>
   <footer class="bg-light text-center text-lg-start">
@@ -184,7 +274,7 @@
         html: `
             <div class="tutorial-slider-container">
                 <!-- Step 1: Login -->
-                <div class="tutorial-card active" data-index="0">
+                <div class="tutorial-card active" data-index="0" style="background: linear-gradient(135deg, #ece6de, #a9cbf1);">
                     <div class="tutorial-image-container">
                         <img src="{{ url_for('static', filename='img/login.png') }}" alt="Paso 1">
                         <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
@@ -197,7 +287,7 @@
                     </div>
                 </div>
                 <!-- Step 2: Main Interface -->
-                <div class="tutorial-card" data-index="1">
+                <div class="tutorial-card" data-index="1" style="background: linear-gradient(135deg, #aff19b, #5ed180e8);">
                     <div class="tutorial-image-container">
                         <img src="{{ url_for('static', filename='img/panel.png') }}" alt="Paso 2">
                         <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
@@ -206,11 +296,11 @@
                     </div>
                     <div class="tutorial-text-container">
                         <h5>Paso <i class="bi bi-2-circle-fill"></i> Navegar por la Interfaz Principal</h5>
-                        <p>Una vez iniciada la sesión, verá el panel principal con opciones como "Órdenes" <i class="bi bi-bell" style=" font-size: 1.5em;"></i>, "Panel" <i class="bi bi-speedometer2" style="font-size: 1.5em;"></i>, "Productos" <i class="bi bi-bag-fill" style="font-size: 1.5em;"></i>, "Estadísticas" <i class="bi bi-graph-up-arrow" style=" font-size: 1.5em;"></i>, "Configuración" <i class="bi bi-sliders" style="font-size: 1.5em;"></i> y "Herramientas" <i class="bi bi-tools" style="font-size: 1.5em;"></i>. Estas pestañas o botones le permiten acceder a las funciones claves del sistema. Haga clic en cada una para gestionar productos, procesar ordenes o generar reportes. En el panel puedes "Eliminar" <span class="tutorial-fill" style="font-size: 1.5em;"> <i class="bi bi-trash3 text-danger"></i></span> y atualizar el estado de las "Órdenes" que emitió cada uno de sus empleados cuando los mismos coticen, ten en cuenta que al cambiar el estado este será irreversible</p>
+                        <p>Una vez iniciada la sesión, verá el panel principal con opciones como "Órdenes" <i class="bi bi-bell" style="font-size: 1.5em;"></i>, "Panel" <i class="bi bi-speedometer2" style="font-size: 1.5em;"></i>, "Productos" <i class="bi bi-bag-fill" style="font-size: 1.5em;"></i>, "Estadísticas" <i class="bi bi-graph-up-arrow" style="font-size: 1.5em;"></i>, "Configuración" <i class="bi bi-sliders" style="font-size: 1.5em;"></i> y "Herramientas" <i class="bi bi-tools" style="font-size: 1.5em;"></i>. Estas pestañas o botones le permiten acceder a las funciones claves del sistema. Haga clic en cada una para gestionar productos, procesar ordenes o generar reportes. En el panel puedes "Eliminar" <span class="tutorial-fill" style="font-size: 1.5em;"> <i class="bi bi-trash3 text-danger"></i></span> y atualizar el estado de las "Órdenes" que emitió cada uno de sus empleados cuando los mismos coticen, ten en cuenta que al cambiar el estado este será irreversible</p>
                     </div>
                 </div>
                 <!-- Step 3: Add Product -->
-                <div class="tutorial-card" data-index="2">
+                <div class="tutorial-card" data-index="2" style="background: linear-gradient(135deg, #ebb1cc, #f07575);">
                     <div class="tutorial-image-container">
                         <img src="{{ url_for('static', filename='img/productos.png') }}" alt="Paso 3">
                         <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
@@ -219,11 +309,11 @@
                     </div>
                     <div class="tutorial-text-container">
                         <h5>Paso <i class="bi bi-3-circle-fill"></i> Añadir un Nuevo Producto</h5>
-                        <p>Vaya a la sección "Productos" y haga clic en "Añadir Producto" <i class="bi bi-database-fill-add" style=" font-size: 1.5em;"></i>. Complete el formulario con detalles como nombre del producto, categoria, imagen, costo, precio, stock y stock_min. Presione "Guardar" para registrar el producto en la base de datos.</p>
+                        <p>Vaya a la sección "Productos" y haga clic en "Añadir Producto" <i class="bi bi-database-fill-add" style="font-size: 1.5em;"></i>. Complete el formulario con detalles como nombre del producto, categoría, imagen, costo, precio, stock y stock_min. Presione "Guardar" para registrar el producto en la base de datos.</p>
                     </div>
                 </div>
                 <!-- Step 4: Edit/Delete Product -->
-                <div class="tutorial-card" data-index="3">
+                <div class="tutorial-card" data-index="3" style="background: linear-gradient(135deg, #ece6de, #a9cbf1);">
                     <div class="tutorial-image-container">
                         <img src="{{ url_for('static', filename='img/gestionproductos.png') }}" alt="Paso 4">
                         <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
@@ -236,7 +326,7 @@
                     </div>
                 </div>
                 <!-- Step 5: Process Sale -->
-                <div class="tutorial-card" data-index="4">
+                <div class="tutorial-card" data-index="4" style="background: linear-gradient(135deg, #aff19b, #5ed180e8);">
                     <div class="tutorial-image-container">
                         <img src="{{ url_for('static', filename='img/factura.png') }}" alt="Paso 5">
                         <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
@@ -249,7 +339,7 @@
                     </div>
                 </div>
                 <!-- Step 6: Generate Report -->
-                <div class="tutorial-card" data-index="5">
+                <div class="tutorial-card" data-index="5" style="background: linear-gradient(135deg, #ebb1cc, #f07575);">
                     <div class="tutorial-image-container">
                         <img src="{{ url_for('static', filename='img/estadisticas.png') }}" alt="Paso 6">
                         <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
@@ -262,7 +352,7 @@
                     </div>
                 </div>
                 <!-- Step 7: Manage Inventory -->
-                <div class="tutorial-card" data-index="6">
+                <div class="tutorial-card" data-index="6" style="background: linear-gradient(135deg, #ece6de, #a9cbf1);">
                     <div class="tutorial-image-container">
                         <img src="{{ url_for('static', filename='img/ConfgGestionEmpleados.png') }}" alt="Paso 7">
                         <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
@@ -275,7 +365,7 @@
                     </div>
                 </div>
                 <!-- Step 8: Log Out -->
-                <div class="tutorial-card" data-index="7">
+                <div class="tutorial-card" data-index="7" style="background: linear-gradient(135deg, #aff19b, #5ed180e8);">
                     <div class="tutorial-image-container">
                         <img src="{{ url_for('static', filename='img/cerrarSesion.png') }}" alt="Paso 8">
                         <button class="tutorial-zoom-button" onclick="toggleZoom(this)">
@@ -343,7 +433,6 @@
         }
       });
     }
-
   </script>
 
   <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>

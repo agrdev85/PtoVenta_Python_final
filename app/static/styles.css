@@ -970,7 +970,7 @@ fijate en el este apartado para que despues arreglemos algo
 	transition: opacity 0.3s, background 0.3s, transform 0.3s, box-shadow 0.3s;
 	z-index: 10;
 	box-shadow: 0 4px 15px var(--shadow-light);
-	animation: 
+	animation:
 		pulse 1.5s ease-in-out infinite,
 		rotateGradient 4s linear infinite,
 		glow 2s ease-in-out infinite,
@@ -982,7 +982,7 @@ fijate en el este apartado para que despues arreglemos algo
 	background: linear-gradient(45deg, #00f4ff, #ff2e63);
 	transform: translateY(-50%) scale(1.15);
 	box-shadow: 0 6px 20px var(--shadow-light), 0 0 15px var(--chart-yellow);
-	animation: 
+	animation:
 		pulse 1s ease-in-out infinite,
 		rotateGradient 2s linear infinite,
 		glow 1.5s ease-in-out infinite;
@@ -990,50 +990,163 @@ fijate en el este apartado para que despues arreglemos algo
 }
 
 @keyframes pulse {
-	0%, 100% { transform: translateY(-50%) scale(1); }
-	50% { transform: translateY(-50%) scale(1.1); }
+
+	0%,
+	100% {
+		transform: translateY(-50%) scale(1);
+	}
+
+	50% {
+		transform: translateY(-50%) scale(1.1);
+	}
 }
 
 @keyframes rotateGradient {
-	0% { background: linear-gradient(45deg, #ff2e63, #00f4ff); }
-	100% { background: linear-gradient(405deg, #ff2e63, #00f4ff); }
+	0% {
+		background: linear-gradient(45deg, #ff2e63, #00f4ff);
+	}
+
+	100% {
+		background: linear-gradient(405deg, #ff2e63, #00f4ff);
+	}
 }
 
 @keyframes glow {
-	0%, 100% { box-shadow: 0 4px 15px var(--shadow-light); }
-	50% { box-shadow: 0 4px 15px var(--shadow-light), 0 0 10px var(--chart-yellow); }
+
+	0%,
+	100% {
+		box-shadow: 0 4px 15px var(--shadow-light);
+	}
+
+	50% {
+		box-shadow: 0 4px 15px var(--shadow-light), 0 0 10px var(--chart-yellow);
+	}
 }
 
 @keyframes bounce {
-	0%, 100% { right: 0; }
-	50% { right: 5px; }
-}
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-	.tutorial-button {
-		width: 35px;
-		height: 35px;
-		animation: 
-			pulse 1.5s ease-in-out infinite,
-			rotateGradient 4s linear infinite,
-			glow 2s ease-in-out infinite,
-			bounce 3s ease-in-out infinite;
+	0%,
+	100% {
+		right: 0;
 	}
-	.tutorial-button:hover {
-		transform: translateY(-50%) scale(1.1);
-		box-shadow: 0 5px 15px var(--shadow-light), 0 0 12px var(--chart-yellow);
-	}
-	@keyframes bounce {
-		0%, 100% { right: 0; }
-		50% { right: 3px; } /* Smaller bounce for mobile */
+
+	50% {
+		right: 5px;
 	}
 }
 
-.tutorial-nav-button:hover {
+/* Estilos para el modal de tutorial */
+.tutorial-modal {
+	width: 90%;
+	max-width: 90%;
+	margin: 0 auto;
+	padding: 0;
+}
+
+.tutorial-slider-container {
+	position: relative;
+	padding: 15px;
+	overflow-y: auto;
+	/* Permite scroll vertical */
+	max-height: 85vh;
+	/* Ajusta la altura máxima para evitar desbordamiento */
+	background: transparent;
+	/* Fondo transparente para que el gradiente de la tarjeta sea visible */
+}
+
+.tutorial-card {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	opacity: 0;
+	transform: translateY(20px);
+	transition: opacity 0.5s ease, transform 0.5s ease;
+	background: linear-gradient(135deg, #ece6de, #a9cbf1);
+	/* Gradiente por defecto */
+	border-radius: 10px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+	transition: transform 0.3s ease;
+}
+
+.tutorial-card.active {
+	position: relative;
 	opacity: 1;
-	background: linear-gradient(45deg, #ff2e63, #00f4ff);
-	transform: translateY(-50%) scale(1.15);
+	transform: translateY(0);
+}
+
+.tutorial-card:hover {
+	transform: scale(1.02);
+}
+
+.tutorial-image-container {
+	position: relative;
+	margin-bottom: 10px;
+}
+
+.tutorial-image-container img {
+	width: 100%;
+	height: auto;
+	border-radius: 10px 10px 0 0;
+	max-height: 300px;
+	object-fit: contain;
+}
+
+.tutorial-zoom-button {
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+	background: rgba(0, 0, 0, 0.5);
+	border: none;
+	border-radius: 50%;
+	width: 40px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tutorial-zoom-button svg {
+	width: 20px;
+	height: 20px;
+	fill: white;
+}
+
+.tutorial-zoom-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.8);
+	display: none;
+	align-items: center;
+	justify-content: center;
+	z-index: 10000;
+}
+
+.tutorial-zoom-overlay.active {
+	display: flex;
+}
+
+.tutorial-zoom-overlay img {
+	max-width: 90%;
+	max-height: 90%;
+	border-radius: 10px;
+}
+
+.tutorial-nav-button {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	background: rgba(0, 0, 0, 0.5);
+	border: none;
+	border-radius: 50%;
+	width: 40px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .tutorial-nav-button.prev {
@@ -1045,107 +1158,189 @@ fijate en el este apartado para que despues arreglemos algo
 }
 
 .tutorial-nav-button svg {
-	fill: var(--white);
-	width: 28px;
-	height: 28px;
+	width: 20px;
+	height: 20px;
+	fill: white;
 }
 
-/* Page container (minimal to avoid conflicts) */
-.tutorial-page-container {
+.tutorial-text-container {
+	padding: 1.5rem;
 	text-align: center;
-	padding: 20px;
 }
 
-.tutorial-page-container h1 {
-	margin-bottom: 20px;
-	color: var(--primary-blue);
-	font-weight: 700;
+.tutorial-text-container h5 {
+	font-size: 1.5rem;
+	margin-bottom: 10px;
+	font-weight: bold;
 }
 
-.tutorial-page-container p {
-	margin-bottom: 30px;
-	color: var(--dark-bg);
+.tutorial-text-container p {
+	font-size: 1rem;
+	line-height: 1.5;
 }
 
-.tutorial-page-container .tutorial-btn {
-	background: linear-gradient(45deg, #ff2e63, #00f4ff);
-	border: none;
-	padding: 12px 24px;
-	font-size: 18px;
-	border-radius: 25px;
-	color: var(--white);
-	transition: transform 0.3s;
-}
+/* Móviles pequeños (<576px) */
+@media (max-width: 576px) {
+	.tutorial-modal {
+		width: 98%;
+		max-width: 98%;
+		padding: 5px;
+		margin: 0 auto;
+	}
 
-.tutorial-page-container .tutorial-btn:hover {
-	transform: scale(1.05);
-}
+	.tutorial-slider-container {
+		padding: 10px;
+		max-height: 80vh;
+	}
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
 	.tutorial-card {
-		grid-template-columns: 200px 1fr;
-		gap: 15px;
-		padding: 15px;
-		max-height: 500px;
+		border-radius: 8px;
 	}
 
-	.tutorial-image-container {
-		width: 200px;
-		height: 150px;
+	.tutorial-image-container img {
+		max-height: 180px;
+		/* Reduce la altura en móviles */
+		border-radius: 8px 8px 0 0;
 	}
 
-	.tutorial-card img {
-		width: 100%;
-		height: 100%;
-	}
-
-	.tutorial-zoom-overlay img {
-		width: 300px;
-		height: 225px;
+	.tutorial-text-container {
+		padding: 1rem;
 	}
 
 	.tutorial-text-container h5 {
-		font-size: 20px;
-		text-shadow: 1 5px 15px var(--shadow-dark);
-		box-shadow: 0 2px 4px var(--shadow-dark);
+		font-size: 1.1rem;
+		margin-bottom: 8px;
 	}
 
 	.tutorial-text-container p {
-		font-size: 14px;
-		max-height: 300px;
-		text-shadow: 1 7px 20px var(--shadow-dark);
-		box-shadow: 0 4px 6px var(--shadow-dark);
+		font-size: 0.85rem;
+		line-height: 1.4;
 	}
 
+	.tutorial-zoom-button,
 	.tutorial-nav-button {
-		width: 50px;
-		height: 50px;
+		width: 30px;
+		height: 30px;
 	}
 
+	.tutorial-zoom-button svg,
 	.tutorial-nav-button svg {
-		width: 24px;
-		height: 24px;
+		width: 15px;
+		height: 15px;
 	}
 
-	.tutorial-zoom-button {
-		width: 25px;
-		height: 25px;
+	.tutorial-nav-button.prev {
+		left: 5px;
 	}
 
-	.tutorial-zoom-button svg {
-		width: 14px;
-		height: 14px;
+	.tutorial-nav-button.next {
+		right: 5px;
+	}
+
+	.tutorial-text-container i,
+	.tutorial-fill {
+		font-size: 1.1em !important;
 	}
 }
 
-.tutorial-span {
-	background: linear-gradient(45deg, #fae8ed, #ffffff);
+/* Móviles grandes (576px-767px) */
+@media (min-width: 576px) and (max-width: 767px) {
+	.tutorial-modal {
+		width: 95%;
+		max-width: 95%;
+		padding: 10px;
+	}
+
+	.tutorial-slider-container {
+		padding: 12px;
+		max-height: 82vh;
+	}
+
+	.tutorial-image-container img {
+		max-height: 220px;
+	}
+
+	.tutorial-text-container {
+		padding: 1.25rem;
+	}
+
+	.tutorial-text-container h5 {
+		font-size: 1.3rem;
+	}
+
+	.tutorial-text-container p {
+		font-size: 0.9rem;
+	}
+
+	.tutorial-zoom-button,
+	.tutorial-nav-button {
+		width: 35px;
+		height: 35px;
+	}
+
+	.tutorial-zoom-button svg,
+	.tutorial-nav-button svg {
+		width: 18px;
+		height: 18px;
+	}
 }
 
-.tutorial-fill {
-	background: linear-gradient(45deg, #faf7e4ea, #c0ffff);
-	border-radius: 50px;
-	color: var(--white);
-	font-size: 28px;
+/* Tablets (768px-991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+	.tutorial-modal {
+		width: 85%;
+		max-width: 85%;
+		padding: 15px;
+	}
+
+	.tutorial-slider-container {
+		padding: 15px;
+		max-height: 85vh;
+	}
+
+	.tutorial-image-container img {
+		max-height: 250px;
+	}
+
+	.tutorial-text-container {
+		padding: 1.5rem;
+	}
+
+	.tutorial-text-container h5 {
+		font-size: 1.4rem;
+	}
+
+	.tutorial-text-container p {
+		font-size: 1rem;
+	}
+}
+
+/* Laptops y PCs (≥992px) */
+@media (min-width: 992px) {
+	.tutorial-modal {
+		width: 100%;
+		max-width: 100%;
+		padding: 20px;
+	}
+
+	.tutorial-slider-container {
+		padding: 20px;
+		max-height: 85vh;
+	}
+
+	.tutorial-image-container img {
+		max-height: 300px;
+	}
+
+	.tutorial-text-container {
+		padding: 2rem;
+	}
+
+	.tutorial-text-container h5 {
+		font-size: 1.75rem;
+	}
+
+	.tutorial-text-container p {
+		font-size: 1.1rem;
+	}
 }
