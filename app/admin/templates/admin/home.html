@@ -6,28 +6,6 @@ Admin Dashboard - CuBaro
 
 {% block content %}
 
-<!-- Mensajes flash con SweetAlert2 -->
-{% with msgs = get_flashed_messages(with_categories=True) %}
-{% if msgs %}
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        {% for category, message in msgs %}
-        Swal.fire({
-            title: '{{ "¡Éxito!" if category == "success" else "Error" }}',
-            text: '{{ message | safe }}',
-            icon: '{{ "success" if category == "success" else "error" }}',
-            confirmButtonText: 'OK',
-            customClass: {
-                confirmButton: 'btn btn-primary'
-            },
-            buttonsStyling: false
-        });
-        {% endfor %}
-    });
-</script>
-{% endif %}
-{% endwith %}
-
 <!-- Alertas de stock -->
 {% if alerts %}
 <div class="alert-container">
@@ -270,4 +248,25 @@ Admin Dashboard - CuBaro
 </script>
 
 {% endif %}
+
+<!-- Mensajes flash con SweetAlert2 -->
+{% with msgs = get_flashed_messages(with_categories=true) %}
+{% if msgs %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    {% for category, message in msgs %}
+    Swal.fire({
+        title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
+        text: '{{ message | safe }}',
+        icon: '{{ category }}',
+        confirmButtonText: 'OK',
+        customClass: { confirmButton: 'btn btn-primary' },
+        buttonsStyling: false
+    });
+    {% endfor %}
+});
+</script>
+{% endif %}
+{% endwith %}
+
 {% endblock %}

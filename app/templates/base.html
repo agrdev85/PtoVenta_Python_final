@@ -33,94 +33,139 @@
   <title>{% block title %} {% endblock %}</title>
 
   <style>
-    /* Ajustes generales para responsividad */
+    /* [Ajustes Generales de Responsividad] */
     body {
-      padding-bottom: 70px;
-      /* Espacio para el botón flotante */
+        padding-bottom: 70px; /* Espacio para el botón flotante */
     }
 
-    /* Botón de Telegram */
+    /* [Botón de Telegram] */
+    .telegram-float {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: var(--telegram-blue, #0088cc);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        box-shadow: 0 4px 8px var(--shadow-light, rgba(0, 0, 0, 0.2));
+        transition: background-color 0.3s, transform 0.3s ease;
+        z-index: 9999;
+    }
 
     .telegram-float i {
-      font-size: 24px;
+        font-size: 24px;
+        margin-right: 5px;
     }
 
-    /* Estilos para flash messages */
+    .telegram-float:hover {
+        background-color: var(--telegram-hover, #3688b183);
+        transform: translateY(-5px);
+    }
+
+    /* [Mensajes Flash] */
     .flash-error,
     .success {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      text-align: center;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        text-align: center;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .flash-error {
-      background-color: #f8d7da;
-      color: #721c24;
+        background-color: #f8d7da;
+        color: #721c24;
     }
 
     .success {
-      background-color: #d4edda;
-      color: #155724;
+        background-color: #d4edda;
+        color: #155724;
     }
 
-    /* Ajustes para diferentes dispositivos */
+    /* [Media Queries - Responsividad] */
     @media (max-width: 576px) {
+        /* Móviles pequeños */
+        body {
+            padding-bottom: 60px; /* Menos espacio en móviles pequeños */
+        }
 
-      /* Móviles pequeños */
-      .telegram-float {
-        bottom: 10px;
-        right: 10px;
-        padding: 6px 10px;
-      }
+        .telegram-float {
+            bottom: 10px;
+            right: 10px;
+            padding: 6px 10px;
+        }
 
-      .telegram-float i {
-        font-size: 18px;
-      }
+        .telegram-float i {
+            font-size: 18px;
+        }
+
+        .flash-error,
+        .success {
+            padding: 8px;
+            font-size: 0.9rem;
+        }
     }
 
     @media (min-width: 576px) and (max-width: 767px) {
+        /* Móviles grandes */
+        .telegram-float {
+            bottom: 15px;
+            right: 15px;
+            padding: 8px 12px;
+        }
 
-      /* Móviles grandes */
-      .telegram-float {
-        bottom: 15px;
-        right: 15px;
-        padding: 8px 12px;
-      }
+        .telegram-float i {
+            font-size: 20px;
+        }
 
-      .telegram-float i {
-        font-size: 20px;
-      }
+        .flash-error,
+        .success {
+            padding: 9px;
+            font-size: 1rem;
+        }
     }
 
     @media (min-width: 768px) and (max-width: 991px) {
+        /* Tablets */
+        .telegram-float {
+            bottom: 20px;
+            right: 20px;
+            padding: 9px 13px;
+        }
 
-      /* Tablets */
-      .telegram-float {
-        bottom: 20px;
-        right: 20px;
-        padding: 9px 13px;
-      }
+        .telegram-float i {
+            font-size: 22px;
+        }
 
-      .telegram-float i {
-        font-size: 22px;
-      }
+        .flash-error,
+        .success {
+            padding: 10px;
+            font-size: 1.1rem;
+        }
     }
 
     @media (min-width: 992px) {
+        /* Laptops y PCs */
+        .telegram-float {
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+        }
 
-      /* Laptops y PCs */
-      .telegram-float {
-        bottom: 20px;
-        right: 20px;
-        padding: 10px 15px;
-      }
+        .telegram-float i {
+            font-size: 24px;
+        }
 
-      .telegram-float i {
-        font-size: 24px;
-      }
+        .flash-error,
+        .success {
+            padding: 10px;
+            font-size: 1.2rem;
+        }
     }
-  </style>
+</style>
 
 </head>
 
