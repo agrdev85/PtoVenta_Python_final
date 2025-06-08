@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-    {{ item.name }} - CuBaro
+    {{ item.name }} | CuBaro
 {% endblock %}
 
 {% block content %}
@@ -39,9 +39,9 @@
                     <div class="item-display text-center">
                         <div class="img-wrapper">
                             {% if item.stock > 0 %}
-                                <img src="{{ item.image }}" class="pic img-fluid" style="max-height: 300px;">
+                                <img src="{{ item.image }}" class="pic img-fluid" style="max-height: 300px;" alt="{{ item.name }}">
                             {% else %}
-                                <img src="{{ url_for('static', filename='Uploads/agotados.png') }}" class="pic img-fluid" style="max-height: 300px;">
+                                <img src="{{ url_for('static', filename='Uploads/agotados.png') }}" class="pic img-fluid" style="max-height: 300px;" alt="Producto agotado">
                             {% endif %}
                         </div>
                         <h4>{{ item.name }}</h4>
@@ -61,7 +61,7 @@
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="quantity-container mt-3">
                                 <label>Cantidad:</label>
-                                <div class="input-group w-50 mx-auto">
+                                <div class="input-group mx-auto">
                                     <button type="button" id="decrease" class="btn btn-danger">-</button>
                                     <input type="number" value="1" name="quantity" id="quantity" min="1" max="{{ item.stock }}"
                                         class="form-control text-center"
@@ -72,7 +72,7 @@
                             <p class="mt-2"><strong style="color: red;"><span id="subtotal">Subtotal: {{ item.price }} CUP</span></strong></p>
                             <input type="submit" class="btn btn-primary mt-2" value="Añadir al Carro" name="add">
                         </form>
-                        <a href="{{ url_for('home') }}" class="btn btn-outline-info mt-2">Regresar a la Página de Artículos</a>
+                        <a href="{{ url_for('home') }}" class="btn btn-outline-info mt-2">Página de Artículos</a>
                         {% else %}
                         <p class="text-muted mt-3">Este producto está agotado</p>
                         {% endif %}

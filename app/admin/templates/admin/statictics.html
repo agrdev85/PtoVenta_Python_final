@@ -1,21 +1,10 @@
 {% extends "admin/base.html" %}
 
 {% block title %}
-Admin Dashboard - CuBaro
+Admin Estadísticas | CuBaro
 {% endblock %}
 
 {% block content %}
-
-{% with msgs = get_flashed_messages(with_categories=True) %}
-{% for c, msg in msgs %}
-{% if c == 'error' %}
-<div class="flash-error">
-  {% else %}
-  <div class="success">
-    {% endif %}
-    {{ msg }}</div><br>
-  {% endfor %}
-  {% endwith %}
 
   {% if not orders %}
   <div class="flash-error">No hay Ordenes.</div>
@@ -460,4 +449,25 @@ Admin Dashboard - CuBaro
   </script>
 
   {% endif %}
+
+  <!-- Mensajes flash con SweetAlert2 -->
+{% with msgs = get_flashed_messages(with_categories=true) %}
+{% if msgs %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    {% for category, message in msgs %}
+    Swal.fire({
+        title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
+        text: '{{ message | safe }}',
+        icon: '{{ category }}',
+        confirmButtonText: 'OK',
+        customClass: { confirmButton: 'btn btn-primary' },
+        buttonsStyling: false
+    });
+    {% endfor %}
+});
+</script>
+{% endif %}
+{% endwith %}
+
   {% endblock %}

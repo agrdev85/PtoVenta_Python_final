@@ -66,14 +66,15 @@ Admin Dashboard - CuBaro
                 </td>
                 <td>
                     <form method="POST" action="{{ url_for('admin.update_order_status', id=order.id) }}">
-                        <input type="hidden" name="csrf_token" id="csrf_token_{{ order.id }}" value="{{ csrf_token() }}">
+                        <input type="hidden" name="csrf_token" id="csrf_token_{{ order.id }}"
+                            value="{{ csrf_token() }}">
                         <select name="status">
-                            <option value="Pagado" {% if order.status=='Pagado' %}selected{% endif %}>Pagado
-                            </option>
-                            <!-- <option value="Libre" {% if order.status=='Libre' %}selected{% endif %}>Libre</option>
+                            <option value="Select">Selecciona</option>
+                            <option value="Pagado" {% if order.status=='Pagado' %}selected{% endif %}>Pagado</option>
+                            <!--<option value="Libre" {% if order.status=='Libre' %}selected{% endif %}>Libre</option>
                                 <option value="Reservado" {% if order.status=='Reservado' %}selected{% endif %}>
                                 Reservado</option> -->
-                                
+
                         </select>
                         <button class="btn-primary btn" type="submit">Actualizar</button>
                     </form>
@@ -96,156 +97,186 @@ Admin Dashboard - CuBaro
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Inicializar DataTables
-        var table = $('#orders-table').DataTable({
-            "lengthMenu": [5, 10, 25, 50],
-            "ordering": true,
-            "searching": true,
-            "paging": true,
-            "info": true,
-            "columnDefs": [
-                {
-                    "targets": 0, // Índice de la columna "Order ID"
-                    "visible": false, // Oculta la columna
-                    "searchable": false // También evita que sea buscable
-                }
-            ]
-        });
-
-        // Depurar CSRF tokens
-        document.querySelectorAll('input[name="csrf_token"]').forEach(input => {
-            console.log(`CSRF Token para orden ${input.id}:`, input.value || "No encontrado");
-        });
-
-        // SweetAlert2 para confirmación de eliminación
-        document.querySelectorAll('.delete-order-link').forEach(link => {
-            link.addEventListener('click', async function (e) {
-                e.preventDefault();
-                const orderId = this.getAttribute('data-order-id');
-                const row = this.closest('tr[data-order-id]');
-                const status = row.getAttribute('data-order-status');
-
-                if (status === 'Pagado') {
-                    await Swal.fire({
-                        title: 'Error',
-                        text: 'No se puede eliminar una orden en estado Pagado.',
-                        icon: 'error',
-                        confirmButtonText: 'OK',
-                        customClass: {
-                            confirmButton: 'btn btn-primary'
-                        },
-                        buttonsStyling: false
-                    });
-                    return; // Detener la ejecución
-                }
-
-                if (status === 'Reservado') {
-                    const result = await Swal.fire({
-                        title: '¿Estás seguro?',
-                        text: 'Esta acción eliminará la orden permanentemente.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Eliminar',
-                        cancelButtonText: 'Cancelar',
-                        customClass: {
-                            confirmButton: 'btn btn-danger',
-                            cancelButton: 'btn btn-secondary'
-                        },
-                        buttonsStyling: false
-                    });
-                    if (result.isConfirmed) {
-                        window.location.href = `{{ url_for('admin.delete_order', id=0) }}`.replace('0', orderId);
-                    }
-                }
-            });
-        });
-
-        // Función para calcular el total reservado
-        function calculateTotalReservado() {
-            let totalReservado = 0;
-
-            // Iterar sobre las filas filtradas en DataTables
-            table.rows({ search: 'applied' }).nodes().each(function (row) {
-                const status = row.getAttribute('data-order-status');
-                let orderTotal = 0;
-
-                // Sumar los totales de cada ítem
-                $(row).find('.my').each(function () {
-                    const itemTotal = parseFloat($(this).attr('data-item-total'));
-                    orderTotal += itemTotal;
-                });
-
-                // Si el estado es 'Reservado', sumar al total reservado
-                if (status === 'Reservado') {
-                    totalReservado += orderTotal;
-                }
-
-                // Mostrar el total de la orden
-                $(row).find('.order-total').text(`$${orderTotal.toFixed(2)}`);
-
-                // Estilos según el estado
-                if (status === 'Pagado') {
-                    $(row).css({
-                        'border': '2px solid red',
-                        'background-color': '#ffdddd',
-                        'color': 'red'
-                    });
-                } else if (status === 'Libre') {
-                    $(row).css({
-                        'border': '2px solid purple',
-                        'background-color': '#f3e5f5',
-                        'color': 'purple'
-                    });
-                }
-            });
-
-            // Mostrar el total reservado
-            $('#total-reservado').text(`$${totalReservado.toFixed(2)}`);
-        }
-
-        // Llamar a la función para calcular el total reservado al iniciar y después de cada filtrado
-        calculateTotalReservado();
-
-        // Ejecutar recalculación cada vez que se realiza un filtrado en DataTables
-        table.on('search.dt', function () {
-            calculateTotalReservado();
-        });
-
-
-        // Verificar y actualizar órdenes a "Libre" si están "Pagado" desde hace 24 horas
-        function checkAndUpdateOrders() {
-            fetch('/admin/update_order_status_to_free', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data.message);  // Muestra el mensaje de respuesta en la consola
-                    window.location.reload(); // Recarga la página para reflejar los cambios
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-        }
-
-        // Llama a la función para verificar y actualizar las órdenes cada cierto tiempo
-        setInterval(checkAndUpdateOrders, 60000); // Verifica cada minuto (60000 ms)
+document.addEventListener("DOMContentLoaded", function () {
+    // Inicializar DataTables
+    var table = $('#orders-table').DataTable({
+        "lengthMenu": [5, 10, 25, 50],
+        "ordering": true,
+        "searching": true,
+        "paging": true,
+        "info": true,
+        "columnDefs": [
+            {
+                "targets": 0, // Índice de la columna "Order ID"
+                "visible": false, // Oculta la columna
+                "searchable": false // También evita que sea buscable
+            }
+        ]
     });
 
+    // Depurar CSRF tokens
+    document.querySelectorAll('input[name="csrf_token"]').forEach(input => {
+        console.log(`CSRF Token para orden ${input.id}:`, input.value || "No encontrado");
+    });
 
-    function closeAlertSmoothly(id) {
-        const el = document.getElementById('alert-' + id);
-        if (el) {
-            el.style.transition = 'opacity 0.5s ease';
-            el.style.opacity = '0';
-            setTimeout(() => el.remove(), 500); // Espera medio segundo y elimina
-        }
+    // Función para desactivar botones y selects en órdenes con estado "Libre"
+    function disableUpdateControls() {
+        table.rows().nodes().each(function (row) {
+            const status = row.getAttribute('data-order-status');
+            const updateButton = row.querySelector('button[type="submit"]');
+            const statusSelect = row.querySelector('select[name="status"]');
+
+            if (status === 'Libre') {
+                if (updateButton) {
+                    updateButton.disabled = true;
+                    updateButton.classList.add('disabled');
+                }
+                if (statusSelect) {
+                    statusSelect.disabled = true;
+                    statusSelect.classList.add('disabled');
+                }
+            } else {
+                if (updateButton) {
+                    updateButton.disabled = false;
+                    updateButton.classList.remove('disabled');
+                }
+                if (statusSelect) {
+                    statusSelect.disabled = false;
+                    statusSelect.classList.remove('disabled');
+                }
+            }
+        });
     }
 
+    // SweetAlert2 para confirmación de eliminación
+    document.querySelectorAll('.delete-order-link').forEach(link => {
+        link.addEventListener('click', async function (e) {
+            e.preventDefault();
+            const orderId = this.getAttribute('data-order-id');
+            const row = this.closest('tr[data-order-id]');
+            const status = row.getAttribute('data-order-status');
+
+            if (status === 'Pagado') {
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'No se puede eliminar una orden en estado Pagado.',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    customClass: {
+                        confirmButton: 'btn btn-primary'
+                    },
+                    buttonsStyling: false
+                });
+                return; // Detener la ejecución
+            }
+
+            if (status === 'Reservado') {
+                const result = await Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: 'Esta acción eliminará la orden permanentemente.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Eliminar',
+                    cancelButtonText: 'Cancelar',
+                    customClass: {
+                        confirmButton: 'btn btn-danger',
+                        cancelButton: 'btn btn-secondary'
+                    },
+                    buttonsStyling: false
+                });
+                if (result.isConfirmed) {
+                    window.location.href = `{{ url_for('admin.delete_order', id=0) }}`.replace('0', orderId);
+                }
+            }
+        });
+    });
+
+    // Función para calcular el total reservado
+    function calculateTotalReservado() {
+        let totalReservado = 0;
+
+        // Iterar sobre las filas filtradas en DataTables
+        table.rows({ search: 'applied' }).nodes().each(function (row) {
+            const status = row.getAttribute('data-order-status');
+            let orderTotal = 0;
+
+            // Sumar los totales de cada ítem
+            $(row).find('.my').each(function () {
+                const itemTotal = parseFloat($(this).attr('data-item-total'));
+                orderTotal += itemTotal;
+            });
+
+            // Si el estado es 'Reservado', sumar al total reservado
+            if (status === 'Reservado') {
+                totalReservado += orderTotal;
+            }
+
+            // Mostrar el total de la orden
+            $(row).find('.order-total').text(`$${orderTotal.toFixed(2)}`);
+
+            // Estilos según el estado
+            if (status === 'Pagado') {
+                $(row).css({
+                    'border': '2px solid red',
+                    'background-color': '#ffdddd',
+                    'color': 'red'
+                });
+            } else if (status === 'Libre') {
+                $(row).css({
+                    'border': '2px solid purple',
+                    'background-color': '#f3e5f5',
+                    'color': 'purple'
+                });
+            }
+        });
+
+        // Mostrar el total reservado
+        $('#total-reservado').text(`$${totalReservado.toFixed(2)}`);
+    }
+
+    // Llamar a las funciones al iniciar y después de cada filtrado o redibujado
+    calculateTotalReservado();
+    disableUpdateControls(); // Llamar al iniciar
+
+    // Ejecutar recalculación y actualización de controles cada vez que se realiza un filtrado o redibujado en DataTables
+    table.on('search.dt draw.dt', function () {
+        calculateTotalReservado();
+        disableUpdateControls(); // Actualizar estado de botones y selects tras filtrado o redibujado
+    });
+
+    // Verificar y actualizar órdenes a "Libre" si están "Pagado" desde hace 24 horas
+    function checkAndUpdateOrders() {
+        fetch('/admin/update_order_status_to_free', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('input[name="csrf_token"]').value // Añadir CSRF token
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);  // Muestra el mensaje de respuesta en la consola
+                window.location.reload(); // Recarga la página para reflejar los cambios
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    }
+
+    // Llama a la función para verificar y actualizar las órdenes cada minuto
+    setInterval(checkAndUpdateOrders, 60000); // 60000 ms = 1 minuto
+});
+
+function closeAlertSmoothly(id) {
+    const el = document.getElementById('alert-' + id);
+    if (el) {
+        el.style.transition = 'opacity 0.5s ease';
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 500); // Espera medio segundo y elimina
+    }
+}
 </script>
+
 
 {% endif %}
 
@@ -253,18 +284,18 @@ Admin Dashboard - CuBaro
 {% with msgs = get_flashed_messages(with_categories=true) %}
 {% if msgs %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    {% for category, message in msgs %}
-    Swal.fire({
-        title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
-        text: '{{ message | safe }}',
-        icon: '{{ "success" if category == "success" else "Información" if category == "info" else "Error" }}',
-        confirmButtonText: 'OK',
-        customClass: { confirmButton: 'btn btn-primary' },
-        buttonsStyling: false
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for category, message in msgs %}
+        Swal.fire({
+            title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
+            text: '{{ message | safe }}',
+            icon: '{{ "success" if category == "success" else "Información" if category == "info" else "Error" }}',
+            confirmButtonText: 'OK',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false
+        });
+        {% endfor %}
     });
-    {% endfor %}
-});
 </script>
 {% endif %}
 {% endwith %}

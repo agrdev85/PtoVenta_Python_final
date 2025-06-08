@@ -1,437 +1,140 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Planes de Membresía | CuBaro
+Planes de Membresía | CuBaro
 {% endblock %}
-<script src="https://js.stripe.com/v3/"></script>
 {% block content %}
-<style>
-    /* Ajustes generales */
-    #logoAnimated {
-        max-width: 100%;
-        height: auto;
-    }
-
-    .membership-card {
-        transition: transform 0.3s ease;
-    }
-
-    .membership-card:hover {
-        transform: scale(1.05);
-    }
-
-    .membership-card .card-body {
-        padding: 1.5rem;
-    }
-
-    .membership-card ul {
-        margin-bottom: 1.5rem;
-    }
-
-    .membership-card .btn {
-        font-size: 1rem;
-    }
-
-    #tuto {
-        display: inline-block;
-        margin-left: 10px;
-    }
-
-    .tutorial-button {
-        font-size: 1.5rem;
-        padding: 5px 10px;
-    }
-
-    .accordion .card-header button {
-        white-space: normal;
-        text-align: left;
-        padding: 0.75rem;
-    }
-
-    .accordion .card-body {
-        padding: 1rem;
-    }
-
-    /* Móviles pequeños (<576px) */
-    @media (max-width: 576px) {
-        #logoAnimated {
-            width: 120px;
-            height: auto;
-        }
-
-        h1.text-center {
-            font-size: 1.75rem;
-            margin-bottom: 1.5rem;
-        }
-
-        h2.text-center {
-            font-size: 1.5rem;
-        }
-
-        .membership-card .card-body {
-            padding: 1rem;
-        }
-
-        .membership-card h3.card-title {
-            font-size: 1.25rem;
-        }
-
-        .membership-card p.card-text {
-            font-size: 0.9rem;
-        }
-
-        .membership-card h3.fw-bold {
-            font-size: 1.5rem;
-        }
-
-        .membership-card ul li {
-            font-size: 0.85rem;
-        }
-
-        .membership-card .btn {
-            font-size: 0.9rem;
-            padding: 0.5rem;
-        }
-
-        .row.justify-content-center.gap-4 {
-            gap: 1.5rem !important;
-        }
-
-        .accordion .card-header button {
-            font-size: 0.95rem;
-        }
-
-        .accordion .card-body {
-            font-size: 0.9rem;
-        }
-
-        #tuto {
-            margin-left: 5px;
-        }
-
-        .tutorial-button {
-            font-size: 1.2rem;
-            padding: 3px 6px;
-        }
-    }
-
-    /* Móviles grandes (576px-767px) */
-    @media (min-width: 576px) and (max-width: 767px) {
-        #logoAnimated {
-            width: 140px;
-            height: auto;
-        }
-
-        h1.text-center {
-            font-size: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        h2.text-center {
-            font-size: 1.75rem;
-        }
-
-        .membership-card .card-body {
-            padding: 1.25rem;
-        }
-
-        .membership-card h3.card-title {
-            font-size: 1.5rem;
-        }
-
-        .membership-card p.card-text {
-            font-size: 1rem;
-        }
-
-        .membership-card h3.fw-bold {
-            font-size: 1.75rem;
-        }
-
-        .membership-card ul li {
-            font-size: 0.9rem;
-        }
-
-        .membership-card .btn {
-            font-size: 0.95rem;
-            padding: 0.75rem;
-        }
-
-        .row.justify-content-center.gap-4 {
-            gap: 2rem !important;
-        }
-
-        .accordion .card-header button {
-            font-size: 1rem;
-        }
-
-        .accordion .card-body {
-            font-size: 0.95rem;
-        }
-
-        #tuto {
-            margin-left: 8px;
-        }
-
-        .tutorial-button {
-            font-size: 1.3rem;
-            padding: 4px 8px;
-        }
-    }
-
-    /* Tablets (768px-991px) */
-    @media (min-width: 768px) and (max-width: 991px) {
-        #logoAnimated {
-            width: 160px;
-            height: auto;
-        }
-
-        h1.text-center {
-            font-size: 2.5rem;
-            margin-bottom: 2.5rem;
-        }
-
-        h2.text-center {
-            font-size: 2rem;
-        }
-
-        .membership-card .card-body {
-            padding: 1.5rem;
-        }
-
-        .membership-card h3.card-title {
-            font-size: 1.75rem;
-        }
-
-        .membership-card p.card-text {
-            font-size: 1.1rem;
-        }
-
-        .membership-card h3.fw-bold {
-            font-size: 2rem;
-        }
-
-        .membership-card ul li {
-            font-size: 1rem;
-        }
-
-        .membership-card .btn {
-            font-size: 1rem;
-            padding: 0.75rem;
-        }
-
-        .row.justify-content-center.gap-4 {
-            gap: 2.5rem !important;
-        }
-
-        .accordion .card-header button {
-            font-size: 1.1rem;
-        }
-
-        .accordion .card-body {
-            font-size: 1rem;
-        }
-
-        #tuto {
-            margin-left: 10px;
-        }
-
-        .tutorial-button {
-            font-size: 1.4rem;
-            padding: 5px 10px;
-        }
-    }
-
-    /* Laptops y PCs (≥992px) */
-    @media (min-width: 992px) {
-        #logoAnimated {
-            width: 150px;
-            height: auto;
-        }
-
-        h1.text-center {
-            font-size: 3rem;
-            margin-bottom: 3rem;
-        }
-
-        h2.text-center {
-            font-size: 2.25rem;
-        }
-
-        .membership-card .card-body {
-            padding: 1rem;
-        }
-
-        .membership-card h3.card-title {
-            font-size: 1.5rem;
-        }
-
-        .membership-card p.card-text {
-            font-size: 1.2rem;
-        }
-
-        .membership-card h3.fw-bold {
-            font-size: 2rem;
-        }
-
-        .membership-card ul li {
-            font-size: 1.1rem;
-        }
-
-        .membership-card .btn {
-            font-size: 1.1rem;
-            padding: 1rem;
-        }
-
-        .row.justify-content-center.gap-4 {
-            gap: 3rem !important;
-            display: flex;
-            justify-content: center;
-        }
-
-        .col-lg-4 {
-            flex: 0 0 30%; /* Asegura que las 3 tarjetas estén en una fila */
-            max-width: 30%;
-        }
-
-        .accordion .card-header button {
-            font-size: 1.25rem;
-        }
-
-        .accordion .card-body {
-            font-size: 1.1rem;
-        }
-
-        #tuto {
-            margin-left: 15px;
-        }
-
-        .tutorial-button {
-            font-size: 1.5rem;
-            padding: 5px 10px;
-        }
-    }
-</style>
 
 {% with msgs = get_flashed_messages(with_categories=True) %}
-    {% for c, msg in msgs %}
-        {% if c == 'error' %}
-            <div class="flash-error">
-        {% else %}
-            <div class="success">
+{% for c, msg in msgs %}
+{% if c == 'error' %}
+<div class="flash-error">
+    {% else %}
+    <div class="success">
         {% endif %}
         {{ msg | safe }}</div>
     {% endfor %}
-{% endwith %}
+    {% endwith %}
 
-<div class="row justify-content-center mt-0">
-    <img id="logoAnimated" src="{{ url_for('static', filename='img/logoo.png') }}" alt="Logo CuBaro">
-</div>
-<h1 class="text-center mb-4">Elige tu Plan de Membresía</h1>
+    <div class="row justify-content-center mt-0 logo-container">
+        <img id="logoAnimated" src="{{ url_for('static', filename='img/logoo.png') }}" alt="Logo CuBaro">
+    </div>
+    <h1 class="text-center mb-4">Elige tu Plan de Membresía</h1>
 
-<!-- Cards de Membresía -->
-<div class="container">
-    <div class="row justify-content-center gap-4">
-        <!-- Plan Prueba -->
-        <div class="col-lg-4 col-md-6 col-sm-12">
-            <div class="card membership-card shadow-lg bg-warning rounded"
-                style="background: linear-gradient(135deg, #ece6de, #a9cbf1);">
-                <div class="card-body text-center">
-                    <h3 class="card-title fw-bold">Plan de Prueba</h3>
-                    <p class="card-text">Prueba nuestra plataforma durante 7 días con acceso limitado a 3 empleados.</p>
-                    <h3 class="fw-bold text-primary">$0 / 7 días</h3>
-                    <ul class="list-unstyled">
-                        <li>✅ Hasta 3 empleados</li>
-                        <li>✅ Hasta 5 productos</li>
-                        <li>⚠️ Acceso limitado a funciones básicas</li>
-                    </ul>
-                    <a href="{{ url_for('register_admin') }}" class="btn btn-primary w-100">Comienza tu Prueba</a>
+    <!-- Cards de Membresía -->
+    <div class="container">
+        <div class="row justify-content-center gap-4">
+            <!-- Plan Prueba -->
+            <div class="col-lg-4 col-md-6 col-sm-12">
+                <div class="card membership-card shadow-lg bg-warning rounded"
+                    style="background: linear-gradient(135deg, #ece6de, #a9cbf1);">
+                    <div class="card-body text-center">
+                        <h3 class="card-title fw-bold">Plan de Prueba</h3>
+                        <p class="card-text">Prueba nuestra plataforma durante 7 días con acceso limitado a 3 empleados.
+                        </p>
+                        <h3 class="fw-bold text-primary">$0 / 7 días</h3>
+                        <ul class="list-unstyled">
+                            <li>✅ Hasta 3 empleados</li>
+                            <li>✅ Hasta 5 productos</li>
+                            <li>⚠️ Acceso limitado a funciones básicas</li>
+                        </ul>
+                        <a href="{{ url_for('register_admin') }}" class="btn btn-primary w-100">Comienza tu Prueba</a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Plan Básico -->
-        <div class="col-lg-4 col-md-6 col-sm-12">
-            <div class="card membership-card shadow-lg bg-danger rounded"
-                style="background: linear-gradient(135deg, #aff19b, #5ed180e8);">
-                <div class="card-body text-center">
-                    <h3 class="card-title fw-bold">Plan Básico</h3>
-                    <p class="card-text">Accede a productos limitados, ideal para clientes ocasionales.</p>
-                    <h3 class="fw-bold text-success">$4.99 / mes</h3>
-                    <ul class="list-unstyled">
-                        <li>✅ Hasta 3 empleados</li>
-                        <li>✅ Hasta 12 productos</li>
-                        <li>✅ Soporte básico</li>
-                        <li>✅ Acceso a todas las funciones</li>
-                    </ul>
-                    <a href="{{ url_for('register_admin') }}" class="btn btn-success w-100">Suscribirse</a>
+            <!-- Plan Básico -->
+            <div class="col-lg-4 col-md-6 col-sm-12">
+                <div class="card membership-card shadow-lg bg-danger rounded"
+                    style="background: linear-gradient(135deg, #aff19b, #5ed180e8);">
+                    <div class="card-body text-center">
+                        <h3 class="card-title fw-bold">Plan Básico</h3>
+                        <p class="card-text">Accede a productos limitados, ideal para clientes ocasionales.</p>
+                        <h3 class="fw-bold text-success">$4.99 / mes</h3>
+                        <ul class="list-unstyled">
+                            <li>✅ Hasta 3 empleados</li>
+                            <li>✅ Hasta 12 productos</li>
+                            <li>✅ Soporte básico</li>
+                            <li>✅ Acceso a todas las funciones</li>
+                        </ul>
+                        <a href="{{ url_for('register_admin') }}" class="btn btn-success w-100">Suscribirse</a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Plan Profesional -->
-        <div class="col-lg-4 col-md-6 col-sm-12">
-            <div class="card membership-card shadow-lg bg-warning rounded"
-                style="background: linear-gradient(135deg, #ebb1cc, #f07575);">
-                <div class="card-body text-center">
-                    <h3 class="card-title fw-bold">Plan Profesional</h3>
-                    <p class="card-text">Mejora tu experiencia con soporte prioritario y más productos.</p>
-                    <h3 class="fw-bold text-danger">$9.99 / mes</h3>
-                    <ul class="list-unstyled">
-                        <li>✅ Hasta 5 empleados</li>
-                        <li>✅ Hasta 40 productos</li>
-                        <li>✅ Acceso a todas las funciones</li>
-                        <li>🚀 Soporte prioritario</li>
-                        <li>💰 Descuento del 15%</li>
-                    </ul>
-                    <a href="{{ url_for('register_admin') }}" class="btn btn-danger w-100">Suscribirse</a>
+            <!-- Plan Profesional -->
+            <div class="col-lg-4 col-md-6 col-sm-12">
+                <div class="card membership-card shadow-lg bg-warning rounded"
+                    style="background: linear-gradient(135deg, #ebb1cc, #f07575);">
+                    <div class="card-body text-center">
+                        <h3 class="card-title fw-bold">Plan Profesional</h3>
+                        <p class="card-text">Mejora tu experiencia con soporte prioritario y más productos.</p>
+                        <h3 class="fw-bold text-danger">$9.99 / mes</h3>
+                        <ul class="list-unstyled">
+                            <li>✅ Hasta 5 empleados</li>
+                            <li>✅ Hasta 40 productos</li>
+                            <li>✅ Acceso a todas las funciones</li>
+                            <li>🚀 Soporte prioritario</li>
+                            <li>💰 Descuento del 15%</li>
+                        </ul>
+                        <a href="{{ url_for('register_admin') }}" class="btn btn-danger w-100">Suscribirse</a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Acordeón de Preguntas Frecuentes -->
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Preguntas Frecuentes  
-        <div id="tuto">
-            <button class="tutorial-button" style="border-radius: 100px;" data-toggle="tooltip" title="Iniciar Tutorial" onclick="showTutorial()">
-                <i class="bi bi-question-circle-fill"></i>
-            </button>
-        </div>
-    </h2>
-   
-    <div class="accordion" id="accordionExample">
-        {% set preguntas_respuestas = [
-        ('¿Cómo me registro y qué pasa después de los 7 días?', '✅ Después de registrarte, tendrás 7 días de prueba. Luego, si decides continuar, puedes realizar un pago y activar tu membresía. Si no pagas después de los 7 días, tu cuenta será desactivada.'),
-        ('¿Como puedo adquirir una membresia?', '✅ Después de registrarte, tendrás que contactar a soporte para realizar un pago por transferencia en CUP por el valor de tu membresía al cambio actual en el TOQUE.'),
-        ('¿Cómo puedo renovar mi membresía?', '✅ Puedes renovar tu membresía contactando a Soporte. Una vez que realices el pago, tu cuenta se reactivará y se asignará el nuevo período de membresía.'),
-        ('¿Qué sucede si mi cuenta se desactiva por falta de pago?', '✅ Si tu cuenta se desactiva, tendrás que ponerte en contacto con soporte para reactivarla. El costo de la reactivación será determinado por el tipo de membresía que elijas.'),
-        ('¿Puedo cambiar mi plan de membresía?', '✅ Sí, puedes cambiar tu plan de membresía en cualquier momento. Si deseas cambiar tu plan, por favor contacta a nuestro soporte.'),
-        ('¿Puedo personalizar mi plan con beneficios extras?', '✅ Si deseas un plan con beneficios que no cubren los planes existentes, puedes ponerte en contacto con soporte para diseñar un plan a medida.')
-        ] %}
-
-        {% for pregunta, respuesta in preguntas_respuestas %}
-        {% set index = loop.index0 %}
-        <div class="card mb-3">
-            <div class="card-header" id="heading{{ index }}" data-toggle="tooltip" title="{{ pregunta }}">
-                <h5 class="mb-0">
-                    <button class="btn btn-link {% if index != 0 %}collapsed{% endif %}" type="button"
-                        data-toggle="collapse" data-target="#collapse{{ index }}"
-                        aria-expanded="{% if index == 0 %}true{% else %}false{% endif %}"
-                        aria-controls="collapse{{ index }}">
-                        {{ pregunta }}
-                    </button>
-                </h5>
+    <!-- Acordeón de Preguntas Frecuentes -->
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Preguntas Frecuentes
+            <div id="tuto">
+                <button class="tutorial-button" style="border-radius: 100px;" data-toggle="tooltip"
+                    title="Iniciar Tutorial" onclick="showTutorial()">
+                    <i class="bi bi-question-circle-fill"></i>
+                </button>
             </div>
+        </h2>
 
-            <div id="collapse{{ index }}" class="collapse {% if index == 0 %}show{% endif %}"
-                aria-labelledby="heading{{ index }}" data-parent="#accordionExample">
-                <div class="card-body">
-                    {{ respuesta }}
+        <div class="accordion" id="accordionExample">
+            {% set preguntas_respuestas = [
+            ('¿Cómo me registro y qué pasa después de los 7 días?', '✅ Después de registrarte, tendrás 7 días de prueba.
+            Luego, si decides continuar, puedes realizar un pago y activar tu membresía. Si no pagas después de los 7
+            días, tu cuenta será desactivada.'),
+            ('¿Como puedo adquirir una membresia?', '✅ Después de registrarte, tendrás que contactar a soporte para
+            realizar un pago por transferencia en CUP por el valor de tu membresía al cambio actual en el TOQUE.'),
+            ('¿Cómo puedo renovar mi membresía?', '✅ Puedes renovar tu membresía contactando a Soporte. Una vez que
+            realices el pago, tu cuenta se reactivará y se asignará el nuevo período de membresía.'),
+            ('¿Qué sucede si mi cuenta se desactiva por falta de pago?', '✅ Si tu cuenta se desactiva, tendrás que
+            ponerte en contacto con soporte para reactivarla. El costo de la reactivación será determinado por el tipo
+            de membresía que elijas.'),
+            ('¿Puedo cambiar mi plan de membresía?', '✅ Sí, puedes cambiar tu plan de membresía en cualquier momento. Si
+            deseas cambiar tu plan, por favor contacta a nuestro soporte.'),
+            ('¿Puedo personalizar mi plan con beneficios extras?', '✅ Si deseas un plan con beneficios que no cubren los
+            planes existentes, puedes ponerte en contacto con soporte para diseñar un plan a medida.')
+            ] %}
+
+            {% for pregunta, respuesta in preguntas_respuestas %}
+            {% set index = loop.index0 %}
+            <div class="card mb-3">
+                <div class="card-header" id="heading{{ index }}" data-toggle="tooltip" title="{{ pregunta }}">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link {% if index != 0 %}collapsed{% endif %}" type="button"
+                            data-toggle="collapse" data-target="#collapse{{ index }}"
+                            aria-expanded="{% if index == 0 %}true{% else %}false{% endif %}"
+                            aria-controls="collapse{{ index }}">
+                            {{ pregunta }}
+                        </button>
+                    </h5>
+                </div>
+
+                <div id="collapse{{ index }}" class="collapse {% if index == 0 %}show{% endif %}"
+                    aria-labelledby="heading{{ index }}" data-parent="#accordionExample">
+                    <div class="card-body">
+                        {{ respuesta }}
+                    </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-</div>
-{% endblock %}
+    {% endblock %}

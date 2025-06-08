@@ -148,7 +148,7 @@ def create_app():
             func=update_orders_logic,
             args=[app],  # Pasa la instancia app como argumento
             trigger='interval',
-            seconds=3  # Considera aumentar a hours=1 para menos carga
+            hours=1  # Considera aumentar a hours=1 para menos carga
         )
         scheduler.add_job(
             id='deactivate_expired_users',

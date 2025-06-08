@@ -1,268 +1,259 @@
 {% import "bootstrap/wtf.html" as wtf %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="icon" href="{{ url_for('static', filename='img/logoo.png') }}">
   <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-  <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css"
-    rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  <!-- Animate -->
+  <!-- Animate.css -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <!-- Incluye DataTables CSS y JS -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- jQuery primero -->
+  <!-- DataTables CSS -->
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-  <script type="text/javascript" charset="utf8"
-    src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
-  <!-- Incluye Botones Bootstrap CSS-->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-switch-button/css/bootstrap-switch-button.min.css"
-    rel="stylesheet">
-
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-  <title>{% block title %} {% endblock %}</title>
-
-  <style>
-    /* [Ajustes Generales de Responsividad] */
-    body {
-        padding-bottom: 70px; /* Espacio para el botón flotante */
-    }
-
-    /* [Botón de Telegram] */
-    .telegram-float {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: var(--telegram-blue, #0088cc);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 25px;
-        text-decoration: none;
-        box-shadow: 0 4px 8px var(--shadow-light, rgba(0, 0, 0, 0.2));
-        transition: background-color 0.3s, transform 0.3s ease;
-        z-index: 9999;
-    }
-
-    .telegram-float i {
-        font-size: 24px;
-        margin-right: 5px;
-    }
-
-    .telegram-float:hover {
-        background-color: var(--telegram-hover, #3688b183);
-        transform: translateY(-5px);
-    }
-
-    /* [Mensajes Flash] */
-    .flash-error,
-    .success {
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 5px;
-        text-align: center;
-        max-width: 400px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .flash-error {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-
-    .success {
-        background-color: #d4edda;
-        color: #155724;
-    }
-
-    /* [Media Queries - Responsividad] */
-    @media (max-width: 576px) {
-        /* Móviles pequeños */
-        body {
-            padding-bottom: 60px; /* Menos espacio en móviles pequeños */
-        }
-
-        .telegram-float {
-            bottom: 10px;
-            right: 10px;
-            padding: 6px 10px;
-        }
-
-        .telegram-float i {
-            font-size: 18px;
-        }
-
-        .flash-error,
-        .success {
-            padding: 8px;
-            font-size: 0.9rem;
-        }
-    }
-
-    @media (min-width: 576px) and (max-width: 767px) {
-        /* Móviles grandes */
-        .telegram-float {
-            bottom: 15px;
-            right: 15px;
-            padding: 8px 12px;
-        }
-
-        .telegram-float i {
-            font-size: 20px;
-        }
-
-        .flash-error,
-        .success {
-            padding: 9px;
-            font-size: 1rem;
-        }
-    }
-
-    @media (min-width: 768px) and (max-width: 991px) {
-        /* Tablets */
-        .telegram-float {
-            bottom: 20px;
-            right: 20px;
-            padding: 9px 13px;
-        }
-
-        .telegram-float i {
-            font-size: 22px;
-        }
-
-        .flash-error,
-        .success {
-            padding: 10px;
-            font-size: 1.1rem;
-        }
-    }
-
-    @media (min-width: 992px) {
-        /* Laptops y PCs */
-        .telegram-float {
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 15px;
-        }
-
-        .telegram-float i {
-            font-size: 24px;
-        }
-
-        .flash-error,
-        .success {
-            padding: 10px;
-            font-size: 1.2rem;
-        }
-    }
-</style>
+  <title>{% block title %}{% endblock %} - CuBaro</title>
 
 </head>
-
 <body>
-
-  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-    <a class="navbar-brand" href="{{ url_for('home') }}" data-toggle="tooltip" title="Inicio">
-      <img src="{{ url_for('static', filename='img/logoo.png') }}" height="30" width="60"> CuBaro
-    </a>
-
-
-
-    <ul class="navbar-nav d-flex flex-row">
-      <!-- Formulario de búsqueda siempre visible -->
-      {% if request.endpoint == 'home' %}
-      <form class="form-inline d-flex ml-auto mr-3">
-        <input class="form-control" type="search" name="query" id="search-input" placeholder="Buscar" size="30"
-          autocomplete="off">
-      </form>
-      {% endif %}
-
-      <!-- Botones visibles siempre -->
-      <div class="d-flex ml-auto justify-content-center">
-        {% if not current_user.is_authenticated %}
-        <a class="btn btn-outline-primary mr-2 {% if request.endpoint == 'login' %}active{% endif %}"
-          href="{{ url_for('login') }}">Iniciar Sesión</a>
-        <a class="btn btn-outline-primary {% if request.endpoint == 'register_admin' %}active{% endif %}"
-          href="{{ url_for('register_admin') }}">Registrarse</a>
-        {% else %}
-        <li class="nav-item mr-2 {% if request.endpoint == 'orders' %}active{% endif %}">
-          <a class="nav-link" href="{{ url_for('orders') }}" data-toggle="tooltip" title="Órdenes">
-            <div class="icon-circle">
-              <i class="bi bi-bell"></i>
-            </div>
-          </a>
-        </li>
-        <li class="nav-item mr-2 {% if request.endpoint == 'cart' %}active{% endif %}">
-          <a class="nav-link" href="{{ url_for('cart') }}" data-toggle="tooltip" title="Carrito">
-            <div class="icon-circle">
-              <i class="fa fa-shopping-cart"></i>
-            </div>
-          </a>
-        </li>
-        <li class="nav-item mr-2">
-          <a class="nav-link" href="{{ url_for('membership_plans') }}" data-toggle="tooltip" title="FAQ">
-            <div class="icon-circle">
-              <i class="bi bi-question-circle-fill"></i>
-            </div>
-          </a>
-        </li>
-        <div class="dropdown ml-auto">
-          <a class="btn btn-outline-primary dropdown-toggle" href="#" id="navbarDropdown" role="button"
-            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fa fa-user-circle"></i> {{ current_user.name }}
-          </a>
-          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-            {% if current_user.admin == 1 %}
-            <a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">Admin</a>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg {% if request.path.startswith('/admin') %}navbar-dark bg-dark{% else %}navbar-light bg-light{% endif %} fixed-top">
+    <div class="container-fluid">
+      <!-- Logo -->
+      <a class="navbar-brand" href="{{ url_for('home') }}" data-toggle="tooltip" title="Inicio">
+        <img src="{{ url_for('static', filename='img/logoo.png') }}" height="30" width="60" alt="CuBaro Logo"> CuBaro
+      </a>
+      <!-- Botón hamburguesa -->
+      <button class="navbar-toggler navbar-mobile-toggle" type="button" id="sidebarToggle">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <!-- Contenido del navbar -->
+      <ul class="navbar-nav d-flex flex-row ml-auto">
+        
+        <div class="d-flex justify-content-center">
+          {% if not current_user.is_authenticated %}
+            {% if request.path.startswith('/admin') %}
+              <li class="nav-item {% if request.endpoint == 'login' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('login') }}" data-toggle="tooltip" title="Iniciar Sesión">
+                  <div class="icon-circle">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                  </div>
+                </a>
+              </li>
+            {% else %}
+              <a class="btn btn-outline-primary mr-2 {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">Iniciar Sesión</a>
+              <a class="btn btn-outline-primary {% if request.endpoint == 'register_admin' %}active{% endif %}" href="{{ url_for('register_admin') }}">Registrarse</a>
             {% endif %}
-            <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Salir</a>
-          </div>
+          {% else %}
+            <li class="nav-item mr-2 {% if request.endpoint == 'orders' %}active{% endif %}">
+              <a class="nav-link" href="{{ url_for('orders') }}" data-toggle="tooltip" title="Órdenes">
+                <div class="icon-circle">
+                  <i class="bi bi-bell"></i>
+                </div>
+              </a>
+            </li>
+            {% if request.path.startswith('/admin') %}
+              <li class="nav-item mr-2 {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin.dashboard') }}" data-toggle="tooltip" title="Panel">
+                  <div class="icon-circle">
+                    <i class="bi bi-speedometer2"></i>
+                  </div>
+                </a>
+              </li>
+              <li class="nav-item mr-2 {% if request.endpoint == 'admin.items' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin.items') }}" data-toggle="tooltip" title="Productos">
+                  <div class="icon-circle">
+                    <i class="bi bi-bag-fill"></i>
+                  </div>
+                </a>
+              </li>
+              <li class="nav-item mr-2 {% if request.endpoint == 'admin.statictics' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin.statictics') }}" data-toggle="tooltip" title="Estadísticas">
+                  <div class="icon-circle">
+                    <i class="bi bi-graph-up-arrow"></i>
+                  </div>
+                </a>
+              </li>
+              <li class="nav-item mr-2 {% if request.endpoint == 'admin.configuracion' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin.configuracion') }}" data-toggle="tooltip" title="Configuración">
+                  <div class="icon-circle">
+                    <i class="bi bi-sliders"></i>
+                  </div>
+                </a>
+              </li>
+              <li class="nav-item mr-2">
+                <a class="nav-link" data-toggle="modal" data-target="#fullScreenModal" title="Herramientas">
+                  <div class="icon-circle">
+                    <i class="bi bi-tools"></i>
+                  </div>
+                </a>
+              </li>
+            {% else %}
+              <li class="nav-item mr-2 {% if request.endpoint == 'cart' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('cart') }}" data-toggle="tooltip" title="Carrito">
+                  <div class="icon-circle">
+                    <i class="fa fa-shopping-cart"></i>
+                  </div>
+                </a>
+              </li>
+              <li class="nav-item mr-2">
+                <a class="nav-link" href="{{ url_for('membership_plans') }}" data-toggle="tooltip" title="FAQ">
+                  <div class="icon-circle">
+                    <i class="bi bi-question-circle-fill"></i>
+                  </div>
+                </a>
+              </li>
+            {% endif %}
+            <div class="dropdown ml-auto">
+              <a class="btn btn-outline-primary dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fa fa-user-circle"></i> {{ current_user.name }}
+              </a>
+              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                {% if current_user.admin == 1 and not request.path.startswith('/admin') %}
+                <a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">Admin</a>
+                {% endif %}
+                <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Salir</a>
+              </div>
+            </div>
+          {% endif %}
         </div>
-        {% endif %}
-      </div>
-    </ul>
+      </ul>
+    </div>
   </nav>
+
+  <!-- Sidebar para móviles -->
+  <div class="sidebar {% if request.path.startswith('/admin') %}admin{% endif %}" id="sidebar">
+    <div class="sidebar-header">
+      <a href="{{ url_for('home') }}" class="d-flex align-items-center">
+        <img src="{{ url_for('static', filename='img/logoo.png') }}" alt="CuBaro Logo"> CuBaro
+      </a>
+      <button class="sidebar-close" id="sidebarClose">&times;</button>
+    </div>
+    <div class="sidebar-nav">
+      <ul class="nav flex-column">
+        {% if request.endpoint == 'home' and not request.path.startswith('/admin') %}
+        <li class="nav-item mb-2">
+          <form class="d-flex px-2">
+            <input class="form-control" type="search" name="query" id="mobile-search-input" placeholder="Buscar" autocomplete="off">
+          </form>
+        </li>
+        {% endif %}
+        {% if not current_user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">
+              <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+            </a>
+          </li>
+          {% if not request.path.startswith('/admin') %}
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'register_admin' %}active{% endif %}" href="{{ url_for('register_admin') }}">
+              <i class="bi bi-person-plus"></i> Registrarse
+            </a>
+          </li>
+          {% endif %}
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'orders' %}active{% endif %}" href="{{ url_for('orders') }}">
+              <i class="bi bi-bell"></i> Órdenes
+            </a>
+          </li>
+          {% if request.path.startswith('/admin') %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
+                <i class="bi bi-speedometer2"></i> Panel
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'admin.items' %}active{% endif %}" href="{{ url_for('admin.items') }}">
+                <i class="bi bi-bag-fill"></i> Productos
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'admin.statictics' %}active{% endif %}" href="{{ url_for('admin.statictics') }}">
+                <i class="bi bi-graph-up-arrow"></i> Estadísticas
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'admin.configuracion' %}active{% endif %}" href="{{ url_for('admin.configuracion') }}">
+                <i class="bi bi-sliders"></i> Configuración
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="modal" data-target="#fullScreenModal">
+                <i class="bi bi-tools"></i> Herramientas
+              </a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'cart' %}active{% endif %}" href="{{ url_for('cart') }}">
+                <i class="fa fa-shopping-cart"></i> Carrito
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'membership_plans' %}active{% endif %}" href="{{ url_for('membership_plans') }}">
+                <i class="bi bi-question-circle-fill"></i> FAQ
+              </a>
+            </li>
+          {% endif %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {% if request.endpoint in ['admin.dashboard', 'logout'] %}active{% endif %}" href="#" id="mobileDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="fa fa-user-circle"></i> {{ current_user.name }}
+            </a>
+            <div class="dropdown-menu">
+              {% if current_user.admin == 1 and not request.path.startswith('/admin') %}
+              <a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">Admin</a>
+              {% endif %}
+              <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Salir</a>
+            </div>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+  <!-- Overlay para cerrar el sidebar -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <div class="container">
     <div class="main">
-      {% block content %}
-      {% endblock %}
-
+      {% if request.endpoint == 'home' and not request.path.startswith('/admin') %}
+        <form class="form-inline d-flex ml-auto mr-3">
+          <input class="form-control" type="search" name="query" id="search-input" placeholder="Buscar" size="30" autocomplete="off">
+        </form>
+        {% endif %}
+      {% block content %}{% endblock %}
       <!-- Botón flotante de Telegram -->
       <a href="https://t.me/CuBaro_soporte" target="_blank" class="telegram-float">
         <i class="fa fa-telegram fa-2x"></i> Soporte
       </a>
     </div>
   </div>
+
   <footer class="bg-light text-center text-lg-start">
     <div class="text-center p-3">
-      © {{ now.year }} Copyright:
-      CuBaro
+      © {{ now.year }} Copyright: CuBaro
     </div>
-
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-    crossorigin="anonymous"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-    crossorigin="anonymous"></script>
-
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
 
   <script>
     $(document).ready(function () {
+      // Inicializar DataTables
       $('.table').DataTable({
         "lengthMenu": [5, 10, 25, 50],
         "ordering": true,
@@ -271,48 +262,77 @@
         "info": true,
         "columnDefs": [
           {
-            "targets": 0, // Índice de la columna "Order ID"
-            "visible": false, // Oculta la columna
-            "searchable": false // También evita que sea buscable
+            "targets": 0,
+            "visible": false,
+            "searchable": false
           }
         ]
       });
-    });
 
-
-    document.addEventListener('DOMContentLoaded', function () {
       // Activar tooltips
-      $(function () {
-        $('[data-toggle="tooltip"]').tooltip();
-      });
+      $('[data-toggle="tooltip"]').tooltip();
+
+      // Manejar menú hamburguesa
+      const sidebar = document.getElementById('sidebar');
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const sidebarClose = document.getElementById('sidebarClose');
+      const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+      function openSidebar() {
+        sidebar.classList.add('open', 'animate__animated', 'animate__slideInLeft');
+        sidebarOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Evita scroll en el fondo
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('open', 'animate__slideInLeft');
+        sidebar.classList.add('animate__slideOutLeft');
+        sidebarOverlay.classList.remove('active');
+        setTimeout(() => {
+          sidebar.classList.remove('animate__animated', 'animate__slideOutLeft');
+          document.body.style.overflow = ''; // Restaura scroll
+        }, 300); // Espera a que termine la animación
+      }
+
+      sidebarToggle.addEventListener('click', openSidebar);
+      sidebarClose.addEventListener('click', closeSidebar);
+      sidebarOverlay.addEventListener('click', closeSidebar);
+
+      // Manejar búsqueda
       const searchInput = document.getElementById('search-input');
+      const mobileSearchInput = document.getElementById('mobile-search-input');
       const searchResults = document.getElementById('search-results');
 
-      searchInput.addEventListener('input', function () {
-        const query = searchInput.value.trim();
-
-        // Solo buscar si hay al menos un carácter
-        if (query.length > 0) {
-          fetch(`/search?query=${encodeURIComponent(query)}`)
-            .then(response => response.text())
-            .then(data => {
-              // Muestra los resultados de la búsqueda en el contenedor
-              searchResults.innerHTML = data;
-            })
-            .catch(error => console.error('Error en la búsqueda:', error));
-        } else {
-          // Si no hay búsqueda, limpia los resultados
-          searchResults.innerHTML = '';
+      function handleSearch(input) {
+        if (input) {
+          input.addEventListener('input', function () {
+            const query = this.value.trim();
+            if (query.length > 0) {
+              fetch(`/search?query=${encodeURIComponent(query)}`)
+                .then(response => response.text())
+                .then(data => {
+                  searchResults.innerHTML = data;
+                })
+                .catch(error => console.error('Error en la búsqueda:', error));
+            } else {
+              searchResults.innerHTML = '';
+            }
+          });
         }
+      }
+
+      handleSearch(searchInput);
+      handleSearch(mobileSearchInput);
+    });
+
+    // Validar números en input de teléfono
+    document.querySelectorAll('input[name="phone"]').forEach(input => {
+      input.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
       });
-
     });
 
-    // JavaScript para asegurar que solo se ingresen números
-    document.querySelector('input[name="phone"]').addEventListener('input', function (e) {
-      this.value = this.value.replace(/[^0-9]/g, ''); // Elimina todo lo que no sea un número
-    });
-
+    // Tutorial (mantenido sin cambios)
     function showTutorial() {
       console.log("Tutorial modal opened"); // Debug
       Swal.fire({
@@ -480,15 +500,11 @@
     }
   </script>
 
-  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-
-  <!-- Enlazar el archivo JS que maneja el comportamiento del botón -->
-  <script src="{{ url_for('static', filename='styles.js') }}"></script>
-
-  <script src="{{ url_for('static', filename='showPw.js') }}"></script>
-
-  <script src="{{ url_for('static', filename='animate.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+<!-- Enlazar el archivo JS que maneja el comportamiento del botón -->
+<script src="{{ url_for('static', filename='styles.js') }}"></script>
+<script src="{{ url_for('static', filename='showPw.js') }}"></script>
+<script src="{{ url_for('static', filename='animate.js') }}"></script>
 
 </body>
-
 </html>

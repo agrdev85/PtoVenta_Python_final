@@ -18,7 +18,8 @@
 
 /* [Estilos Generales] */
 body {
-    padding-top: 80px; /* Compensar navbar fijo */
+    padding-top: 80px;
+    /* Compensar navbar fijo */
 }
 
 .main {
@@ -36,7 +37,8 @@ a:hover {
     position: fixed;
     top: 0;
     z-index: 1050;
-    background-color: var(--dark-bg); /* Fondo oscuro para contraste */
+    background-color: var(--dark-bg);
+    /* Fondo oscuro para contraste */
     width: 100%;
 }
 
@@ -445,7 +447,7 @@ button {
     gap: 20px;
 }
 
-.row > div {
+.row>div {
     flex: 1;
     min-width: 300px;
 }
@@ -520,6 +522,7 @@ button {
         opacity: 0;
         transform: rotate(-30deg) scale(0.5);
     }
+
     100% {
         opacity: 1;
         transform: rotate(0deg) scale(1);
@@ -780,7 +783,7 @@ button {
         flex-direction: column;
     }
 
-    .row > div {
+    .row>div {
         width: 100%;
         min-width: 100%;
     }
@@ -794,6 +797,7 @@ button {
 }
 
 @media (min-width: 601px) and (max-width: 992px) {
+
     /* Tablets */
     .filters-container {
         padding: 12px;
@@ -820,7 +824,7 @@ button {
         max-width: 180px;
     }
 
-    .row > div {
+    .row>div {
         min-width: 40%;
     }
 
@@ -865,7 +869,8 @@ button {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1060; /* Above navbar (1050) */
+    z-index: 1060;
+    /* Above navbar (1050) */
 }
 
 .swal2-popup.tutorial-modal .swal2-html-container {
@@ -1001,7 +1006,8 @@ button {
     background: rgba(0, 0, 0, 0.8);
     justify-content: center;
     align-items: center;
-    z-index: 1070; /* Above modal */
+    z-index: 1070;
+    /* Above modal */
 }
 
 .tutorial-zoom-overlay.active {
@@ -1023,7 +1029,8 @@ button {
     padding: 0 20px;
     max-height: 100%;
     overflow: auto;
-    background: rgba(0, 0, 0, 0.5); /* Fondo semitransparente oscuro para contraste */
+    background: rgba(0, 0, 0, 0.5);
+    /* Fondo semitransparente oscuro para contraste */
     border-radius: 0 0 10px 10px;
 }
 
@@ -1032,14 +1039,16 @@ button {
     font-weight: 700;
     margin: 0 0 10px;
     text-align: center;
-    color: var(--white); /* Blanco para alto contraste */
+    color: var(--white);
+    /* Blanco para alto contraste */
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
 }
 
 .tutorial-text-container p {
     font-size: 20px;
     line-height: 1.6;
-    color: var(--white); /* Blanco para alto contraste */
+    color: var(--white);
+    /* Blanco para alto contraste */
     margin: 0;
     text-align: center;
     overflow-y: auto;
@@ -1132,9 +1141,12 @@ button {
 }
 
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(-50%) scale(1);
     }
+
     50% {
         transform: translateY(-50%) scale(1.1);
     }
@@ -1144,25 +1156,1342 @@ button {
     0% {
         background: linear-gradient(45deg, #ff2e63, #00f4ff);
     }
+
     100% {
         background: linear-gradient(405deg, #ff2e63, #00f4ff);
     }
 }
 
 @keyframes glow {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 4px 15px var(--shadow-light);
     }
+
     50% {
         box-shadow: 0 4px 15px var(--shadow-light), 0 0 10px var(--chart-yellow);
     }
 }
 
 @keyframes bounce {
-    0%, 100% {
+
+    0%,
+    100% {
         right: 0;
     }
+
     50% {
         right: 5px;
+    }
+}
+
+/* Estilos CSS para elementos desactivados */
+.btn-primary.disabled,
+select.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* [Ajustes Generales de Responsividad] */
+body {
+    padding-bottom: 70px;
+    /* Espacio para el botón flotante */
+    padding-top: 56px;
+    /* Espacio para el navbar fijo */
+    overflow-x: hidden;
+    /* Evita desplazamiento horizontal */
+}
+
+/* [Mensajes Flash] */
+.flash-error,
+.success {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-align: center;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.flash-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+/* [Menú Hamburguesa y Sidebar] */
+.navbar-mobile-toggle {
+    display: none;
+    /* Oculto en escritorio */
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    /* Oculto inicialmente */
+    width: 250px;
+    height: 100%;
+    background: linear-gradient(180deg, #ffffff, #f8f9fa);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+}
+
+.sidebar.open {
+    left: 0;
+    /* Visible al abrir */
+}
+
+.sidebar-header {
+    padding: 15px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+}
+
+.sidebar-header img {
+    height: 30px;
+    width: 60px;
+}
+
+.sidebar-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #343a40;
+    cursor: pointer;
+}
+
+.sidebar-nav {
+    padding: 15px;
+}
+
+.sidebar-nav .nav-link {
+    color: #343a40;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+.sidebar-nav .nav-link:hover {
+    background-color: #e9ecef;
+    color: #007bff;
+}
+
+.sidebar-nav .nav-link.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.sidebar-nav .nav-link i {
+    margin-right: 10px;
+    font-size: 1.3rem;
+}
+
+.sidebar-nav .dropdown-menu {
+    position: static;
+    width: 100%;
+    border: none;
+    background: #f8f9fa;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav .dropdown-item {
+    padding: 10px 20px;
+    color: #343a40;
+}
+
+.sidebar-nav .dropdown-item:hover {
+    background-color: #e9ecef;
+    color: #007bff;
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Admin sidebar styles */
+.sidebar.admin {
+    background: linear-gradient(180deg, #343a40, #212529);
+}
+
+.sidebar.admin .sidebar-header {
+    background: #343a40;
+    border-bottom: 1px solid #495057;
+}
+
+.sidebar.admin .sidebar-close {
+    color: #ffffff;
+}
+
+.sidebar.admin .nav-link {
+    color: #ffffff;
+}
+
+.sidebar.admin .nav-link:hover {
+    background-color: #495057;
+    color: #17a2b8;
+}
+
+.sidebar.admin .nav-link.active {
+    background-color: #17a2b8;
+    color: #ffffff;
+}
+
+.sidebar.admin .dropdown-menu {
+    background: #343a40;
+}
+
+.sidebar.admin .dropdown-item {
+    color: #ffffff;
+}
+
+.sidebar.admin .dropdown-item:hover {
+    background-color: #495057;
+    color: #17a2b8;
+}
+
+/* [Logo y Otros Elementos] */
+#logoAnimated {
+    max-width: 100%;
+    height: auto;
+}
+
+.membership-card {
+    transition: transform 0.3s ease;
+}
+
+.membership-card:hover {
+    transform: scale(1.05);
+}
+
+.membership-card .card-body {
+    padding: 1.5rem;
+}
+
+.membership-card ul {
+    margin-bottom: 1.5rem;
+}
+
+.membership-card .btn {
+    font-size: 1rem;
+}
+
+#tuto {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.tutorial-button {
+    font-size: 1.5rem;
+    padding: 5px 10px;
+}
+
+.accordion .card-header button {
+    white-space: normal;
+    text-align: left;
+    padding: 0.75rem;
+}
+
+.accordion .card-body {
+    padding: 1rem;
+}
+
+/* [Responsividad] */
+@media (max-width: 576px) {
+
+    /* Móviles pequeños */
+    .input-group {
+        max-width: 160px;
+        /* Aumentado ligeramente para dar espacio al input más grande */
+        width: 100%;
+    }
+
+    .input-group .form-control {
+        padding: 15px;
+        /* Más padding para usabilidad táctil */
+        font-size: 1rem;
+        /* Más grande para legibilidad */
+        width: 45px;
+        height: 42px;
+        /* Aumenta altura para mejor interacción */
+    }
+
+    .input-group .btn {
+        padding: 10px 12px;
+        /* Ajustado para mantener proporción */
+        font-size: 0.9rem;
+        min-width: 35px;
+    }
+
+    .btn-primary,
+    .btn-outline-info {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+        max-width: 180px;
+        /* Reducido para ajustar al card */
+        width: 100%;
+    }
+
+    .right-item {
+        font-size: 1.1rem;
+        float: none;
+        text-align: center;
+    }
+
+    .pic.img-fluid {
+        max-height: 200px;
+        width: auto;
+        height: auto;
+    }
+
+    .item-display h4 {
+        font-size: 1.25rem;
+    }
+
+    .details {
+        font-size: 0.9rem;
+    }
+
+    .text-muted {
+        font-size: 0.8rem;
+    }
+
+    #subtotal {
+        font-size: 1rem;
+    }
+
+    .swal2-popup {
+        width: 90% !important;
+        font-size: 0.9rem !important;
+    }
+
+    .swal2-title {
+        font-size: 1.25rem !important;
+    }
+
+    .swal2-confirm {
+        padding: 8px 15px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .navbar-nav {
+        display: none !important;
+        /* Oculta el navbar */
+    }
+
+    .navbar-mobile-toggle {
+        display: block !important;
+        /* Muestra el botón hamburguesa */
+    }
+
+    .navbar-brand {
+        flex-grow: 1;
+        /* Centra el logo */
+    }
+
+    .telegram-float {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 10px;
+    }
+
+    .telegram-float i {
+        font-size: 18px;
+    }
+
+    .flash-error,
+    .success {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    .logo-container {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        min-height: 5vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #logoAnimated {
+        max-width: 60%;
+        width: 120px;
+        height: auto;
+    }
+
+    h1.text-center {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    h2.text-center {
+        font-size: 1.5rem;
+    }
+
+    .membership-card .card-body {
+        padding: 1rem;
+    }
+
+    .membership-card h3.card-title {
+        font-size: 1.25rem;
+    }
+
+    .membership-card p.card-text {
+        font-size: 0.9rem;
+    }
+
+    .membership-card h3.fw-bold {
+        font-size: 1.5rem;
+    }
+
+    .membership-card ul li {
+        font-size: 0.85rem;
+    }
+
+    .membership-card .btn {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+
+    .row.justify-content-center.gap-4 {
+        gap: 1.5rem !important;
+    }
+
+    .accordion .card-header button {
+        font-size: 0.95rem;
+    }
+
+    .accordion .card-body {
+        font-size: 0.9rem;
+    }
+
+    #tuto {
+        margin-left: 5px;
+    }
+
+    .tutorial-button {
+        font-size: 1.2rem;
+        padding: 3px 6px;
+    }
+
+    .input-group .btn {
+        padding: 10px 15px;
+        min-width: 40px;
+    }
+
+}
+
+@media (min-width: 576px) and (max-width: 767px) {
+
+    /* Móviles grandes */
+    .input-group {
+        max-width: 190px;
+        /* Aumentado para dar espacio al input más grande */
+        width: 100%;
+    }
+
+    .input-group .form-control {
+        padding: 10px 12px;
+        /* Más padding */
+        font-size: 1.05rem;
+        /* Ligeramente más grande */
+        height: 44px;
+        /* Aumenta altura */
+    }
+
+    .input-group .btn {
+        padding: 10px 13px;
+        font-size: 0.95rem;
+        min-width: 38px;
+    }
+
+    .btn-primary,
+    .btn-outline-info {
+        padding: 9px 18px;
+        font-size: 0.95rem;
+        max-width: 200px;
+        /* Reducido para ajustar al card */
+        width: 100%;
+    }
+
+    .right-item {
+        font-size: 1.2rem;
+        float: none;
+        text-align: center;
+    }
+
+    .pic.img-fluid {
+        max-height: 250px;
+        width: auto;
+        height: auto;
+    }
+
+    .item-display h4 {
+        font-size: 1.5rem;
+    }
+
+    .details {
+        font-size: 0.95rem;
+    }
+
+    .text-muted {
+        font-size: 0.85rem;
+    }
+
+    #subtotal {
+        font-size: 1.05rem;
+    }
+
+    .swal2-popup {
+        width: 85% !important;
+        font-size: 0.95rem !important;
+    }
+
+    .swal2-title {
+        font-size: 1.5rem !important;
+    }
+
+    .swal2-confirm {
+        padding: 9px 18px !important;
+        font-size: 0.95rem !important;
+    }
+
+    .navbar-nav {
+        display: none !important;
+    }
+
+    .navbar-mobile-toggle {
+        display: block !important;
+    }
+
+    .navbar-brand {
+        flex-grow: 1;
+    }
+
+    .telegram-float {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 10px;
+    }
+
+    .telegram-float i {
+        font-size: 18px;
+    }
+
+    .flash-error,
+    .success {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    .logo-container {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        min-height: 5vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #logoAnimated {
+        max-width: 60%;
+        width: 140px;
+        height: auto;
+    }
+
+    h1.text-center {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    h2.text-center {
+        font-size: 1.75rem;
+    }
+
+    .membership-card .card-body {
+        padding: 1.25rem;
+    }
+
+    .membership-card h3.card-title {
+        font-size: 1.5rem;
+    }
+
+    .membership-card p.card-text {
+        font-size: 1rem;
+    }
+
+    .membership-card h3.fw-bold {
+        font-size: 1.75rem;
+    }
+
+    .membership-card ul li {
+        font-size: 0.9rem;
+    }
+
+    .membership-card .btn {
+        font-size: 0.95rem;
+        padding: 0.75rem;
+    }
+
+    .row.justify-content-center.gap-4 {
+        gap: 2rem !important;
+    }
+
+    .accordion .card-header button {
+        font-size: 1rem;
+    }
+
+    .accordion .card-body {
+        font-size: 0.95rem;
+    }
+
+    #tuto {
+        margin-left: 8px;
+    }
+
+    .tutorial-button {
+        font-size: 1.3rem;
+        padding: 4px 8px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+
+    /* Tablets */
+    .navbar-nav {
+        display: none !important;
+    }
+
+    .navbar-mobile-toggle {
+        display: block !important;
+    }
+
+    .navbar-brand {
+        flex-grow: 1;
+    }
+
+    .telegram-float {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 10px;
+    }
+
+    .telegram-float i {
+        font-size: 18px;
+    }
+
+    .flash-error,
+    .success {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    .logo-container {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        min-height: 5vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #logoAnimated {
+        max-width: 60%;
+        width: 160px;
+        height: auto;
+    }
+
+    h1.text-center {
+        font-size: 2.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    h2.text-center {
+        font-size: 2rem;
+    }
+
+    .membership-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .membership-card h3.card-title {
+        font-size: 1.75rem;
+    }
+
+    .membership-card p.card-text {
+        font-size: 1.1rem;
+    }
+
+    .membership-card h3.fw-bold {
+        font-size: 2rem;
+    }
+
+    .membership-card ul li {
+        font-size: 1rem;
+    }
+
+    .membership-card .btn {
+        font-size: 1rem;
+        padding: 0.75rem;
+    }
+
+    .row.justify-content-center.gap-4 {
+        gap: 2.5rem !important;
+    }
+
+    .accordion .card-header button {
+        font-size: 1.1rem;
+    }
+
+    .accordion .card-body {
+        font-size: 1rem;
+    }
+
+    #tuto {
+        margin-left: 10px;
+    }
+
+    .tutorial-button {
+        font-size: 1.4rem;
+        padding: 5px 10px;
+    }
+}
+
+
+@media (min-width: 992px) {
+
+    /* Laptops y PCs */
+    .sidebar,
+    .sidebar-overlay {
+        display: none !important;
+        /* Oculta el sidebar en escritorio */
+    }
+
+    .telegram-float {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 10px;
+    }
+
+    .telegram-float i {
+        font-size: 18px;
+    }
+
+    .flash-error,
+    .success {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    #logoAnimated {
+        width: 150px;
+        height: auto;
+    }
+
+    .card {
+        margin: 20px auto;
+    }
+
+    .card-header h3 {
+        font-size: 2rem;
+    }
+
+    .item-display h4 {
+        font-size: 1.5rem;
+        /* Mantenido desde el código proporcionado */
+    }
+
+    .item-display {
+        max-width: 500px;
+    }
+
+    .input-group {
+        max-width: 190px;
+        /* Desde el código proporcionado */
+        width: 100%;
+    }
+
+    .input-group .form-control {
+        padding: 10px 12px;
+        /* Desde el código proporcionado */
+        font-size: 1.05rem;
+        /* Desde el código proporcionado */
+        text-align: center;
+        height: 44px;
+        /* Desde el código proporcionado */
+    }
+
+    .input-group .btn {
+        padding: 10px 13px;
+        /* Desde el código proporcionado */
+        font-size: 0.95rem;
+        /* Desde el código proporcionado */
+        min-width: 38px;
+        /* Desde el código proporcionado */
+    }
+
+    .btn-primary,
+    .btn-outline-info {
+        padding: 9px 18px;
+        /* Desde el código proporcionado */
+        font-size: 0.95rem;
+        /* Desde el código proporcionado */
+        max-width: 200px;
+        /* Desde el código proporcionado */
+        width: 100%;
+        border-radius: 5px;
+        margin: 5px;
+    }
+
+    .right-item {
+        font-size: 1.2rem;
+        /* Desde el código proporcionado */
+        float: none;
+        /* Desde el código proporcionado */
+        text-align: center;
+        /* Desde el código proporcionado */
+    }
+
+    .pic.img-fluid {
+        max-height: 250px;
+        /* Desde el código proporcionado */
+        width: auto;
+        height: auto;
+    }
+
+    .details {
+        font-size: 0.95rem;
+        /* Desde el código proporcionado */
+    }
+
+    .text-muted {
+        font-size: 0.85rem;
+        /* Desde el código proporcionado */
+    }
+
+    #subtotal {
+        font-size: 1.05rem;
+        /* Desde el código proporcionado */
+    }
+
+    .swal2-popup {
+        width: 500px !important;
+        /* Mantenido del CSS unificado para consistencia */
+        font-size: 0.95rem !important;
+        /* Desde el código proporcionado */
+    }
+
+    .swal2-title {
+        font-size: 1.5rem !important;
+        /* Desde el código proporcionado */
+    }
+
+    .swal2-confirm {
+        padding: 9px 18px !important;
+        /* Desde el código proporcionado */
+        font-size: 0.95rem !important;
+        /* Desde el código proporcionado */
+    }
+
+    .membership-card .card-body {
+        padding: 1rem;
+    }
+
+    .membership-card h3.card-title {
+        font-size: 1.5rem;
+    }
+
+    .membership-card p.card-text {
+        font-size: 1.2rem;
+    }
+
+    .membership-card h3.fw-bold {
+        font-size: 2rem;
+    }
+
+    .membership-card ul li {
+        font-size: 1.1rem;
+    }
+
+    .membership-card .btn {
+        font-size: 1.1rem;
+        padding: 1rem;
+    }
+
+    .row.justify-content-center.gap-4 {
+        gap: 3rem !important;
+        display: flex;
+        justify-content: center;
+    }
+
+    .col-lg-4 {
+        flex: 0 0 30%;
+        max-width: 30%;
+    }
+
+    .accordion .card-header button {
+        font-size: 1.25rem;
+    }
+
+    .accordion .card-body {
+        font-size: 1.1rem;
+    }
+
+    #tuto {
+        margin-left: 15px;
+    }
+
+    .tutorial-button {
+        font-size: 1.5rem;
+        padding: 5px 10px;
+    }
+
+    h1.text-center {
+        font-size: 3rem;
+        margin-bottom: 3rem;
+    }
+
+    h2.text-center {
+        font-size: 2.25rem;
+    }
+
+    #top-products-chart,
+    #total-sales-chart,
+    #orderStatusChart {
+        width: 400px !important;
+        height: 400px !important;
+    }
+
+    .row>div {
+        min-width: 200px;
+    }
+}
+
+
+/* [Filtros] */
+.filters-container {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#start-date, #end-date {
+    margin: 5px 10px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 200px;
+}
+#filter-date-range {
+    padding: 8px 15px;
+    font-size: 1rem;
+    margin-top: 10px;
+    width: 100%;
+    max-width: 200px;
+}
+
+/* [Tablas] */
+.table-responsive {
+    overflow-x: auto;
+}
+table.dataTable {
+    margin: 0 auto;
+    width: 100%;
+}
+table.dataTable th {
+    color: white;
+    background-color: var(--dark-bg, #343a40);
+    padding: 15px;
+    font-size: 1rem;
+}
+table.dataTable tr {
+    border-bottom: 1px solid #0046C2;
+}
+table.dataTable td {
+    padding: 15px 30px;
+    font-size: 0.95rem;
+}
+#statictics-table, #products-table {
+    width: 100%;
+    min-width: 600px;
+}
+#statictics-table th, #products-table th {
+    white-space: nowrap;
+}
+#statictics-table td, #products-table td {
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* [Gráficos] */
+.chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    margin: 10px auto;
+    padding: 5px;
+    background: #ffffff; /* Fondo blanco para contraste */
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+    overflow: hidden; /* Evita desbordamiento */
+}
+
+/* Sobrescribir estilos inline de los contenedores de gráficos */
+.chart-container > div,
+.chart-container > div > div {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.chart-container canvas {
+    background: #f5f5f5; /* Fondo claro para gráficos */
+    border-radius: 6px;
+    width: 100% !important;
+    height: auto !important;
+    border: 1px solid rgba(0, 0, 0, 0.1); /* Borde para nitidez */
+    image-rendering: -webkit-optimize-contrast; /* Mejora nitidez en WebKit */
+    image-rendering: crisp-edges; /* Nitidez en otros navegadores */
+}
+
+#total-sales-chart,
+#orderStatusChart {
+    max-width: 100%;
+    height: auto !important;
+}
+
+/* Ajustar contenedores específicos */
+div[style*="width: 30%"] { /* Contenedor de #total-sales-chart */
+    width: 100% !important;
+    max-width: 400px;
+}
+
+div[style*="width: 45%"] { /* Contenedor de #orderStatusChart */
+    width: 100% !important;
+    max-width: 400px;
+}
+
+div[style*="width:250; height:250"] { /* Contenedor interno de #orderStatusChart */
+    width: 100% !important;
+    height: auto !important;
+}
+#top-products-chart, #total-sales-chart, #orderStatusChart {
+    max-width: 100%;
+    height: auto !important;
+}
+
+/* [Responsividad] */
+@media (max-width: 575.98px) {
+    /* Móviles pequeños */
+    .filters-container {
+        padding: 10px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #start-date, #end-date {
+        width: 100%;
+        margin: 5px 0;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    #filter-date-range {
+        width: 100%;
+        padding: 10px;
+        font-size: 0.9rem;
+        max-width: none;
+    }
+    .custom-switch {
+        margin: 5px 0;
+        justify-content: center;
+    }
+    .custom-switch label {
+        width: 50px;
+        height: 25px;
+    }
+    .custom-switch label::before {
+        width: 50px;
+        height: 25px;
+    }
+    .custom-switch label::after {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        line-height: 20px;
+    }
+    .custom-switch .switch-label {
+        font-size: 0.85rem;
+    }
+    table.dataTable th {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+    table.dataTable td {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        max-width: 150px;
+    }
+    #statictics-table, #products-table {
+        min-width: 100%;
+    }
+    .chart-container {
+        padding: 5px;
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: 250px !important; /* Aumentado para evitar compresión */
+    }
+    #top-products-chart, #total-sales-chart, #orderStatusChart {
+        width: 100% !important;
+        height: 250px !important;
+    }
+    .row {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .row > div {
+        width: 100%;
+        min-width: 100%;
+    }
+    h3 {
+        font-size: 1.25rem;
+        text-align: center;
+    }
+    #total-reservado, #total-por-cobrar, #ganancia-neta {
+        font-size: 1rem;
+    }
+    .flash-error, .success {
+        padding: 8px;
+        font-size: 0.85rem;
+        max-width: 100%;
+    }
+    .d-flex.justify-content-center {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .d-flex.flex-column.flex-sm-row {
+        gap: 10px;
+    }
+     .chart-container {
+        padding: 3px; /* Mínimo padding */
+        margin: 8px auto;
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: 180px !important; /* Compacto */
+    }
+    #total-sales-chart,
+    #orderStatusChart {
+        width: 100% !important;
+        height: 180px !important;
+    }
+    div[style*="width: 30%"],
+    div[style*="width: 45%"] {
+        max-width: 100%;
+    }
+    h3 {
+        font-size: 1.2rem; /* Compacto */
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    .row {
+        flex-direction: column;
+        gap: 10px; /* Menos espacio */
+    }
+    .row > div {
+        width: 100%;
+        min-width: 100%;
+    }
+    /* Ajustar contenedor de totales */
+    div[style*="display: flex; gap: 20px"] {
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+    }
+}
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+    /* Móviles grandes */
+    .filters-container {
+        padding: 12px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #start-date, #end-date {
+        width: 100%;
+        margin: 5px 0;
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+    #filter-date-range {
+        width: 100%;
+        padding: 10px;
+        font-size: 0.95rem;
+        max-width: none;
+    }
+    .custom-switch {
+        margin: 5px 0;
+        justify-content: center;
+    }
+    .custom-switch label {
+        width: 50px;
+        height: 25px;
+    }
+    .custom-switch label::before {
+        width: 50px;
+        height: 25px;
+    }
+    .custom-switch label::after {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        line-height: 20px;
+    }
+    .custom-switch .switch-label {
+        font-size: 0.9rem;
+    }
+    table.dataTable th {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    table.dataTable td {
+        padding: 10px 15px;
+        font-size: 0.85rem;
+        max-width: 180px;
+    }
+    #statictics-table, #products-table {
+        min-width: 100%;
+    }
+    .chart-container {
+        padding: 8px;
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: 300px !important; /* Aumentado para más claridad */
+    }
+    #top-products-chart, #total-sales-chart, #orderStatusChart {
+        width: 100% !important;
+        height: 300px !important;
+    }
+    .row {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .row > div {
+        width: 100%;
+        min-width: 100%;
+    }
+    h3 {
+        font-size: 1.4rem;
+        text-align: center;
+    }
+    #total-reservado, #total-por-cobrar, #ganancia-neta {
+        font-size: 1.1rem;
+    }
+    .flash-error, .success {
+        padding: 8px;
+        font-size: 0.9rem;
+        max-width: 100%;
+    }
+    .d-flex.justify-content-center {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .d-flex.flex-column.flex-sm-row {
+        gap: 15px;
+    }
+    .chart-container {
+        padding: 4px;
+        margin: 10px auto;
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: 200px !important; /* Compacto */
+    }
+    #total-sales-chart,
+    #orderStatusChart {
+        width: 100% !important;
+        height: 200px !important;
+    }
+    div[style*="width: 30%"],
+    div[style*="width: 45%"] {
+        max-width: 100%;
+    }
+    h3 {
+        font-size: 1.3rem;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    .row {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .row > div {
+        width: 100%;
+        min-width: 100%;
+    }
+    div[style*="display: flex; gap: 20px"] {
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+    }
+}
+
+@media (min-width: 768px) {
+    /* Tablets y PC */
+    .chart-container {
+        padding: 5px;
+        margin: 15px auto;
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: 300px !important; /* Más grande en pantallas grandes */
+    }
+    #total-sales-chart,
+    #orderStatusChart {
+        width: 100% !important;
+        height: 300px !important;
+    }
+    div[style*="width: 30%"] {
+        max-width: 350px;
+    }
+    div[style*="width: 45%"] {
+        max-width: 450px;
     }
 }

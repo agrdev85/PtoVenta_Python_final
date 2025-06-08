@@ -14,7 +14,8 @@ Admin Configuración - CuBaro
             </a>
         </div>
         <div class="add-new btn-warning btn">
-            <a href="{{ url_for('generate_reset_code') }}" data-toggle="tooltip" title="Generar código para recuperar cuenta de Empleado" class="text-light">
+            <a href="{{ url_for('generate_reset_code') }}" data-toggle="tooltip"
+                title="Generar código para recuperar cuenta de Empleado" class="text-light">
                 <i class="bi bi-key"></i>
             </a>
         </div>
@@ -72,18 +73,16 @@ Admin Configuración - CuBaro
                         {% endif %}
                     </td>
                     <td>
-                        <a href="#" class="edit-user" 
-                           data-id="{{ user.id }}"
-                           data-name="{{ user.name }}"
-                           data-email="{{ user.email }}"
-                           data-phone="{{ user.phone }}"
-                           data-registration-date="{{ user.registration_date | default('') }}"
-                           data-membership-expiration="{{ user.membership_expiration | default('') }}"
-                           data-membership-id="{{ user.membership_id | default('') }}"
-                           data-email-confirmed="{{ '1' if user.email_confirmed else '0' }}">
+                        <a href="#" class="edit-user" data-id="{{ user.id }}" data-name="{{ user.name }}"
+                            data-email="{{ user.email }}" data-phone="{{ user.phone }}"
+                            data-registration-date="{{ user.registration_date | default('') }}"
+                            data-membership-expiration="{{ user.membership_expiration | default('') }}"
+                            data-membership-id="{{ user.membership_id | default('') }}"
+                            data-email-confirmed="{{ '1' if user.email_confirmed else '0' }}">
                             <i class="bi bi-pencil-square text-success"></i>
                         </a>
-                        <a href="#" class="delete-user-link" data-user-id="{{ user.id }}"><i class="bi bi-trash3 text-danger"></i></a>
+                        <a href="#" class="delete-user-link" data-user-id="{{ user.id }}"><i
+                                class="bi bi-trash3 text-danger"></i></a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -117,15 +116,15 @@ Admin Configuración - CuBaro
                     <div class="form-group">
                         <label for="userPhone">Teléfono</label>
                         <input type="text" class="form-control" id="userPhone" name="userPhone" maxlength="8"
-                               pattern="\d{8}" title="El teléfono debe tener exactamente 8 dígitos." required>
+                            pattern="\d{8}" title="El teléfono debe tener exactamente 8 dígitos." required>
                     </div>
                     <div class="form-group position-relative">
                         <label for="password">Nueva Contraseña</label>
                         <input type="password" class="form-control" id="password" name="password"
-                               pattern="^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$"
-                               title="La contraseña debe tener entre 8 y 30 caracteres y puede contener letras, números y símbolos.">
-                        <span onclick="togglePassword()" class="position-absolute"
-                              style="top: 38px; right: 15px; cursor: pointer; color: rgb(14, 66, 238);">
+                            pattern="^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$"
+                            title="La contraseña debe tener entre 8 y 30 caracteres y puede contener letras, números y símbolos.">
+                        <span onclick="togglePasswords('password', 'toggleIcon')" class="position-absolute"
+                            style="top: 38px; right: 15px; cursor: pointer; color: rgb(14, 66, 238);">
                             <i class="fa fa-eye toggle-icon" id="toggleIcon" title="Mostrar contraseña"></i>
                         </span>
                     </div>
@@ -136,7 +135,8 @@ Admin Configuración - CuBaro
                     </div>
                     <div class="form-group">
                         <label for="membershipExpiration">Fecha de Vencimiento de Membresía</label>
-                        <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration" required>
+                        <input type="date" class="form-control" id="membershipExpiration" name="membership_expiration"
+                            required>
                     </div>
                     <div class="form-group">
                         <label for="membership">Tipo de Membresía</label>
@@ -163,298 +163,284 @@ Admin Configuración - CuBaro
 </div>
 
 <script>
-$(document).ready(function () {
-    // Inicializar DataTable
-    const table = $('#userTable').DataTable({
-        "lengthMenu": [5, 10, 25, 50],
-        "ordering": true,
-        "searching": true,
-        "paging": true,
-        "info": true,
-        "columnDefs": [
-            {
-                "targets": 0,
-                "visible": false,
-                "searchable": false
+    $(document).ready(function () {
+        // Inicializar DataTable
+        const table = $('#userTable').DataTable({
+            "lengthMenu": [5, 10, 25, 50],
+            "ordering": true,
+            "searching": true,
+            "paging": true,
+            "info": true,
+            "columnDefs": [
+                {
+                    "targets": 0,
+                    "visible": false,
+                    "searchable": false
+                }
+            ]
+        });
+
+        // SweetAlert2 para confirmación de eliminación con AJAX
+        $(document).on('click', '.delete-user-link', function (e) {
+            e.preventDefault();
+            const userId = $(this).data('user-id');
+            const csrfToken = $('input[name="csrf_token"]').val();
+
+            if (!csrfToken) {
+                console.error("CSRF token no encontrado");
+                Swal.fire({
+                    title: 'Error',
+                    text: 'El token CSRF no está presente.',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    customClass: { confirmButton: 'btn btn-primary' },
+                    buttonsStyling: false
+                });
+                return;
             }
-        ]
-    });
 
-    // SweetAlert2 para confirmación de eliminación con AJAX
-    $(document).on('click', '.delete-user-link', function (e) {
-        e.preventDefault();
-        const userId = $(this).data('user-id');
-        const csrfToken = $('input[name="csrf_token"]').val();
-
-        if (!csrfToken) {
-            console.error("CSRF token no encontrado");
             Swal.fire({
-                title: 'Error',
-                text: 'El token CSRF no está presente.',
-                icon: 'error',
-                confirmButtonText: 'OK',
-                customClass: { confirmButton: 'btn btn-primary' },
+                title: '¿Estás seguro?',
+                text: 'Esta acción eliminará el usuario permanentemente.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Eliminar',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                    confirmButton: 'btn btn-danger',
+                    cancelButton: 'btn btn-secondary'
+                },
                 buttonsStyling: false
-            });
-            return;
-        }
-
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: 'Esta acción eliminará el usuario permanentemente.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Eliminar',
-            cancelButtonText: 'Cancelar',
-            customClass: {
-                confirmButton: 'btn btn-danger',
-                cancelButton: 'btn btn-secondary'
-            },
-            buttonsStyling: false
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: `/admin/delete_user/${userId}`,
-                    type: 'POST',
-                    data: { csrf_token: csrfToken },
-                    headers: {
-                        'X-CSRF-Token': csrfToken
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            Swal.fire({
-                                title: 'Éxito',
-                                text: response.message,
-                                icon: 'success',
-                                confirmButtonText: 'OK',
-                                customClass: { confirmButton: 'btn btn-primary' },
-                                buttonsStyling: false
-                            }).then(() => {
-                                table.row($(e.target).closest('tr')).remove().draw();
-                            });
-                        } else {
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/admin/delete_user/${userId}`,
+                        type: 'POST',
+                        data: { csrf_token: csrfToken },
+                        headers: {
+                            'X-CSRF-Token': csrfToken
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'Éxito',
+                                    text: response.message,
+                                    icon: 'success',
+                                    confirmButtonText: 'OK',
+                                    customClass: { confirmButton: 'btn btn-primary' },
+                                    buttonsStyling: false
+                                }).then(() => {
+                                    table.row($(e.target).closest('tr')).remove().draw();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: response.message + (response.details ? `: ${response.details}` : ''),
+                                    icon: 'error',
+                                    confirmButtonText: 'OK',
+                                    customClass: { confirmButton: 'btn btn-primary' },
+                                    buttonsStyling: false
+                                });
+                            }
+                        },
+                        error: function (xhr) {
+                            console.error("Error AJAX:", xhr.responseText);
                             Swal.fire({
                                 title: 'Error',
-                                text: response.message + (response.details ? `: ${response.details}` : ''),
+                                text: xhr.responseJSON?.message || 'Error al eliminar el usuario.',
                                 icon: 'error',
                                 confirmButtonText: 'OK',
                                 customClass: { confirmButton: 'btn btn-primary' },
                                 buttonsStyling: false
                             });
                         }
-                    },
-                    error: function (xhr) {
-                        console.error("Error AJAX:", xhr.responseText);
+                    });
+                }
+            });
+        });
+
+        // Mostrar datos del usuario en el modal
+        $(document).on('click', '.edit-user', function () {
+            const userId = $(this).data('id');
+            const userName = $(this).data('name');
+            const userEmail = $(this).data('email');
+            const userPhone = $(this).data('phone');
+            const registrationDate = $(this).data('registration-date');
+            const membershipExpiration = $(this).data('membership-expiration');
+            const membershipId = $(this).data('membership-id');
+            const emailConfirmed = $(this).data('email-confirmed') === '1';
+
+            console.log("Datos del usuario:", { userId, userName, userEmail, userPhone, registrationDate, membershipExpiration, membershipId, emailConfirmed });
+
+            $('#userId').val(userId);
+            $('#userName').val(userName);
+            $('#userEmail').val(userEmail);
+            $('#userPhone').val(userPhone);
+            $('#emailConfirmed').prop('checked', emailConfirmed);
+
+            if (registrationDate) {
+                try {
+                    const formattedRegistrationDate = new Date(registrationDate).toISOString().split('T')[0];
+                    $('#registrationDate').val(formattedRegistrationDate);
+                } catch (e) {
+                    console.error("Error al formatear fecha de registro:", e);
+                    $('#registrationDate').val('');
+                }
+            } else {
+                $('#registrationDate').val('');
+            }
+
+            if (membershipExpiration) {
+                try {
+                    const formattedMembershipExpiration = new Date(membershipExpiration).toISOString().split('T')[0];
+                    $('#membershipExpiration').val(formattedMembershipExpiration);
+                } catch (e) {
+                    console.error("Error al formatear fecha de vencimiento:", e);
+                    $('#membershipExpiration').val('');
+                }
+            } else {
+                $('#membershipExpiration').val('');
+            }
+
+            const membershipSelect = $('#membership');
+            if (membershipSelect.length) {
+                membershipSelect.val(membershipId || '');
+                membershipSelect.trigger('change');
+            }
+
+            $('#userModal').modal('show');
+        });
+
+        // Manejar el envío del formulario
+        $('#userForm').on('submit', function (e) {
+            e.preventDefault();
+
+            const userIdElement = $('#userId');
+            const userNameElement = $('#userName');
+            const userEmailElement = $('#userEmail');
+            const userPhoneElement = $('#userPhone');
+            const passwordElement = $('#password');
+            const membershipElement = $('#membership');
+            const membershipExpirationElement = $('#membershipExpiration');
+            const emailConfirmedElement = $('#emailConfirmed');
+            const csrfTokenElement = $('input[name="csrf_token"]');
+
+            if (!csrfTokenElement.length || !csrfTokenElement.val()) {
+                console.error("CSRF token no encontrado o vacío");
+                Swal.fire({
+                    title: 'Error',
+                    text: 'El token CSRF no está presente.',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    customClass: { confirmButton: 'btn btn-primary' },
+                    buttonsStyling: false
+                });
+                return;
+            }
+
+            const formData = {
+                user_id: userIdElement.val(),
+                userName: userNameElement.val(),
+                userEmail: userEmailElement.val(),
+                userPhone: userPhoneElement.val(),
+                password: passwordElement.val() || null,
+                membership_id: membershipElement.length ? (membershipElement.val() || null) : null,
+                membership_expiration: membershipExpirationElement.length ? (membershipExpirationElement.val() || null) : null,
+                email_confirmed: emailConfirmedElement.length && emailConfirmedElement.is(':checked') ? '1' : '0',
+                csrf_token: csrfTokenElement.val()
+            };
+
+            const isSuperAdmin = Number('{{ current_user.id | default(0) | int }}') === 1;
+            if (isSuperAdmin) {
+                if (!formData.membership_id || formData.membership_id === '') {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Debes seleccionar un tipo de membresía.',
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        customClass: { confirmButton: 'btn btn-primary' },
+                        buttonsStyling: false
+                    });
+                    return;
+                }
+                if (!formData.membership_expiration) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Debes ingresar una fecha de vencimiento de membresía.',
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        customClass: { confirmButton: 'btn btn-primary' },
+                        buttonsStyling: false
+                    });
+                    return;
+                }
+            }
+
+            console.log("Datos enviados:", formData);
+
+            $.ajax({
+                url: `/admin/update_user/${formData.user_id}`,
+                type: 'POST',
+                data: $.param(formData),
+                headers: {
+                    'X-CSRF-Token': formData.csrf_token
+                },
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Éxito',
+                            text: response.message,
+                            icon: 'success',
+                            confirmButtonText: 'OK',
+                            customClass: { confirmButton: 'btn btn-primary' },
+                            buttonsStyling: false
+                        }).then(() => {
+                            $('#userModal').modal('hide');
+                            location.reload();
+                        });
+                    } else {
                         Swal.fire({
                             title: 'Error',
-                            text: xhr.responseJSON?.message || 'Error al eliminar el usuario.',
+                            text: response.message + (response.details ? `: ${response.details}` : ''),
                             icon: 'error',
                             confirmButtonText: 'OK',
                             customClass: { confirmButton: 'btn btn-primary' },
                             buttonsStyling: false
                         });
                     }
-                });
-            }
-        });
-    });
-
-    // Mostrar datos del usuario en el modal
-    $(document).on('click', '.edit-user', function () {
-        const userId = $(this).data('id');
-        const userName = $(this).data('name');
-        const userEmail = $(this).data('email');
-        const userPhone = $(this).data('phone');
-        const registrationDate = $(this).data('registration-date');
-        const membershipExpiration = $(this).data('membership-expiration');
-        const membershipId = $(this).data('membership-id');
-        const emailConfirmed = $(this).data('email-confirmed') === '1';
-
-        console.log("Datos del usuario:", { userId, userName, userEmail, userPhone, registrationDate, membershipExpiration, membershipId, emailConfirmed });
-
-        $('#userId').val(userId);
-        $('#userName').val(userName);
-        $('#userEmail').val(userEmail);
-        $('#userPhone').val(userPhone);
-        $('#emailConfirmed').prop('checked', emailConfirmed);
-
-        if (registrationDate) {
-            try {
-                const formattedRegistrationDate = new Date(registrationDate).toISOString().split('T')[0];
-                $('#registrationDate').val(formattedRegistrationDate);
-            } catch (e) {
-                console.error("Error al formatear fecha de registro:", e);
-                $('#registrationDate').val('');
-            }
-        } else {
-            $('#registrationDate').val('');
-        }
-
-        if (membershipExpiration) {
-            try {
-                const formattedMembershipExpiration = new Date(membershipExpiration).toISOString().split('T')[0];
-                $('#membershipExpiration').val(formattedMembershipExpiration);
-            } catch (e) {
-                console.error("Error al formatear fecha de vencimiento:", e);
-                $('#membershipExpiration').val('');
-            }
-        } else {
-            $('#membershipExpiration').val('');
-        }
-
-        const membershipSelect = $('#membership');
-        if (membershipSelect.length) {
-            membershipSelect.val(membershipId || '');
-            membershipSelect.trigger('change');
-        }
-
-        $('#userModal').modal('show');
-    });
-
-    // Manejar el envío del formulario
-    $('#userForm').on('submit', function (e) {
-        e.preventDefault();
-
-        const userIdElement = $('#userId');
-        const userNameElement = $('#userName');
-        const userEmailElement = $('#userEmail');
-        const userPhoneElement = $('#userPhone');
-        const passwordElement = $('#password');
-        const membershipElement = $('#membership');
-        const membershipExpirationElement = $('#membershipExpiration');
-        const emailConfirmedElement = $('#emailConfirmed');
-        const csrfTokenElement = $('input[name="csrf_token"]');
-
-        if (!csrfTokenElement.length || !csrfTokenElement.val()) {
-            console.error("CSRF token no encontrado o vacío");
-            Swal.fire({
-                title: 'Error',
-                text: 'El token CSRF no está presente.',
-                icon: 'error',
-                confirmButtonText: 'OK',
-                customClass: { confirmButton: 'btn btn-primary' },
-                buttonsStyling: false
-            });
-            return;
-        }
-
-        const formData = {
-            user_id: userIdElement.val(),
-            userName: userNameElement.val(),
-            userEmail: userEmailElement.val(),
-            userPhone: userPhoneElement.val(),
-            password: passwordElement.val() || null,
-            membership_id: membershipElement.length ? (membershipElement.val() || null) : null,
-            membership_expiration: membershipExpirationElement.length ? (membershipExpirationElement.val() || null) : null,
-            email_confirmed: emailConfirmedElement.length && emailConfirmedElement.is(':checked') ? '1' : '0',
-            csrf_token: csrfTokenElement.val()
-        };
-
-        const isSuperAdmin = Number('{{ current_user.id | default(0) | int }}') === 1;
-        if (isSuperAdmin) {
-            if (!formData.membership_id || formData.membership_id === '') {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Debes seleccionar un tipo de membresía.',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-                return;
-            }
-            if (!formData.membership_expiration) {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Debes ingresar una fecha de vencimiento de membresía.',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-                return;
-            }
-        }
-
-        console.log("Datos enviados:", formData);
-
-        $.ajax({
-            url: `/admin/update_user/${formData.user_id}`,
-            type: 'POST',
-            data: $.param(formData),
-            headers: {
-                'X-CSRF-Token': formData.csrf_token
-            },
-            success: function (response) {
-                if (response.success) {
-                    Swal.fire({
-                        title: 'Éxito',
-                        text: response.message,
-                        icon: 'success',
-                        confirmButtonText: 'OK',
-                        customClass: { confirmButton: 'btn btn-primary' },
-                        buttonsStyling: false
-                    }).then(() => {
-                        $('#userModal').modal('hide');
-                        location.reload();
-                    });
-                } else {
+                },
+                error: function (xhr) {
+                    console.error("Error AJAX:", xhr.responseText);
                     Swal.fire({
                         title: 'Error',
-                        text: response.message + (response.details ? `: ${response.details}` : ''),
+                        text: xhr.responseJSON?.message || 'Error al actualizar el usuario.',
                         icon: 'error',
                         confirmButtonText: 'OK',
                         customClass: { confirmButton: 'btn btn-primary' },
                         buttonsStyling: false
                     });
                 }
-            },
-            error: function (xhr) {
-                console.error("Error AJAX:", xhr.responseText);
-                Swal.fire({
-                    title: 'Error',
-                    text: xhr.responseJSON?.message || 'Error al actualizar el usuario.',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-            }
+            });
         });
     });
-
-    // Función para alternar visibilidad de contraseña
-    function togglePassword() {
-        const input = document.getElementById('password');
-        const icon = document.getElementById('toggleIcon');
-        if (input && icon) {
-            input.type = input.type === 'password' ? 'text' : 'password';
-            icon.classList.toggle('fa-eye');
-            icon.classList.toggle('fa-eye-slash');
-            icon.title = input.type === 'password' ? 'Mostrar contraseña' : 'Ocultar contraseña';
-        } else {
-            console.warn("Elemento de contraseña o ícono no encontrado.");
-        }
-    }
-});
 </script>
 
 <!-- Mensajes flash con SweetAlert2 -->
 {% with msgs = get_flashed_messages(with_categories=true) %}
 {% if msgs %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    {% for category, message in msgs %}
-    Swal.fire({
-        title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
-        text: '{{ message | safe }}',
-        icon: '{{ category }}',
-        confirmButtonText: 'OK',
-        customClass: { confirmButton: 'btn btn-primary' },
-        buttonsStyling: false
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for category, message in msgs %}
+        Swal.fire({
+            title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
+            text: '{{ message | safe }}',
+            icon: '{{ category }}',
+            confirmButtonText: 'OK',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false
+        });
+        {% endfor %}
     });
-    {% endfor %}
-});
 </script>
 {% endif %}
 {% endwith %}
