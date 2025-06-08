@@ -1,7 +1,8 @@
 .env
 __pycache__
-istance
+istance/
 .vscode
+*.sqlite3
 *.sql
 *.exe
 *.log
