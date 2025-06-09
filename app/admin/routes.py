@@ -461,7 +461,7 @@ def update_user(user_id):
         user_name = request.form.get('userName')
         user_email = request.form.get('userEmail')
         user_phone = request.form.get('userPhone')
-        password = request.form.get('password')  # Nueva contraseña (opcional)
+        user_password = request.form.get('userPassword')  # Nueva contraseña (opcional)
 
         # Buscar al usuario en la base de datos
         user = User.query.get(user_id)
@@ -478,8 +478,8 @@ def update_user(user_id):
             user.email_confirmed = request.form.get('email_confirmed', '1')
 
             # Actualizar contraseña si se proporciona
-            if password:
-                user.password = bcrypt.generate_password_hash(password).decode('utf-8')
+            if user_password:
+                user.password = bcrypt.generate_password_hash(user_password).decode('utf-8')
 
             # Actualizar la fecha de vencimiento de los empleados del administrador
             if user.admin:
@@ -494,8 +494,8 @@ def update_user(user_id):
                 user.phone = user_phone
 
                 # Actualizar contraseña si se proporciona
-                if password:
-                    user.password = bcrypt.generate_password_hash(password).decode('utf-8')
+                if user_password:
+                    user.password = bcrypt.generate_password_hash(user_password).decode('utf-8')
             else:
                 return jsonify({'success': False, 'message': 'No tienes permisos para actualizar este usuario.'}), 403
 
