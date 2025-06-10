@@ -40001,3 +40001,108 @@ INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: in
 INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:27 CDT)" (scheduled at 2025-06-10 19:40:24.657483-04:00)
 INFO:app:Ejecutando update_orders_logic
 INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:27 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:30 CDT)" (scheduled at 2025-06-10 19:40:27.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:30 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:33 CDT)" (scheduled at 2025-06-10 19:40:30.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:33 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:36 CDT)" (scheduled at 2025-06-10 19:40:33.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:36 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:39 CDT)" (scheduled at 2025-06-10 19:40:36.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:39 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:42 CDT)" (scheduled at 2025-06-10 19:40:39.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:42 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:45 CDT)" (scheduled at 2025-06-10 19:40:42.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:45 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:48 CDT)" (scheduled at 2025-06-10 19:40:45.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:48 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:51 CDT)" (scheduled at 2025-06-10 19:40:48.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:51 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:54 CDT)" (scheduled at 2025-06-10 19:40:51.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:54 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:57 CDT)" (scheduled at 2025-06-10 19:40:54.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:40:57 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:00 CDT)" (scheduled at 2025-06-10 19:40:57.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:00 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:03 CDT)" (scheduled at 2025-06-10 19:41:00.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:03 CDT)" executed successfully
+INFO:flask_wtf.csrf:The CSRF token is missing.
+INFO:werkzeug:127.0.0.1 - - [10/Jun/2025 19:41:00] "[31m[1mPOST /admin/update_order_status_to_free HTTP/1.1[0m" 400 -
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:06 CDT)" (scheduled at 2025-06-10 19:41:03.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:06 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:09 CDT)" (scheduled at 2025-06-10 19:41:06.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:09 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "check_stock (trigger: interval[0:01:00], next run at: 2025-06-10 19:42:06 CDT)" (scheduled at 2025-06-10 19:41:06.660062-04:00)
+INFO:apscheduler.executors.default:Job "check_stock (trigger: interval[0:01:00], next run at: 2025-06-10 19:42:06 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:12 CDT)" (scheduled at 2025-06-10 19:41:09.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:12 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:15 CDT)" (scheduled at 2025-06-10 19:41:12.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:15 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:18 CDT)" (scheduled at 2025-06-10 19:41:15.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:18 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:21 CDT)" (scheduled at 2025-06-10 19:41:18.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:21 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:24 CDT)" (scheduled at 2025-06-10 19:41:21.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:24 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:27 CDT)" (scheduled at 2025-06-10 19:41:24.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:27 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:30 CDT)" (scheduled at 2025-06-10 19:41:27.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:30 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:33 CDT)" (scheduled at 2025-06-10 19:41:30.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:33 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:36 CDT)" (scheduled at 2025-06-10 19:41:33.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:36 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:39 CDT)" (scheduled at 2025-06-10 19:41:36.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:39 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:42 CDT)" (scheduled at 2025-06-10 19:41:39.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:42 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:45 CDT)" (scheduled at 2025-06-10 19:41:42.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:45 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:48 CDT)" (scheduled at 2025-06-10 19:41:45.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:48 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:51 CDT)" (scheduled at 2025-06-10 19:41:48.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:51 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:54 CDT)" (scheduled at 2025-06-10 19:41:51.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:54 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:57 CDT)" (scheduled at 2025-06-10 19:41:54.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:41:57 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:42:00 CDT)" (scheduled at 2025-06-10 19:41:57.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:42:00 CDT)" executed successfully
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:42:03 CDT)" (scheduled at 2025-06-10 19:42:00.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:42:03 CDT)" executed successfully
+INFO:flask_wtf.csrf:The CSRF token is missing.
+INFO:werkzeug:127.0.0.1 - - [10/Jun/2025 19:42:00] "[31m[1mPOST /admin/update_order_status_to_free HTTP/1.1[0m" 400 -
+INFO:apscheduler.executors.default:Running job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:42:06 CDT)" (scheduled at 2025-06-10 19:42:03.657483-04:00)
+INFO:app:Ejecutando update_orders_logic
+INFO:apscheduler.executors.default:Job "update_order_status_to_free (trigger: interval[0:00:03], next run at: 2025-06-10 19:42:06 CDT)" executed successfully
