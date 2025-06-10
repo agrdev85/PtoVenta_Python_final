@@ -447,7 +447,7 @@ def create_app():
         if form.validate_on_submit():
             user = User.query.filter_by(email=form.email.data).first()
             if user:
-                flash(f'El usuario con correo {form.email.data} ya existe. <a href="{url_for("login")}">Inicie sesión.</a>', 'error')
+                flash(f'El usuario con correo {form.email.data} ya existe! ¡Inicia sesión ahora!', 'error')
                 return redirect(url_for('register'))
             temp_password = secrets.token_urlsafe(12)
             new_user = User(name=form.name.data.strip(), email=form.email.data.lower().strip(),

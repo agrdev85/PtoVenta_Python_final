@@ -153,22 +153,20 @@ Registrar
 </script>
 {% endif %}
 
-{% with mensajes = get_flashed_messages(with_categories=true) %}
-{% if mensajes %}
+<!-- Mensajes flash con SweetAlert2 -->
+{% with msgs = get_flashed_messages(with_categories=true) %}
+{% if msgs %}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        {% for categoria, mensaje in mensajes %}
-        if not (categoria == "info" and "Empleado creado" in mensaje):
-            Swal.fire({
-                title: '{{ "¡Éxito!" if categoria == "success" else "Información" if categoria == "info" else "Error" }}',
-                html: `<p>${mensaje | safe}</p>`,
-                icon: '{{ "success" if categoria == "success" else "info" if categoria == "info" else "error" }}',
-                showConfirmButton: true,
-                confirmButtonText: 'OK',
-                confirmButtonClass: 'btn btn-primary',
-                buttonsStyling: false,
-                allowOutsideClick: false
-            });
+        {% for category, message in msgs %}
+        Swal.fire({
+            title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
+            text: '{{ message | safe }}',
+            icon: '{{ category }}',
+            confirmButtonText: 'OK',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false
+        });
         {% endfor %}
     });
 </script>
