@@ -72,8 +72,8 @@ Admin Dashboard - CuBaro
                             </option>
                             <!-- <option value="Libre" {% if order.status=='Libre' %}selected{% endif %}>Libre</option>
                                 <option value="Reservado" {% if order.status=='Reservado' %}selected{% endif %}>
-                                Reservado</option>
-                                 -->
+                                Reservado</option> -->
+                                
                         </select>
                         <button class="btn-primary btn" type="submit">Actualizar</button>
                     </form>
@@ -258,7 +258,7 @@ document.addEventListener("DOMContentLoaded", function () {
     Swal.fire({
         title: '{{ "¡Éxito!" if category == "success" else "Información" if category == "info" else "Error" }}',
         text: '{{ message | safe }}',
-        icon: '{{ category }}',
+        icon: '{{ "success" if category == "success" else "Información" if category == "info" else "Error" }}',
         confirmButtonText: 'OK',
         customClass: { confirmButton: 'btn btn-primary' },
         buttonsStyling: false

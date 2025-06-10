@@ -1,4 +1,5 @@
-from flask import Flask, Blueprint, jsonify, json, render_template, session, url_for, flash, request, make_response
+import bcrypt
+from flask import Flask, Blueprint, app, current_app, jsonify, render_template, session, url_for, flash, request, make_response
 from flask_login import current_user, login_required
 from pydantic import validate_call
 from sqlalchemy import func
@@ -8,7 +9,7 @@ from ..admin.forms import AddItemForm, OrderEditForm
 from ..funcs import admin_only
 import logging
 from sqlalchemy.orm import aliased, joinedload
-from flask_bcrypt import Bcrypt  # Ensure Flask-Bcrypt is imported
+from flask_bcrypt import Bcrypt
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 import os
@@ -16,56 +17,39 @@ from datetime import datetime, timedelta, timezone
 from collections import Counter
 from weasyprint import HTML
 
-
 admin = Blueprint("admin", __name__, url_prefix="/admin", static_folder="static", template_folder="templates")
-
-app = Flask(__name__, static_folder='static')
-bcrypt = Bcrypt(app)  # Initialize Flask-Bcrypt
-csrf = CSRFProtect(app)
 
 
 def eliminar_alerta_si_corresponde(item):
-    """
-    Elimina la alerta si el stock actual supera el stock mínimo.
-    """
+    """ Elimina la alerta si el stock actual supera el stock mínimo. """
     mensaje_inicio = f"ALERTA: El producto '{item.name}'"
     alerta = Alert.query.filter(
         Alert.user_id == item.created_by,
         Alert.message.like(f"{mensaje_inicio}%")
     ).first()
-
-    if alerta:
-        # Si la alerta ya no es necesaria (el stock ha superado el mínimo), la eliminamos
-        if item.stock > item.stock_min:
-            db.session.delete(alerta)
-            db.session.commit()
+    if alerta and item.stock > item.stock_min:
+        db.session.delete(alerta)
+        db.session.commit()
 
 @admin.route('/')
 @admin_only
 def dashboard():
-    # Obtener las alertas de la sesión
     alerts = Alert.query.filter_by(user_id=current_user.id).order_by(Alert.created_at.desc()).all()
-    # Obtener las órdenes relacionadas con el administrador actual o sus empleados
-    orders = Order.query.join(User, Order.uid == User.id).filter((User.id == current_user.id) | (User.created_by == current_user.id)
+    orders = Order.query.join(User, Order.uid == User.id).filter(
+        (User.id == current_user.id) | (User.created_by == current_user.id)
     ).all()
-
     return render_template("admin/home.html", orders=orders, alerts=alerts)
-
 
 @admin.route('/update_order_status/<int:id>', methods=['POST'])
 @admin_only
 def update_order_status(id):
     try:
-        # No validamos CSRF manualmente; CSRFProtect lo hace automáticamente
         csrf_token = request.form.get('csrf_token')
         logging.info(f"CSRF Token recibido: {csrf_token}")
-
-        # Validar que la orden pertenece al admin o empleado
         order = Order.query.join(User, Order.uid == User.id).filter(
             Order.id == id,
             (User.created_by == current_user.id) | (User.id == current_user.id)
         ).first_or_404()
-
         status = request.form.get('status')
         if status in ['Pagado', 'Libre', 'Reservado']:
             order.status = status
@@ -74,9 +58,7 @@ def update_order_status(id):
             flash(f"¡Estado de la orden actualizado exitosamente a '{status}'!", "success")
         else:
             flash("¡Estado no válido!", "error")
-
         return redirect(url_for('admin.dashboard'))
-
     except Exception as e:
         db.session.rollback()
         logging.error(f"Error al actualizar orden {id}: {str(e)}", exc_info=True)
@@ -84,130 +66,89 @@ def update_order_status(id):
         return redirect(url_for('admin.dashboard')), 500
 
 def create_user_folder(user_id):
-    """ Crea una carpeta para el usuario dentro de app/static/upload/ """
     user_folder = f'app/static/upload/{user_id}'
     absolute_folder = os.path.join(os.getcwd(), user_folder)
-    
     if not os.path.exists(absolute_folder):
         os.makedirs(absolute_folder)
         print(f"Carpeta creada: {absolute_folder}")
-    
-    return user_folder    
+    return user_folder
 
 @admin.route('/items')
 @admin_only
 def items():
-    # Obtener las alertas de la sesión
     alerts = Alert.query.filter_by(user_id=current_user.id).order_by(Alert.created_at.desc()).all()
-    # Filtrar productos creados por el administrador actual o sus empleados
     items = Item.query.join(User, Item.created_by == User.id).filter(
         (User.id == current_user.id) | (User.created_by == current_user.id)
     ).all()
     return render_template("admin/items.html", items=items, alerts=alerts)
 
-
+# Funciones de estadísticas (mantenidas como estaban)
 def calcular_total_ventas(uid=None, start_date=None, end_date=None):
-    query = db.session.query(
-        func.sum(Item.price * Ordered_item.quantity)
-    ).join(Ordered_item).join(Order).join(User).filter(
+    query = db.session.query(func.sum(Item.price * Ordered_item.quantity)).join(Ordered_item).join(Order).join(User).filter(
         (User.id == uid) | (User.created_by == uid)
     )
     if start_date and end_date:
         query = query.filter(Order.date.between(start_date, end_date))
-    total = query.scalar()
-    return round(total or 0, 2)
-
+    return round(query.scalar() or 0, 2)
 
 def calcular_total_reservado(uid=None, start_date=None, end_date=None):
-    query = db.session.query(
-        func.sum(Item.price * Ordered_item.quantity)
-    ).select_from(Order).join(Ordered_item).join(Item).join(User).filter(
-        ((User.id == uid) | (User.created_by == uid)) & 
-        func.lower(func.trim(Order.status)).in_(['reservado'])
+    query = db.session.query(func.sum(Item.price * Ordered_item.quantity)).select_from(Order).join(Ordered_item).join(Item).join(User).filter(
+        ((User.id == uid) | (User.created_by == uid)) & func.lower(func.trim(Order.status)).in_(['reservado'])
     )
     if start_date and end_date:
         query = query.filter(Order.date.between(start_date, end_date))
     return round(query.scalar() or 0, 2)
-
 
 def calcular_total_por_cobrar(uid=None, start_date=None, end_date=None):
-    query = db.session.query(
-        func.sum(Item.price * Ordered_item.quantity)
-    ).select_from(Order).join(Ordered_item).join(Item).join(User).filter(
-        ((User.id == uid) | (User.created_by == uid)) & 
-        func.lower(func.trim(Order.status)).in_(['reservado'])
+    query = db.session.query(func.sum(Item.price * Ordered_item.quantity)).select_from(Order).join(Ordered_item).join(Item).join(User).filter(
+        ((User.id == uid) | (User.created_by == uid)) & func.lower(func.trim(Order.status)).in_(['reservado'])
     )
     if start_date and end_date:
         query = query.filter(Order.date.between(start_date, end_date))
     return round(query.scalar() or 0, 2)
-
 
 def calcular_ganancia_neta(uid=None, start_date=None, end_date=None):
-    query = db.session.query(
-        func.sum((Item.price - Item.costo) * Ordered_item.quantity)
-    ).select_from(Order) \
-     .join(Ordered_item, Ordered_item.oid == Order.id) \
-     .join(Item, Ordered_item.itemid == Item.id) \
-     .join(User, Order.uid == User.id) \
-     .filter((User.id == uid) | (User.created_by == uid)) \
-     .filter(func.lower(func.trim(Order.status)).in_(['libre', 'pagado']))
+    query = db.session.query(func.sum((Item.price - Item.costo) * Ordered_item.quantity)).select_from(Order).join(Ordered_item).join(Item).join(User).filter(
+        (User.id == uid) | (User.created_by == uid), func.lower(func.trim(Order.status)).in_(['libre', 'pagado'])
+    )
     if start_date and end_date:
         query = query.filter(Order.date.between(start_date, end_date))
     return round(query.scalar() or 0, 2)
 
-
 def obtener_productos_mas_vendidos(uid=None, start_date=None, end_date=None, limit=10):
-    query = db.session.query(
-        Item.name,
-        func.sum(Ordered_item.quantity).label('total_vendidos'),
-        func.sum(Ordered_item.quantity * Item.price).label('monto_total_vendido')
-    ).join(Ordered_item).join(Order).join(User).filter(
+    query = db.session.query(Item.name, func.sum(Ordered_item.quantity).label('total_vendidos'), func.sum(Ordered_item.quantity * Item.price).label('monto_total_vendido')).join(Ordered_item).join(Order).join(User).filter(
         (User.id == uid) | (User.created_by == uid)
     )
     if start_date and end_date:
         query = query.filter(Order.date.between(start_date, end_date))
-    
     resultados = query.group_by(Item.id).order_by(func.sum(Ordered_item.quantity).desc()).limit(limit).all()
-
-    return [
-        {"nombre": r[0], "vendidos": int(r[1]), "monto_total_vendido": round(r[2] or 0, 2)}
-        for r in resultados
-    ]
-
+    return [{"nombre": r[0], "vendidos": int(r[1]), "monto_total_vendido": round(r[2] or 0, 2)} for r in resultados]
 
 def obtener_resumen_pedidos(uid=None, start_date=None, end_date=None):
-    query = db.session.query(
-        Order.status, func.count(Order.id)
-    ).join(User).filter(
+    query = db.session.query(Order.status, func.count(Order.id)).join(User).filter(
         (User.id == uid) | (User.created_by == uid)
     )
     if start_date and end_date:
         query = query.filter(Order.date.between(start_date, end_date))
-
     estados = query.group_by(Order.status).all()
     return {estado: cantidad for estado, cantidad in estados}
-
 
 def obtener_productos(uid=None, start_date=None, end_date=None):
     query = db.session.query(Item).join(User, Item.created_by == User.id).filter(
         (User.id == uid) | (User.created_by == uid)
     )
-    # Si Item tiene campo de fecha
     if start_date and end_date and hasattr(Item, 'created_at'):
         query = query.filter(Item.created_at.between(start_date, end_date))
     return query.all()
 
 def obtener_rango_fechas():
-    # Obtener la primera fecha y la última fecha de todas las órdenes
     primera_fecha = db.session.query(func.min(Order.date)).scalar()
     ultima_fecha = db.session.query(func.max(Order.date)).scalar()
-
     return primera_fecha, ultima_fecha
 
 @admin.route('/statictics')
 @admin_only
 def statictics():
-    # Filtrar órdenes relacionadas con el administrador actual o sus empleados
     orders = Order.query.join(User, Order.uid == User.id).filter(
         (User.id == current_user.id) | (User.created_by == current_user.id)
     ).all()
@@ -216,23 +157,17 @@ def statictics():
     ).all()
     return render_template("admin/statictics.html", orders=orders, items=items)
 
-
-# PDF exportado directamente desde los mismos cálculos
 @admin.route('/exportar-estadisticas-pdf')
 @admin_only
 def exportar_estadisticas_pdf():
     uid = current_user.id
-
-    # Obtener las fechas del filtro, si se pasan como parámetros
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-
     if start_date and end_date:
         start_date = datetime.strptime(start_date, '%Y-%m-%d')
         end_date = datetime.strptime(end_date, '%Y-%m-%d')
     else:
         start_date, end_date = obtener_rango_fechas()
-
     total_ventas = calcular_total_ventas(uid, start_date, end_date)
     total_reservado = calcular_total_reservado(uid, start_date, end_date)
     total_por_cobrar = calcular_total_por_cobrar(uid, start_date, end_date)
@@ -240,20 +175,10 @@ def exportar_estadisticas_pdf():
     productos_mas_vendidos = obtener_productos_mas_vendidos(uid, start_date, end_date)
     resumen_pedidos = obtener_resumen_pedidos(uid, start_date, end_date)
     listado_productos = obtener_productos(uid, start_date, end_date)
-
-    html = render_template('admin/statistics_pdf.html',
-        total_ventas=total_ventas,
-        total_reservado=total_reservado,
-        total_por_cobrar=total_por_cobrar,
-        ganancia_neta=ganancia_neta,
-        productos_mas_vendidos=productos_mas_vendidos,
-        resumen_pedidos=resumen_pedidos,
-        listado_productos=listado_productos,
-        date=datetime.now(),
-        fecha_inicio=start_date,
-        fecha_fin=end_date
-    )
-
+    html = render_template('admin/statistics_pdf.html', total_ventas=total_ventas, total_reservado=total_reservado,
+                          total_por_cobrar=total_por_cobrar, ganancia_neta=ganancia_neta, productos_mas_vendidos=productos_mas_vendidos,
+                          resumen_pedidos=resumen_pedidos, listado_productos=listado_productos, date=datetime.now(),
+                          fecha_inicio=start_date, fecha_fin=end_date)
     pdf = HTML(string=html).write_pdf()
     response = make_response(pdf)
     response.headers['Content-Type'] = 'application/pdf'
@@ -432,26 +357,26 @@ def delete_order(id):
     # Redirigir según el rol del usuario
     return redirect(url_for('admin.dashboard' if current_user.admin == 1 else 'orders'))
 
-# Esta función se ejecutará cada X tiempo para revisar las órdenes pendientes
-@admin.route('/update_order_status_to_free', methods=['POST'])
-def update_order_status_to_free():
-    one_day_ago = datetime.now() - timedelta(days=1)
-    
-    # Encuentra las órdenes con estado "Pagado" que tienen más de un día
-    orders_to_update = Order.query.filter(
-        Order.status == 'Pagado',
-        Order.date <= one_day_ago
-    ).all()
 
-    if orders_to_update:
+def update_orders_logic(app):  # Añade app como parámetro
+    app.logger.info("Ejecutando update_orders_logic")
+    with app.app_context():  # Usa app.app_context() en lugar de current_app
+        now = datetime.now(timezone.utc)
+        orders_to_update = Order.query.filter(
+            Order.status == 'Pagado',
+            Order.date <= now - timedelta(days=1)
+        ).all()
         for order in orders_to_update:
             order.status = 'Libre'
-        
+            app.logger.info(f"Actualizando orden {order.id} a Libre")
         db.session.commit()
-        flash("El estado del pedido cambió exitosamente a Libre.", "success")
-    else:
-        flash("No hay pedidos para actualizar", "info")
 
+# Ruta manual para actualizar órdenes (opcional, para pruebas)
+@admin.route('/update_order_status_to_free', methods=['POST'])
+@admin_only
+def update_order_status_to_free():
+    update_orders_logic()  # Llama a la función independiente
+    flash("El estado del pedido cambió exitosamente a Libre.", "success")
     return redirect(url_for('admin.dashboard'))
     
 
