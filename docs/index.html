@@ -1,0 +1,474 @@
+<script type="text/javascript">
+  var gk_isXlsx = false;
+  var gk_xlsxFileLookup = {};
+  var gk_fileData = {};
+  function filledCell(cell) {
+    return cell !== '' && cell != null;
+  }
+  function loadFileData(filename) {
+    if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+      try {
+        var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+        var firstSheetName = workbook.SheetNames[0];
+        var worksheet = workbook.Sheets[firstSheetName];
+
+        // Convert sheet to JSON to filter blank rows
+        var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+        // Filter out blank rows (rows where all cells are empty, null, or undefined)
+        var filteredData = jsonData.filter(row => row.some(filledCell));
+
+        // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+        var headerRowIndex = filteredData.findIndex((row, index) =>
+          row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+        );
+        // Fallback
+        if (headerRowIndex === -1 || headerRowIndex > 25) {
+          headerRowIndex = 0;
+        }
+
+        // Convert filtered JSON back to CSV
+        var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+        csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+        return csv;
+      } catch (e) {
+        console.error(e);
+        return "";
+      }
+    }
+    return gk_fileData[filename] || "";
+  }
+</script>
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CuBaro - Sistema de Punto de Venta</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome para íconos -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <!-- Animate.css para animaciones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <!-- SweetAlert2 para alertas -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Estilos personalizados -->
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      color: #fff;
+      background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    .navbar {
+      padding: 0.5rem 1rem;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .navbar-brand img {
+      height: 30px;
+      width: auto;
+      animation: animate__random 2s infinite alternate;
+      animation-delay: 0.5s;
+    }
+
+    .hero {
+      background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      padding: 80px 0;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+
+    .hero p {
+      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+
+    .carousel-caption {
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 10px;
+      padding: 15px;
+    }
+
+    .carousel-caption h5 {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .carousel-caption p {
+      font-size: 0.9rem;
+    }
+
+    .feature-card {
+      transition: transform 0.3s, box-shadow 0.3s;
+      border: none;
+      text-align: center;
+      padding: 20px;
+      cursor: pointer;
+      border-radius: 15px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(5px);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-linear-gradient(45deg,
+          transparent,
+          transparent 10px,
+          rgba(255, 255, 255, 0.1) 10px,
+          rgba(255, 255, 255, 0.1) 20px);
+      animation: movePattern 10s linear infinite;
+    }
+
+    @keyframes movePattern {
+      0% {
+        transform: translate(0, 0);
+      }
+
+      100% {
+        transform: translate(50%, 50%);
+      }
+    }
+
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .feature-card i.bi {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      z-index: 1;
+      position: relative;
+    }
+
+    .feature-card i.fas {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      z-index: 1;
+      position: relative;
+    }
+
+    /* Estilos de cristal con degradados y patrones para cada tarjeta */
+    .feature-card:nth-child(1) {
+      background: linear-gradient(135deg, rgba(46, 204, 113, 0.3), rgba(39, 174, 96, 0.3));
+    }
+
+    .feature-card:nth-child(2) {
+      background: linear-gradient(135deg, rgba(52, 152, 219, 0.3), rgba(41, 128, 185, 0.3));
+    }
+
+    .feature-card:nth-child(3) {
+      background: linear-gradient(135deg, rgba(241, 196, 15, 0.3), rgba(243, 156, 18, 0.3));
+    }
+
+    .feature-card:nth-child(4) {
+      background: linear-gradient(135deg, rgba(230, 126, 34, 0.3), rgba(211, 84, 0, 0.3));
+    }
+
+    .feature-card:nth-child(5) {
+      background: linear-gradient(135deg, rgba(155, 89, 182, 0.3), rgba(142, 68, 173, 0.3));
+    }
+
+    .feature-card:nth-child(6) {
+      background: linear-gradient(135deg, rgba(231, 76, 60, 0.3), rgba(192, 57, 43, 0.3));
+    }
+
+    .feature-card:nth-child(7) {
+      background: linear-gradient(135deg, rgba(46, 204, 113, 0.3), rgba(39, 174, 96, 0.3));
+    }
+
+    .feature-card:nth-child(8) {
+      background: linear-gradient(135deg, rgba(52, 152, 219, 0.3), rgba(41, 128, 185, 0.3));
+    }
+
+    footer {
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <img src="img/logoo.png" alt="CuBaro Logo">
+      </a>
+    </div>
+  </nav>
+
+  <!-- Encabezado (Atención) -->
+  <section class="hero">
+    <div class="container">
+      <h1>¡Transforma tu Negocio con CuBaro!</h1>
+      <p>El sistema de punto de venta que simplifica la gestión de tu comercio.</p>
+      <a href="https://cubaro.onrender.com/" target="_blank" class="btn btn-primary btn-lg">Prueba Gratis Ahora</a>
+    </div>
+  </section>
+
+  <!-- Carrusel -->
+  <section id="usage" class="py-5">
+    <div class="container">
+      <h2 class="text-center mb-4">Cómo Usar CuBaro</h2>
+      <div id="usageCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <img
+              src="img/membresias00 (copia).png"
+              class="d-block w-100" alt="Entorno de Desarrollo">
+            <div class="carousel-caption">
+              <h5>Paso 1: Iniciar Sesión</h5>
+              <p>Abre la aplicación, presiona "Iniciar Sesión", ingresa tu correo y contraseña, y accede al panel
+                principal.</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img
+              src="img/panel.png"
+              class="d-block w-100" alt="Interfaz de Ventas">
+            <div class="carousel-caption">
+              <h5>Paso 2: Navegar por la Interfaz</h5>
+              <p>Explora las opciones como "Órdenes", "Productos" y "Estadísticas" para gestionar tu negocio.</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img
+              src="https://images.unsplash.com/photo-1581090742188-385b1a032ea2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80"
+              class="d-block w-100" alt="Gestión de Productos">
+            <div class="carousel-caption">
+              <h5>Paso 3: Añadir un Producto</h5>
+              <p>Ve a "Productos", completa el formulario con los detalles y guarda el nuevo producto.</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img
+              src="https://images.unsplash.com/photo-1600585154526-990d71ebb8b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80"
+              class="d-block w-100" alt="Editar Productos">
+            <div class="carousel-caption">
+              <h5>Paso 4: Editar o Eliminar Productos</h5>
+              <p>Selecciona un producto, edita sus detalles o elimínalo para mantener tu inventario actualizado.</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img
+              src="https://images.unsplash.com/photo-1600585154473-6a6a1e0c3cd0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80"
+              class="d-block w-100" alt="Procesar Orden">
+            <div class="carousel-caption">
+              <h5>Paso 5: Procesar una Orden</h5>
+              <p>Selecciona productos, agrégalos al carrito, revisa el total y confirma la venta.</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img
+              src="https://images.unsplash.com/photo-1600585154276-05d68b6e7a1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80"
+              class="d-block w-100" alt="Reportes">
+            <div class="carousel-caption">
+              <h5>Paso 6: Generar Reportes</h5>
+              <p>Filtra por fechas y genera PDFs con estadísticas de ventas e inventario.</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img
+              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80"
+              class="d-block w-100" alt="Gestión de Empleados">
+            <div class="carousel-caption">
+              <h5>Paso 7: Gestionar Empleados</h5>
+              <p>Añade, edita o elimina empleados desde el panel de configuración.</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img
+              src="https://images.unsplash.com/photo-1600585154473-6a6a1e0c3cd0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80"
+              class="d-block w-100" alt="Cerrar Sesión">
+            <div class="carousel-caption">
+              <h5>Paso 8: Cerrar Sesión</h5>
+              <p>Haz clic en "Salir" para cerrar tu sesión de forma segura.</p>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#usageCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Anterior</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#usageCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Siguiente</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Características (Interés y Deseo) -->
+  <section id="features" class="py-5">
+    <div class="container">
+      <h2 class="text-center mb-4">Características Principales</h2>
+      <div class="row">
+        <div class="col-md-3 mb-4">
+          <div class="card feature-card" onclick="showAlert(1)">
+            <i class="bi bi-1-circle-fill"></i>
+            <i class="fas fa-sign-in-alt"></i>
+            <h5>Iniciar Sesión</h5>
+            <p>Abre la app y accede al panel con facilidad.</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="card feature-card" onclick="showAlert(2)">
+            <i class="bi bi-2-circle-fill"></i>
+            <i class="fas fa-tachometer-alt"></i>
+            <h5>Navegar por la Interfaz</h5>
+            <p>Gestiona tu negocio con opciones intuitivas.</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="card feature-card" onclick="showAlert(3)">
+            <i class="bi bi-3-circle-fill"></i>
+            <i class="fas fa-plus"></i>
+            <h5>Añadir un Producto</h5>
+            <p>Registra nuevos productos rápidamente.</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="card feature-card" onclick="showAlert(4)">
+            <i class="bi bi-4-circle-fill"></i>
+            <i class="fas fa-edit"></i>
+            <h5>Editar o Eliminar Productos</h5>
+            <p>Actualiza tu inventario con control total.</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="card feature-card" onclick="showAlert(5)">
+            <i class="bi bi-5-circle-fill"></i>
+            <i class="fas fa-shopping-cart"></i>
+            <h5>Procesar una Orden</h5>
+            <p>Realiza ventas de forma eficiente.</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="card feature-card" onclick="showAlert(6)">
+            <i class="bi bi-6-circle-fill"></i>
+            <i class="fas fa-chart-bar"></i>
+            <h5>Generar Reportes</h5>
+            <p>Obtén estadísticas detalladas en PDF.</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="card feature-card" onclick="showAlert(7)">
+            <i class="bi bi-7-circle-fill"></i>
+            <i class="fas fa-users"></i>
+            <h5>Gestionar Empleados</h5>
+            <p>Administra tu equipo con facilidad.</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="card feature-card" onclick="showAlert(8)">
+            <i class="bi bi-8-circle-fill"></i>
+            <i class="fas fa-sign-out-alt"></i>
+            <h5>Cerrar Sesión</h5>
+            <p>Cierra tu sesión de forma segura.</p>
+          </div>
+        </div>
+      </div>
+      <div class="text-center mt-4">
+        <a href="https://cubaro.onrender.com/" target="_blank" class="btn btn-primary btn-lg">Prueba Gratis Ahora</a>
+        <p class="mt-2 text-warning">¡Oferta limitada: Únete hoy y obtén soporte gratuito por 7 días!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Descripción (Deseo) -->
+  <section id="about" class="py-5">
+    <div class="container">
+      <h2 class="text-center mb-4">Acerca de CuBaro</h2>
+      <p class="text-center lead">
+        CuBaro es la herramienta ideal para pequeñas empresas y comercios que necesitan gestionar productos, ventas e
+        inventarios con confianza. Miles de usuarios ya confían en nosotros para optimizar sus negocios. ¡Pruébalo y
+        descubre la diferencia!
+      </p>
+    </div>
+  </section>
+
+  <!-- Pie de página -->
+  <footer>
+    <div class="container text-center">
+      <p>© 2025 CuBaro. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function showAlert(step) {
+      const titles = [
+        "Paso 1: Iniciar Sesión en el Sistema",
+        "Paso 2: Navegar por la Interfaz Principal",
+        "Paso 3: Añadir un Nuevo Producto",
+        "Paso 4: Editar o Eliminar Productos",
+        "Paso 5: Procesar una Orden",
+        "Paso 6: Generar un Reporte de Estadística",
+        "Paso 7: Gestionar Empleados",
+        "Paso 8: Cerrar Sesión"
+      ];
+      const messages = [
+        "Abre la aplicación. En la ventana principal, presiona 'Iniciar Sesión'. Ingresa tu correo y contraseña. Haz clic en 'Iniciar Sesión' para entrar al panel principal del sistema.",
+        "Una vez iniciada la sesión, verás el panel principal con opciones como 'Órdenes' <i class='bi bi-bell' style='font-size: 1.5em;'></i>, 'Panel' <i class='bi bi-speedometer2' style='font-size: 1.5em;'></i>, 'Productos' <i class='bi bi-bag-fill' style='font-size: 1.5em;'></i>, 'Estadísticas' <i class='bi bi-graph-up-arrow' style='font-size: 1.5em;'></i>, 'Configuración' <i class='bi bi-sliders' style='font-size: 1.5em;'></i> y 'Herramientas' <i class='bi bi-tools' style='font-size: 1.5em;'></i>. Estas pestañas o botones le permiten acceder a las funciones claves del sistema. Haga clic en cada una para gestionar productos, procesar ordenes o generar reportes. En el panel puedes 'Eliminar' <span class='tutorial-fill' style='font-size: 1.5em;'><i class='bi bi-trash3 text-danger'></i></span> y actualizar el estado de las 'Órdenes' que emitió cada uno de sus empleados cuando los mismos coticen, ten en cuenta que al cambiar el estado este será irreversible",
+        "Ve a la sección 'Productos' y haga clic en 'Añadir Producto' <i class='bi bi-database-fill-add' style='font-size: 1.5em;'></i>. Complete el formulario con detalles como nombre del producto, categoría, imagen, costo, precio, stock y stock_min. Presione 'Guardar' para registrar el producto en la base de datos.",
+        "En 'Productos', seleccione un producto de la lista. Haga clic en 'Editar' <span class='tutorial-fill'><strong><i class='bi bi-pencil-square text-success'></i></strong></span> para actualizar detalles como precio o stock, luego guarde los cambios. Para eliminar, seleccione 'Eliminar' <span class='tutorial-fill'><i class='bi bi-trash3 text-danger'></i></span> y confirme la acción. Esto actualiza la base de datos, asegurando que la información sea precisa.",
+        "Diríjase a 'Inicio'. Seleccione un producto, ingrese la cantidad a vender y haga clic en 'Agregar al Carrito'. Repita para más productos si es necesario. Revise el total de la venta y haga clic en 'Reservar' y confirmar para registrar la transacción y reducir el inventario automáticamente. Una vez generada la 'Órden' se puede 'Eliminar' <span class='tutorial-fill' style='font-size: 1.5em;'><i class='bi bi-trash3 text-danger'></i></span> o emitir una factura en caso de que el cliente la requiera <i class='bi bi-file-earmark-pdf' style='color: #ff1212; font-size: 1.5em;'></i>Factura",
+        "En la sección 'Estadística', seleccione un rango de fechas o una venta específica. Haga clic en '<i class='bi bi-file-earmark-pdf-fill' style='color: #ff1212; font-size: 1.5em;'></i>Filtrar' para crear un archivo PDF con detalles de las ventas, como productos más o menos vendidos y totales, además del estado del inventario.",
+        "Acceda al panel de 'Configuración' para ver todos los empleados. Para 'Añadir' seleccione <i class='bi bi-person-plus' style='font-size: 1.5em;'></i> y para 'Editar' <span class='tutorial-fill'><i class='bi bi-pencil-square text-success'></i></span>, luego guarde los cambios. Para eliminar, seleccione 'Eliminar' <span class='tutorial-fill'><i class='bi bi-trash3 text-danger'></i></span>, y confirme la acción.",
+        "Cuando termine, haga clic en 'Salir', ubicado en la interfaz principal o en un menú. Esto cierra su sesión de forma segura, asegurando que los datos del sistema queden protegidos hasta la próxima vez que inicie sesión."
+      ];
+      Swal.fire({
+        title: titles[step - 1],
+        html: messages[step - 1],
+        icon: 'info',
+        confirmButtonText: 'Cerrar',
+        customClass: {
+          popup: 'custom-swal'
+        }
+      });
+    }
+  </script>
+  <style>
+    .custom-swal {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .swal2-title {
+      color: #fff;
+    }
+
+    .swal2-html-container {
+      color: #fff;
+    }
+  </style>
+</body>
+
+</html>
