@@ -118,7 +118,7 @@ Admin Configuración
                         <input type="text" class="form-control" id="userPhone" name="userPhone" maxlength="8"
                             pattern="\d{8}" title="El teléfono debe tener exactamente 8 dígitos." required>
                     </div>
-                    <div class="form-group position-relative">
+                    <!-- <div class="form-group position-relative">
                         <label for="userPassword">Nueva Contraseña</label>
                         <input type="password" class="form-control" id="userPassword" name="userPassword"
                             pattern="^[a-zA-Z0-9_\-&$@#!%^*+.]{8,30}$"
@@ -127,7 +127,7 @@ Admin Configuración
                             style="top: 38px; right: 15px; cursor: pointer; color: rgb(14, 66, 238);">
                             <i class="fa fa-eye toggle-icon" id="toggleIcon" title="Mostrar contraseña"></i>
                         </span>
-                    </div>
+                    </div> -->
                     {% if current_user.id == 1 %}
                     <div class="form-group">
                         <label for="registrationDate">Fecha de Registro</label>
@@ -319,7 +319,7 @@ Admin Configuración
             const userNameElement = $('#userName');
             const userEmailElement = $('#userEmail');
             const userPhoneElement = $('#userPhone');
-            const userPasswordElement = $('#userPassword');
+            //const userPasswordElement = $('#userPassword');
             const membershipElement = $('#membership');
             const membershipExpirationElement = $('#membershipExpiration');
             const emailConfirmedElement = $('#emailConfirmed');
@@ -343,7 +343,7 @@ Admin Configuración
                 userName: userNameElement.val(),
                 userEmail: userEmailElement.val(),
                 userPhone: userPhoneElement.val(),
-                userPassword: userPasswordElement.val() || null,
+                //userPassword: userPasswordElement.val() || null,
                 membership_id: membershipElement.length ? (membershipElement.val() || null) : null,
                 membership_expiration: membershipExpirationElement.length ? (membershipExpirationElement.val() || null) : null,
                 email_confirmed: emailConfirmedElement.length && emailConfirmedElement.is(':checked') ? '1' : '0',

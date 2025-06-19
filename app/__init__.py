@@ -1,4 +1,5 @@
 import os
+import bcrypt
 from sqlalchemy import func
 import stripe
 import json
@@ -13,7 +14,7 @@ import secrets
 from flask_login import LoginManager, login_user, current_user, login_required, logout_user
 from .extensions import db  # Importa db desde extensions.py
 from .db_models import Membership, PasswordResetLog, User, Item, Alert, Order, Ordered_item
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import Serializer, URLSafeTimedSerializer
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
 from flask_apscheduler import APScheduler
@@ -22,6 +23,7 @@ from flask import current_app, json
 from weasyprint import HTML
 from io import BytesIO
 import uuid
+import pytz
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -57,6 +59,7 @@ def create_app():
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "123456")
     csrf = CSRFProtect(app)
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    timezone = pytz.UTC  # Usar UTC explícitamente
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///local_db.sqlite3'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['MAIL_USERNAME'] = os.environ.get("EMAIL", "agr@gmail.com")
@@ -91,7 +94,7 @@ def create_app():
     # Definir funciones de tareas ANTES de añadirlas al programador
     def deactivate_expired_users():
         with app.app_context():
-            now = datetime.now(timezone.utc)
+            now = datetime.now(timezone)
             try:
                 # Excluir al superadmin con id=1
                 expired_users = User.query.filter(
@@ -122,7 +125,7 @@ def create_app():
 
     def clean_old_alerts():
         with app.app_context():
-            old_alerts = Alert.query.filter(Alert.created_at < datetime.now(timezone.utc) - timedelta(days=7)).all()
+            old_alerts = Alert.query.filter(Alert.created_at < datetime.now(timezone) - timedelta(days=7)).all()
             for alert in old_alerts:
                 db.session.delete(alert)
             db.session.commit()
@@ -180,9 +183,11 @@ def create_app():
         db.create_all()
 
     # Procesador de contexto para inyectar 'now'
-    @app.context_processor
     def inject_now():
-        return {'now': datetime.now(timezone.utc)}
+        return {'now': datetime.now(timezone)}  # Usar timezone directamente
+
+    # Registrar el contexto de plantilla
+    app.context_processor(inject_now)
 
     # Loader de usuarios para Flask-Login
     @login_manager.user_loader
@@ -217,7 +222,7 @@ def create_app():
         return render_template('change_password.html', form=form)
 
     @app.route('/forgot_password', methods=['GET', 'POST'])
-    @limiter.limit("5 per hour")
+    @limiter.limit("15 per hour")
     def forgot_password():
         form = ForgotPasswordForm()
         user = None
@@ -250,17 +255,28 @@ def create_app():
                     db.session.commit()
                     return render_template('forgot_password.html', form=form, user=user)
                 reset_value = f'RESET_{reset_code}'
+                print(f"Debug - user.master_key: {user.master_key}")
+                print(f"Debug - reset_code: {reset_code}")
+                print(f"Debug - reset_value: {reset_value}")
                 if not bcrypt.check_password_hash(user.master_key, reset_value):
                     flash('Código de recuperación inválido.', 'error')
                     db.session.commit()
                     return render_template('forgot_password.html', form=form, user=user)
                 last_updated = db.session.query(func.max(User.updated_at)).filter_by(id=user.id).scalar()
                 if last_updated:
-                    expiry = last_updated.replace(tzinfo=timezone.utc) + timedelta(hours=1)
-                    if datetime.now(timezone.utc) > expiry:
+                    if last_updated.tzinfo is None:
+                        last_updated = timezone.localize(last_updated)
+                    expiry = last_updated + timedelta(hours=1)
+                    current_time = datetime.now(timezone)
+                    print(f"Debug - last_updated: {last_updated}, expiry: {expiry}, current_time: {current_time}")
+                    if current_time > expiry:
                         flash('Código de recuperación expirado.', 'error')
                         db.session.commit()
                         return render_template('forgot_password.html', form=form, user=user)
+                else:
+                    flash('No se encontró registro de actualización para este usuario.', 'error')
+                    db.session.commit()
+                    return render_template('forgot_password.html', form=form, user=user)
             token = serializer.dumps(user.email, salt='recover-password')
             log.success = True
             db.session.commit()
@@ -268,7 +284,7 @@ def create_app():
         return render_template('forgot_password.html', form=form, user=user)
 
     @app.route('/reset_password', methods=['GET', 'POST'])
-    @limiter.limit("5 per hour")
+    @limiter.limit("15 per hour")
     def reset_password():
         token = request.args.get('token') or request.form.get('token')
         if not token:
@@ -312,6 +328,7 @@ def create_app():
             reset_code = secrets.token_urlsafe(8).lower()
             reset_value = f'RESET_{reset_code}'
             user.master_key = bcrypt.generate_password_hash(reset_value).decode('utf-8')
+            user.updated_at = datetime.now(timezone)  # Actualizar la marca de tiempo
             db.session.commit()
             flash(f'Código de recuperación para {email}: {reset_code}', 'success')
             return redirect(url_for('generate_reset_code'))
@@ -361,7 +378,6 @@ def create_app():
         return render_template("membership_plans.html")
 
     @app.route('/login', methods=['POST', 'GET'])
-    @limiter.limit("15 per hour")
     def login():
         if current_user.is_authenticated:
             return redirect(url_for('admin.dashboard' if current_user.admin else 'orders'))
@@ -404,10 +420,10 @@ def create_app():
                 return redirect(url_for('login'))
             if form.membership.data == 1:
                 email_confirmed = 1
-                membership_expiration = datetime.now(timezone.utc) + timedelta(days=7)
+                membership_expiration = datetime.now(timezone) + timedelta(days=7)
             else:
                 email_confirmed = 0
-                membership_expiration = datetime.now(timezone.utc)
+                membership_expiration = datetime.now(timezone)
             master_key = secrets.token_hex(16)
             new_user = User(name=form.name.data.strip(), email=form.email.data.lower().strip(),
                            password=bcrypt.generate_password_hash(form.password.data).decode('utf-8'),
